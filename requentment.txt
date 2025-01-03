@@ -1,0 +1,14 @@
+pip install -U bitsandbytes
+
+pip install accelerate>=0.26.0
+
+pip install faiss-gpu langchain_community langchain_core langgraph beautifulsoup4 langchain_ollama
+
+pip install sentence-transformers
+
+datasets
+
+
+wsl------
+sudo apt install pulseaudio
+ollama
