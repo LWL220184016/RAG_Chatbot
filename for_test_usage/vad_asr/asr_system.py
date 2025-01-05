@@ -5,6 +5,7 @@ import numpy as np
 import pyaudio
 import threading
 import queue
+import noisereduce as nr
 
 SOUND_LEVEL = 100
 CHUNK = 512
@@ -36,6 +37,10 @@ def get_asr_model():
 
     return model, processor, device, torch_dtype
 
+def reduce_noise(audio_np, rate):
+    reduced_noise = nr.reduce_noise(y=audio_np, sr=rate)
+    return reduced_noise
+
 if __name__ == "__main__":
     from check_input_device import get_input_device, get_audio_chunk, get_audio_chunk_sound_level
     
@@ -55,10 +60,26 @@ if __name__ == "__main__":
         asr_model, asr_processor, device, torch_dtype = get_asr_model()
         print("Recording...")
         while True:
+
+            # frame = audio_chunk_queue.get()
+            # audio_data = convert_audio_bytes_to_float(frame)
+
+            # # audio_data = normalize_audio(audio_data)
+            # input_features = asr_processor(
+            #     audio_data, sampling_rate=RATE, return_tensors="pt"
+            # )
+            # input_features = input_features.to(device, dtype=torch_dtype)
+
+
             frame = audio_chunk_queue.get()
             audio_data = convert_audio_bytes_to_float(frame)
 
-            # audio_data = normalize_audio(audio_data)
+            # Reduce noise
+            audio_data = reduce_noise(audio_data, RATE)
+
+            # Normalize audio
+            audio_data = normalize_audio(audio_data)
+
             input_features = asr_processor(
                 audio_data, sampling_rate=RATE, return_tensors="pt"
             )
