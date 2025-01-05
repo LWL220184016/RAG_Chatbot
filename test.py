@@ -38,7 +38,7 @@ if __name__ == "__main__":
         asr_model, asr_processor, device, torch_dtype = get_asr_model()
 
         while True:
-            print("Recording...")
+            print("\nRecording...")
             frame = audio_chunk_queue.get()
             audio_data = convert_audio_bytes_to_float(frame)
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
             pred_ids = asr_model.generate(input_features.input_features)
             prompt = asr_processor.batch_decode(pred_ids, skip_special_tokens=True, decode_with_timestamps=False)[0]
 
-            print("\nYou: " + prompt)
+            print("You: " + prompt)
 
             # prompt = input("You: ")
             prompt_queue.put(prompt)
