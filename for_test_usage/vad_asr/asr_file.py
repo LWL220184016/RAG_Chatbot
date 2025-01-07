@@ -9,7 +9,8 @@ def get_asr_model():
     torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
     # model_id = "distil-whisper/distil-large-v3"
-    model_id = "distil-whisper/distil-medium.en"
+    # model_id = "distil-whisper/distil-medium.en"
+    model_id = "openai/whisper-large-v3"
 
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
         model_id, torch_dtype=torch_dtype, low_cpu_mem_usage=True, use_safetensors=True
@@ -23,7 +24,7 @@ def get_asr_model():
 if __name__ == "__main__":
     model, processor, device, torch_dtype = get_asr_model()
     
-    audio_file_path = "en_example.wav"
+    audio_file_path = "output.wav"
     waveform, sample_rate = torchaudio.load(audio_file_path)
 
     # Convert to mono if the audio has more than one channel

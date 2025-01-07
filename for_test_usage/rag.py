@@ -2,7 +2,7 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain.schema import Document
-from for_test_usage.llm import get_LLM
+from for_test_usage.llm_tts.llm import get_LLM
 
 # Step 1: Prepare your documents
 # documents = [

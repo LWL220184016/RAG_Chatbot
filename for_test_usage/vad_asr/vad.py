@@ -5,7 +5,7 @@ class VADIterator:
     def __init__(
         self,
         model,
-        threshold: float = 0.2,
+        threshold: float = 0.5,
         sampling_rate: int = 16000,
         min_silence_duration_ms: int = 100,
         speech_pad_ms: int = 30,
