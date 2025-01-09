@@ -1,4 +1,4 @@
-from transformers import pipeline, AutoModelForCausalLM, AutoModelForSpeechSeq2Seq, AutoProcessor
+from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor
 import torch
 from datasets import load_dataset
 import numpy as np  
