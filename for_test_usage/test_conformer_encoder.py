@@ -3,11 +3,11 @@ from nemo.collections.asr.modules import ConformerEncoder
 
 # Define parameters for the ConformerEncoder
 encoder_params = {
-    'feat_in': 80,
+    'feat_in': 512,
     'n_layers': 12,
     'd_model': 512,
     'subsampling': 'striding',
-    'subsampling_factor': 4,
+    'subsampling_factor': 8,
     'n_heads': 8,
     'ff_expansion_factor': 4,
     'self_attention_model': 'rel_pos',
@@ -22,7 +22,7 @@ conformer_encoder = ConformerEncoder(**encoder_params)
 # Create a dummy input tensor
 # Note: time_steps should be divisible by subsampling_factor for clean subsampling
 batch_size = 2
-time_steps = 500  # Original time steps
+time_steps = 512  # Original time steps
 subsampled_time_steps = time_steps // encoder_params['subsampling_factor']  # Adjust for subsampling
 features = encoder_params['feat_in']
 dummy_input = torch.randn(batch_size, time_steps, features)
@@ -46,3 +46,5 @@ print(f"Encoded lengths: {encoded_lengths}")
 # Explanation:
 # - The shape of encoded_output should now be (batch_size, subsampled_time_steps, d_model)
 # - encoded_lengths will reflect the length after subsampling
+
+# https://x.com/i/grok/share/QZYVaUgVhlYB642mMezaGQJey
