@@ -53,54 +53,54 @@ class Message:
 if __name__ == "__main__":
     llm = get_LLM()
 
-    message = Message(role="friend", content="Today is a nice day, would you want to play with me in the park?", mood="快乐", emoji="🌞😊")
-    message = json.dumps(message.__dict__)
-    result = llm.invoke(message)
-    print("LLM: " + str(result))
-    # LLM: That's great! The weather has been pretty gloomy lately. I'd love to spend some time outdoors with you. What time were you thinking of heading out?
+    # message = Message(role="friend", content="Today is a nice day, would you want to play with me in the park?", mood="快乐", emoji="🌞😊")
+    # message = json.dumps(message.__dict__)
+    # result = llm.invoke(message)
+    # print("LLM: " + str(result))
+    # # LLM: That's great! The weather has been pretty gloomy lately. I'd love to spend some time outdoors with you. What time were you thinking of heading out?
 
-    message = Message(role="friend", content="Can we play hide and seek? That looks like fun!", mood="快乐", emoji="🤗")
-    message = json.dumps(message.__dict__)
-    result = llm.invoke(message)
-    print("LLM: " + str(result))
-    # LLM: "Hey! I'd love to play hide and seek with you. Let's go outside in the backyard, it'll be more fun and we can run around. Are you ready to count to 10 while I hide?"
+    # message = Message(role="friend", content="Can we play hide and seek? That looks like fun!", mood="快乐", emoji="🤗")
+    # message = json.dumps(message.__dict__)
+    # result = llm.invoke(message)
+    # print("LLM: " + str(result))
+    # # LLM: "Hey! I'd love to play hide and seek with you. Let's go outside in the backyard, it'll be more fun and we can run around. Are you ready to count to 10 while I hide?"
 
-    message = Message(role="friend", content="Oh, it hurts. I accidentally tripped.", mood="痛苦", emoji="😣")
-    message = json.dumps(message.__dict__)
-    result = llm.invoke(message)
-    print("LLM: " + str(result))
-    # LLM: Aww, sorry to hear that! Are you okay? Do you need some ice for that bruise?
+    # message = Message(role="friend", content="Oh, it hurts. I accidentally tripped.", mood="痛苦", emoji="😣")
+    # message = json.dumps(message.__dict__)
+    # result = llm.invoke(message)
+    # print("LLM: " + str(result))
+    # # LLM: Aww, sorry to hear that! Are you okay? Do you need some ice for that bruise?
 
-    message = Message(role="friend", content="Can you give me a emoji to let me know what you feeling?", mood="微笑", emoji="😊")
-    message = json.dumps(message.__dict__)
-    result = llm.invoke(message)
-    print("LLM: " + str(result))
-    # LLM: That's a smiling face with smiling eyes 😊! I'm feeling happy today. How about you?
+    # message = Message(role="friend", content="Can you give me a emoji to let me know what you feeling?", mood="微笑", emoji="😊")
+    # message = json.dumps(message.__dict__)
+    # result = llm.invoke(message)
+    # print("LLM: " + str(result))
+    # # LLM: That's a smiling face with smiling eyes 😊! I'm feeling happy today. How about you?
 
-    image_path = "img/cat2.jpg"
-    with open(image_path, "rb") as image_file:
-        image_data = image_file.read()
-    image_base64 = base64.b64encode(image_data).decode('utf-8')
-    llm = llm.bind(images=[image_base64])
+    # image_path = "img/cat2.jpg"
+    # with open(image_path, "rb") as image_file:
+    #     image_data = image_file.read()
+    # image_base64 = base64.b64encode(image_data).decode('utf-8')
+    # llm = llm.bind(images=[image_base64])
 
-    message = Message(role="friend", content="Do you know what is this? It is my new pet! Do you think it is cut?", mood="微笑", emoji="😊")
-    message = json.dumps(message.__dict__)
-    result = llm.invoke(message)
-    print("LLM: " + str(result))
-    # LLM: It's a cat, and it looks like you really like it. Here are some facts about cats:
+    # message = Message(role="friend", content="Do you know what is this? It is my new pet! Do you think it is cut?", mood="微笑", emoji="😊")
+    # message = json.dumps(message.__dict__)
+    # result = llm.invoke(message)
+    # print("LLM: " + str(result))
+    # # LLM: It's a cat, and it looks like you really like it. Here are some facts about cats:
 
-    # 1. Cats have been domesticated for thousands of years and are one of the most popular pets in the world.
-    # 2. They are known for their independence and self-reliance, but they also enjoy human companionship and affection.
-    # 3. Cats are highly intelligent animals that can learn to perform tricks and even solve simple problems.
-    # 4. They have a unique communication system that includes vocalizations (meowing), body language (posturing, tail twitching), and scent marking.
-    # 5. Cats are natural predators, with excellent hearing, vision, and agility, making them skilled hunters in the wild.
+    # # 1. Cats have been domesticated for thousands of years and are one of the most popular pets in the world.
+    # # 2. They are known for their independence and self-reliance, but they also enjoy human companionship and affection.
+    # # 3. Cats are highly intelligent animals that can learn to perform tricks and even solve simple problems.
+    # # 4. They have a unique communication system that includes vocalizations (meowing), body language (posturing, tail twitching), and scent marking.
+    # # 5. Cats are natural predators, with excellent hearing, vision, and agility, making them skilled hunters in the wild.
 
-    # As for your cat, it seems like you're very happy to have it as a pet. Here are some suggestions to keep your feline friend happy and healthy:
+    # # As for your cat, it seems like you're very happy to have it as a pet. Here are some suggestions to keep your feline friend happy and healthy:
 
-    # 1. Provide a nutritious diet: Feed high-quality commercial cat food or consider making homemade meals with veterinarian-approved ingredients.
-    # 2. Ensure regular veterinary check-ups: Schedule annual vaccinations and health exams to monitor your cat's overall well-being.
-    # 3. Create a safe environment: Remove hazardous materials, secure toxic substances, and provide scratching posts to save your furniture.
-    # 4. Offer plenty of playtime: Engage in interactive toys or laser pointers to stimulate your cat's natural hunting instincts.
-    # 5. Provide mental stimulation: Try puzzle toys filled with treats or hide-and-seek games to keep your cat's mind active.
+    # # 1. Provide a nutritious diet: Feed high-quality commercial cat food or consider making homemade meals with veterinarian-approved ingredients.
+    # # 2. Ensure regular veterinary check-ups: Schedule annual vaccinations and health exams to monitor your cat's overall well-being.
+    # # 3. Create a safe environment: Remove hazardous materials, secure toxic substances, and provide scratching posts to save your furniture.
+    # # 4. Offer plenty of playtime: Engage in interactive toys or laser pointers to stimulate your cat's natural hunting instincts.
+    # # 5. Provide mental stimulation: Try puzzle toys filled with treats or hide-and-seek games to keep your cat's mind active.
 
-    # I hope these tips are helpful, and I'm sure your cat will continue to bring joy and companionship into your life.
+    # # I hope these tips are helpful, and I'm sure your cat will continue to bring joy and companionship into your life.
