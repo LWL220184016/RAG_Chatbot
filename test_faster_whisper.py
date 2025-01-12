@@ -4,9 +4,8 @@ import queue
 import sounddevice as sd
 
 from faster_whisper import WhisperModel
-from ASR.audio_process import Audio_Processer
-from LLM.llm import LLM
-from TTS.tts import TTS
+from final.ASR.audio_process import Audio_Processer
+from for_test_usage.llm_tts.llm_tts import get_LLM, get_TTS, llm_output, tts_output
 
 SOUND_LEVEL = 5
 CHUNK = 2048
@@ -16,23 +15,23 @@ RATE = 16000
 SEC = 1
 
 if __name__ == "__main__":
-    stop_event = threading.Event()
-    is_user_talking = threading.Event()
-    speaking_event = threading.Event()
-
-    ap = Audio_Processer(chunk=CHUNK, stop_event=stop_event)
+    llm = get_LLM()
+    tts_processor, tts_model, vocoder, speaker_embeddings = get_TTS()
     asr_model = WhisperModel("large-v3", device="cuda", compute_type="float16")
-    llm = LLM(is_user_talking=is_user_talking)
-    tts = TTS()
+    ap = Audio_Processer(chunk=CHUNK)
     # sound_device_index = get_input_device(p, "Microphone (MONSTER AIRMARS N3)")
 
-    asr_output_queue = queue.Queue()
+    user_input_queue = queue.Queue()
+    llm_output_queue = queue.Queue()
+    audio_queue = queue.Queue()
+    stop_event = threading.Event()
+    speaking_event = threading.Event()
 
     try:
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
         check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,))
-        llm_thread = threading.Thread(target=llm.llm_output, args=(asr_output_queue))
-        tts_thread = threading.Thread(target=tts.tts_output, args=(llm.llm_output_queue, speaking_event))
+        llm_thread = threading.Thread(target=llm_output, args=(llm, user_input_queue, llm_output_queue))
+        tts_thread = threading.Thread(target=tts_output, args=(tts_processor, tts_model, vocoder, speaker_embeddings, llm_output_queue, audio_queue, speaking_event))
         get_audio_thread.start()
         check_audio_thread.start()
         llm_thread.start()
@@ -58,17 +57,18 @@ if __name__ == "__main__":
             print("You: " + prompt)
 
             # prompt = input("You: ")
-            asr_output_queue.put(prompt)
+            user_input_queue.put(prompt)
             speaking_event.set()  # Signal that LLM is speaking
             
-            while speaking_event.is_set() or not tts.audio_queue.empty():
-                audio_chunk = tts.audio_queue.get()
+            while speaking_event.is_set() or not audio_queue.empty():
+                audio_chunk = audio_queue.get()
                 sd.play(audio_chunk, samplerate=16000, blocking=True)
                 sd.wait()
-                tts.audio_queue.task_done()
+                audio_queue.task_done()
 
     except KeyboardInterrupt:
         stop_event.set()
+        ap.stop_event.set()
         get_audio_thread.join()
         check_audio_thread.join()
         llm_thread.join()

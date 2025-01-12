@@ -47,7 +47,6 @@ if __name__ == "__main__":
     p = pyaudio.PyAudio()
     # sound_device_index = get_input_device(p, "Microphone (MONSTER AIRMARS N3)")
 
-    fileNum = 0
     audio_chunk_queue = queue.Queue(50)
     stop_event = threading.Event()
 

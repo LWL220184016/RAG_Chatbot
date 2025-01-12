@@ -17,12 +17,12 @@ if __name__ == "__main__":
     llm = get_LLM()
     processor, model, vocoder, speaker_embeddings = get_TTS()
     p = pyaudio.PyAudio()
+    asr_model, asr_processor, device, torch_dtype = get_asr_model()
     # sound_device_index = get_input_device(p, "Microphone (MONSTER AIRMARS N3)")
 
-    fileNum = 0
     audio_chunk_queue = queue.Queue(50)
-    prompt_queue = queue.Queue()
-    output_queue = queue.Queue()
+    user_input_queue = queue.Queue()
+    llm_output_queue = queue.Queue()
     audio_queue = queue.Queue()
     stop_event = threading.Event()
     speaking_event = threading.Event()
@@ -30,12 +30,11 @@ if __name__ == "__main__":
     try:
         stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
         get_audio_threading = threading.Thread(target=get_audio_chunk_sound_level, args=(stream, audio_chunk_queue, stop_event, CHUNK, SOUND_LEVEL))
-        llm_thread = threading.Thread(target=llm_output, args=(llm, prompt_queue, output_queue))
-        tts_thread = threading.Thread(target=tts_output, args=(processor, model, vocoder, speaker_embeddings, output_queue, audio_queue, speaking_event))
+        llm_thread = threading.Thread(target=llm_output, args=(llm, user_input_queue, llm_output_queue))
+        tts_thread = threading.Thread(target=tts_output, args=(processor, model, vocoder, speaker_embeddings, llm_output_queue, audio_queue, speaking_event))
         get_audio_threading.start()
         llm_thread.start()
         tts_thread.start()
-        asr_model, asr_processor, device, torch_dtype = get_asr_model()
 
         while True:
             print("\nRecording...")
@@ -55,7 +54,7 @@ if __name__ == "__main__":
             print("You: " + prompt)
 
             # prompt = input("You: ")
-            prompt_queue.put(prompt)
+            user_input_queue.put(prompt)
             speaking_event.set()  # Signal that LLM is speaking
             
             while speaking_event.is_set() or not audio_queue.empty():

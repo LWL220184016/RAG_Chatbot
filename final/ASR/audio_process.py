@@ -16,7 +16,8 @@ class Audio_Processer():
             rate = 16000,
             sec = 1,
             audio_unchecked_queue = queue.Queue(),
-            audio_checked_queue = queue.Queue()
+            audio_checked_queue = queue.Queue(),
+            stop_event = threading.Event()
         ):
         self.format = format
         self.channels = channels
@@ -27,7 +28,7 @@ class Audio_Processer():
         self.audio_checked_queue = audio_checked_queue
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
-        self.stop_event = threading.Event()
+        self.stop_event = stop_event
         self.mel_spectrogram = None
         
     def set_mel_spectrogram(self, rate=None, n_mels=80, n_fft=400, hop_length=160):
@@ -83,7 +84,7 @@ class Audio_Processer():
                 volume_norm = np.linalg.norm(audio_data) / self.chunk
                 
                 if volume_norm > sound_level_threshold:
-                    # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
+                    print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
                     # self.audio_checked_queue.put(bytes(frames))
                     self.audio_checked_queue.put(frame)
                     record_start_time = time.time()
@@ -96,7 +97,7 @@ class Audio_Processer():
                             continue
                         # frames = bytearray()
                         record_start_time = 0
-                        print(f'聲音強度: {volume_norm:.2f}')
+                        # print(f'聲音強度: {volume_norm:.2f}')
             except OSError as e:
                 print(f"OSError: {e}")
 

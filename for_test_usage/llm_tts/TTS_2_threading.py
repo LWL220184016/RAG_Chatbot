@@ -12,10 +12,10 @@ import time
 import threading
 import queue
 
-def tts_output(processor, model, vocoder, output_queue):
+def tts_output(processor, model, vocoder, llm_output_queue):
     Process_time = time.time()
-    for i in range(output_queue.qsize()):
-        text = output_queue.get()
+    for i in range(llm_output_queue.qsize()):
+        text = llm_output_queue.get()
         print("text: ", text)
         if text is None:
             break
@@ -25,7 +25,7 @@ def tts_output(processor, model, vocoder, output_queue):
         audio_queue.put(audio_chunk)
         print("Process_time: ", time.time()-Process_time)
         
-        output_queue.task_done()
+        llm_output_queue.task_done()
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -39,57 +39,57 @@ vocoder = SpeechT5HifiGan.from_pretrained("microsoft/speecht5_hifigan").to(devic
 embeddings_dataset = load_dataset("Matthijs/cmu-arctic-xvectors", split="validation") 
 speaker_embeddings = torch.tensor(embeddings_dataset[7306]["xvector"]).unsqueeze(0).to(device) 
 
-output_queue = queue.Queue()
+llm_output_queue = queue.Queue()
 audio_queue = queue.Queue()
 
 # Input text 
 text = "what is your name?" 
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is your quest?" 
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 1
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 2
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 3
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 4
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 5
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 6
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 7
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 8
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 9
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 1
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 2
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 3
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 4
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 5
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 6
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 7
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 8
-output_queue.put(text)
+llm_output_queue.put(text)
 text = "what is the airspeed velocity of an unladen swallow?" # 9
-output_queue.put(text)
+llm_output_queue.put(text)
 
 Total_time = time.time()
 
-process_tts = threading.Thread(target=tts_output, args=(processor, model, vocoder, output_queue))
+process_tts = threading.Thread(target=tts_output, args=(processor, model, vocoder, llm_output_queue))
 process_tts.start()
 
-for i in range(output_queue.qsize()):
+for i in range(llm_output_queue.qsize()):
     audio_chunk = audio_queue.get()
 
     # Time2 = time.time()

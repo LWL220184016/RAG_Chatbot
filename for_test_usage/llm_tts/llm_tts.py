@@ -13,8 +13,9 @@ def get_LLM():
     # Initialize langchain ollama with GGUF format model
     langchain_llm = OllamaLLM(
         # model="Qwen2-VL-7B-Instruct",
-        model="llama3.2-vision",
+        # model="llama3.2-vision",
         # model="llama3.3:70b-instruct-q2_K",
+        model="llama3.2-vision-latest-friend2",
         top_k=10,
         top_p=0.95,
         temperature=0.8,
@@ -32,24 +33,24 @@ def get_TTS():
     return processor, model, vocoder, speaker_embeddings
 
 
-def llm_output(llm, prompt_queue, output_queue):
+def llm_output(llm, user_input_queue, llm_output_queue):
     while True:
-        prompt = prompt_queue.get()
+        prompt = user_input_queue.get()
         text = ""
         for output in llm.invoke(prompt):
             if output not in ["，", ",", "。", ".", "？", "?", "！", "!"]:
                 text += output
             else:
-                output_queue.put(text)
+                llm_output_queue.put(text)
                 text = ""
-        prompt_queue.task_done()
+        user_input_queue.task_done()
 
-def tts_output(processor, model, vocoder, speaker_embeddings, output_queue, audio_queue, speaking_event):
+def tts_output(processor, model, vocoder, speaker_embeddings, llm_output_queue, audio_queue, speaking_event):
     while True:
-        if output_queue.empty():
+        if llm_output_queue.empty():
             speaking_event.clear()  # Signal that LLM has finished speaking
 
-        text = output_queue.get()
+        text = llm_output_queue.get()
         while audio_queue.qsize() >= 5:
             pass
         print("LLM: ", text)
@@ -58,7 +59,7 @@ def tts_output(processor, model, vocoder, speaker_embeddings, output_queue, audi
         audio_chunk = audio_chunk.cpu().numpy()
         audio_queue.put(audio_chunk)
         speaking_event.set()  # Signal that LLM is speaking
-        output_queue.task_done()
+        llm_output_queue.task_done()
 
 
 
@@ -74,13 +75,13 @@ if __name__ == "__main__":
 
     llm = get_LLM()
 
-    prompt_queue = queue.Queue()
-    output_queue = queue.Queue()
+    user_input_queue = queue.Queue()
+    llm_output_queue = queue.Queue()
     audio_queue = queue.Queue()
     speaking_event = threading.Event()
 
-    llm_thread = threading.Thread(target=llm_output, args=(llm, prompt_queue, output_queue))
-    tts_thread = threading.Thread(target=tts_output, args=(processor, model, vocoder, speaker_embeddings, output_queue, audio_queue, speaking_event))
+    llm_thread = threading.Thread(target=llm_output, args=(llm, user_input_queue, llm_output_queue))
+    tts_thread = threading.Thread(target=tts_output, args=(processor, model, vocoder, speaker_embeddings, llm_output_queue, audio_queue, speaking_event))
 
     llm_thread.start()
     tts_thread.start()
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     try:
         while True:
             prompt = input("You: ")
-            prompt_queue.put(prompt)
+            user_input_queue.put(prompt)
             speaking_event.set()  # Signal that LLM is speaking
             
             # while not audio_queue.empty():
@@ -103,8 +104,8 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     finally:
-        prompt_queue.put(None)
-        output_queue.put(None)
+        user_input_queue.put(None)
+        llm_output_queue.put(None)
         llm_thread.join()
         tts_thread.join()
 
