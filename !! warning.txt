@@ -1,0 +1,16 @@
+if not able to load the Nvidia model, check the line 858 to 865 of the following file
+C:\Users\02010521\Desktop\RAG_chatbot\.venv\Lib\site-packages\nemo\core\classes\common.py
+
+
+if you want to run the model offline, you should 
+comment the following code and set "nemo_file_exists" to True.
+
+if you want to download or update new model, you should 
+uncomment the following code and comment "nemo_file_exists = True"
+
+
+        # First check if .nemo file exists in HF
+        api = HfApi(token=hf_token)
+
+        # Check if model exists in HF
+        nemo_file_exists = api.file_exists(repo_id=model_name, filename=resolved_model_filename, repo_type="model")
