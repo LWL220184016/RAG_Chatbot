@@ -4,10 +4,10 @@ import time
 class Message():
     def __init__(self, user_role):
         self.user_role = user_role
-        self.content
-        self.mood
-        self.emoji
-        self.time
+        self.content = None
+        self.mood = None
+        self.emoji = None
+        self.time = None
 
     def update_content(self, content, mood=None, emoji=None):
         self.content = content

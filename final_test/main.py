@@ -16,7 +16,7 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
 SEC = 1
-
+對話玩第一次后在説話就會卡死，感覺可能是在更新faiss的時候出的問題
 if __name__ == "__main__":
     stop_event = threading.Event()
     is_user_talking = threading.Event()
@@ -26,17 +26,18 @@ if __name__ == "__main__":
     asr_model = WhisperModel("large-v3", device="cuda", compute_type="float16")
     llm = LLM(is_user_talking=is_user_talking)
     tts = TTS()
-    rag = RAG(llm)
+    rag = RAG()
     # sound_device_index = get_input_device(p, "Microphone (MONSTER AIRMARS N3)")
 
-    user_message = Message("best friend")
+    user_message = Message("best friend1")
+    llm_message = Message("best friend2")
 
     asr_output_queue = queue.Queue()
 
     try:
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
         check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,))
-        llm_thread = threading.Thread(target=llm.llm_output, args=(asr_output_queue, user_message))
+        llm_thread = threading.Thread(target=llm.llm_output, args=(asr_output_queue, user_message, llm_message, rag))
         tts_thread = threading.Thread(target=tts.tts_output, args=(llm.llm_output_queue, speaking_event))
         get_audio_thread.start()
         check_audio_thread.start()
@@ -53,7 +54,7 @@ if __name__ == "__main__":
             segments, info = asr_model.transcribe(processed_data, beam_size=5)
             print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
             prompt = ""
-            if info.language_probability > 0.5 and (info.language is 'en' or info.language is 'zh'):
+            if info.language_probability > 0.5 and (info.language == 'en' or info.language == 'zh'):
                 for segment in segments:
                     print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
                     prompt = segment.text

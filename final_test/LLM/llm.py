@@ -1,7 +1,7 @@
 from langchain_ollama import OllamaLLM
 import queue
 import threading
-from prompt_template import Message
+from LLM.prompt_template import Message
 
 class LLM():
     def __init__(
@@ -22,16 +22,23 @@ class LLM():
         self.llm_output_queue = queue.Queue()
         self.is_user_talking = is_user_talking
 
-    def llm_output(self, user_input_queue, user_message: Message = None, rag=None):
+    def llm_output(self, user_input_queue, user_message: Message = None, llm_message: Message = None, rag=None):
         while True:
-            user_message.update_content(content=user_input_queue.get())
-            text = ""
-            for output in self.model.invoke(user_message):
+            user_input = user_input_queue.get()
+            memory = rag.search(llm=self.model, query=user_input)
+
+            msg = user_message.update_content(content=user_input + "; " + memory)
+            text_parts = []
+            llm_output = ""
+            for output in self.model.invoke(msg):
                 if output not in ["，", ",", "。", ".", "？", "?", "！", "!"]:
-                    text += output
+                    text_parts.append(output)
                 else:
+                    text = ''.join(text_parts)
                     self.llm_output_queue.put(text)
-                    text = ""
+                    llm_output += text
+                    text_parts = []
             
+            llm_message.update_content(content=user_input_queue.get())
             rag.update_chat_history(user_message, llm_message)
             user_input_queue.task_done()
