@@ -1,0 +1,37 @@
+from langchain_ollama import OllamaLLM
+import queue
+import threading
+from prompt_template import Message
+
+class LLM():
+    def __init__(
+            self, 
+            model_name: str = "llama3.2-vision-latest-friend2", 
+            top_k: int = 10, 
+            top_p: float = 0.95, 
+            temperature: float = 0.8, 
+            is_user_talking: threading.Event = None,
+        ):
+
+        self.model = OllamaLLM(
+            model=model_name,
+            top_k=top_k,
+            top_p=top_p,
+            temperature=temperature,
+        )
+        self.llm_output_queue = queue.Queue()
+        self.is_user_talking = is_user_talking
+
+    def llm_output(self, user_input_queue, user_message: Message = None, rag=None):
+        while True:
+            user_message.update_content(content=user_input_queue.get())
+            text = ""
+            for output in self.model.invoke(user_message):
+                if output not in ["，", ",", "。", ".", "？", "?", "！", "!"]:
+                    text += output
+                else:
+                    self.llm_output_queue.put(text)
+                    text = ""
+            
+            rag.update_chat_history(user_message, llm_message)
+            user_input_queue.task_done()
