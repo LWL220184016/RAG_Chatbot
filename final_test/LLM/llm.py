@@ -11,6 +11,8 @@ class LLM():
             top_p: float = 0.95, 
             temperature: float = 0.8, 
             is_user_talking: threading.Event = None,
+            stop_event: threading.Event = None,
+            speaking_event: threading.Event = None
         ):
 
         self.model = OllamaLLM(
@@ -21,15 +23,25 @@ class LLM():
         )
         self.llm_output_queue = queue.Queue()
         self.is_user_talking = is_user_talking
+        self.stop_event = stop_event
+        self.speaking_event = speaking_event
 
-    def llm_output(self, user_input_queue, user_message: Message = None, llm_message: Message = None, rag=None):
-        while True:
+    def llm_output(
+        self, 
+        user_input_queue, 
+        user_message: Message = None, 
+        llm_message: Message = None, 
+        rag=None
+    ):
+        
+        while not self.stop_event.is_set():
             user_input = user_input_queue.get()
             memory = rag.search(llm=self.model, query=user_input)
 
             msg = user_message.update_content(content=user_input + "; " + memory)
             text_parts = []
             llm_output = ""
+            self.speaking_event.set()
             for output in self.model.invoke(msg):
                 if output not in ["，", ",", "。", ".", "？", "?", "！", "!"]:
                     text_parts.append(output)
