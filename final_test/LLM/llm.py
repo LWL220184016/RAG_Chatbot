@@ -15,12 +15,17 @@ class LLM():
             speaking_event: threading.Event = None
         ):
 
-        self.model = OllamaLLM(
-            model=model_name,
-            top_k=top_k,
-            top_p=top_p,
-            temperature=temperature,
-        )
+        try:
+            self.model = OllamaLLM(
+                model=model_name,
+                top_k=top_k,
+                top_p=top_p,
+                temperature=temperature,
+            )
+            print(f"Model {model_name} loaded successfully.")
+        except Exception as e:
+            print(f"Failed to load model {model_name}: {e}")
+
         self.llm_output_queue = queue.Queue()
         self.is_user_talking = is_user_talking
         self.stop_event = stop_event
@@ -35,14 +40,21 @@ class LLM():
     ):
         
         while not self.stop_event.is_set():
+            print("1")
             user_input = user_input_queue.get()
+            print("2")
+
             memory = rag.search(llm=self.model, query=user_input)
+            print("3")
 
             msg = user_message.update_content(content=user_input + "; " + memory)
+            print("4")
             text_parts = []
             llm_output = ""
             self.speaking_event.set()
             for output in self.model.invoke(msg):
+                print("5")
+
                 if output not in ["，", ",", "。", ".", "？", "?", "！", "!"]:
                     text_parts.append(output)
                 else:
@@ -51,6 +63,7 @@ class LLM():
                     llm_output += text
                     text_parts = []
             
-            llm_message.update_content(content=user_input_queue.get())
+            llm_message.update_content(content=llm_output)
             rag.update_chat_history(user_message, llm_message)
             user_input_queue.task_done()
+            print("6")

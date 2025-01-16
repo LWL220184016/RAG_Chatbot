@@ -24,8 +24,8 @@ if __name__ == "__main__":
     speaking_event = threading.Event()
 
     ap = Audio_Processer(chunk=CHUNK, stop_event=stop_event)
-    asr = ASR(stop_event=stop_event)
-    llm = LLM(is_user_talking=is_user_talking, stop_event=stop_event)
+    asr = ASR(stop_event=stop_event, ap=ap)
+    llm = LLM(is_user_talking=is_user_talking, stop_event=stop_event, speaking_event=speaking_event)
     tts = TTS(stop_event=stop_event)
     rag = RAG()
     # sound_device_index = get_input_device(p, "Microphone (MONSTER AIRMARS N3)")
@@ -33,13 +33,13 @@ if __name__ == "__main__":
     user_message = Message("best friend1")
     llm_message = Message("best friend2")
 
-    asr_output_queue = queue.Queue()
+    # asr_output_queue = queue.Queue()
 
     try:
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
         check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,))
         asr_thread = threading.Thread(target=asr.asr_output, args=())
-        llm_thread = threading.Thread(target=llm.llm_output, args=(asr_output_queue, user_message, llm_message, rag))
+        llm_thread = threading.Thread(target=llm.llm_output, args=(asr.asr_output_queue, user_message, llm_message, rag))
         tts_thread = threading.Thread(target=tts.tts_output, args=(llm.llm_output_queue, speaking_event))
         get_audio_thread.start()
         check_audio_thread.start()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
                 sd.wait()
                 tts.audio_queue.task_done()
             
-            print("\nRecording...")
+            # print("\nRecording...")
 
 
     except KeyboardInterrupt:
