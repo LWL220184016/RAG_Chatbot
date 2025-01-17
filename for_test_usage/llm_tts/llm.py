@@ -1,6 +1,8 @@
 from langchain_ollama import OllamaLLM
+from langchain_huggingface import HuggingFaceEndpoint
 import base64
 import json
+
 
 def get_LLM():
     # Initialize langchain ollama with GGUF format model
@@ -15,6 +17,20 @@ def get_LLM():
     )
     
     return langchain_llm
+
+def get_transformers_LLM(model_name):
+    # model_name = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+    # processor = AutoProcessor.from_pretrained(model_name)
+    from langchain_huggingface import HuggingFacePipeline
+    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name)
+    pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, max_new_tokens=100)
+
+    model = HuggingFacePipeline(pipeline=pipe)
+    
+    return model
 
 class Message:
     def __init__(self, role, content, mood=None, emoji=None):

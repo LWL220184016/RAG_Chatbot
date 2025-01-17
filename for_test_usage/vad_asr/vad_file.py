@@ -3,8 +3,6 @@ import torch
 import numpy as np
 from silero_vad import get_speech_timestamps, read_audio, VADIterator
 # from vad.vad import VADIterator
-import time
-import sys
 
 CHUNK = 512
 CHANNELS = 2

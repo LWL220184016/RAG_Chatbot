@@ -2,6 +2,7 @@ import torch
 from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
 from datasets import load_dataset
 import queue
+import threading
 
 class TTS():
     def __init__(
@@ -12,16 +13,19 @@ class TTS():
             embeddings_dataset: str = "Matthijs/cmu-arctic-xvectors",
             embeddings_split: str = "validation",
             speaker_embeddings: str = None,
+            stop_event: threading.Event = None
         ):
+
         self.processor = SpeechT5Processor.from_pretrained(processor) 
         self.model = SpeechT5ForTextToSpeech.from_pretrained(model) 
         self.vocoder = SpeechT5HifiGan.from_pretrained(vocoder)
         self.embeddings_dataset = load_dataset(embeddings_dataset, split=embeddings_split) 
         self.speaker_embeddings = torch.tensor(self.embeddings_dataset[7306]["xvector"]).unsqueeze(0) 
         self.audio_queue = queue.Queue()
+        self.stop_event = stop_event
 
     def tts_output(self, llm_output_queue: queue.Queue, speaking_event):
-        while True:
+        while not self.stop_event.is_set():
             if llm_output_queue.empty():
                 speaking_event.clear()  # Signal that LLM has finished speaking
 
