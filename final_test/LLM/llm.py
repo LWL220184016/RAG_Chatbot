@@ -15,17 +15,12 @@ class LLM:
             speaking_event: threading.Event = threading.Event()
         ):
 
-        try:
-            self.model = OllamaLLM(
-                model=model_name,
-                top_k=top_k,
-                top_p=top_p,
-                temperature=temperature,
-            )
-            print(f"Model {model_name} loaded successfully.")
-        except Exception as e:
-            print(f"Failed to load model {model_name}: {e}")
-
+        self.model = OllamaLLM(
+            model=model_name,
+            top_k=top_k,
+            top_p=top_p,
+            temperature=temperature,
+        )
         self.llm_output_queue = queue.Queue()
         self.is_user_talking = is_user_talking 
         self.stop_event = stop_event
@@ -43,7 +38,6 @@ class LLM:
         
         prev_msg = ""
         while not self.stop_event.is_set():
-<<<<<<< HEAD
             try:
                 user_input = ""
                 if not self.is_user_talking.is_set():
@@ -51,25 +45,6 @@ class LLM:
                         user_input = user_input_queue.get(timeout=1)  # Wait for 1 second
                     except queue.Empty:
                         pass
-=======
-            print("1")
-            user_input = user_input_queue.get()
-            print("2")
-
-            memory = rag.search(llm=self.model, query=user_input)
-            print("3")
-
-            msg = user_message.update_content(content=user_input + "; " + memory)
-            print("4")
-            text_parts = []
-            llm_output = ""
-            self.speaking_event.set()
-            for output in self.model.invoke(msg):
-                print("5")
-
-                if output not in ["，", ",", "。", ".", "？", "?", "！", "!"]:
-                    text_parts.append(output)
->>>>>>> origin/main
                 else:
                     continue  # Skip if the user is talking
 
@@ -101,7 +76,6 @@ class LLM:
                 llm_message.update_content(content=user_input)
                 rag.update_chat_history(user_message, llm_message)
             
-<<<<<<< HEAD
             except Exception as e:
                 print(f"An error occurred: {e}")
             finally:
@@ -171,9 +145,5 @@ class LLM:
 #             llm_message.update_content(content=user_input_queue.get())
 #             rag.update_chat_history(user_message, llm_message)
 #             user_input_queue.task_done()
-=======
-            llm_message.update_content(content=llm_output)
-            rag.update_chat_history(user_message, llm_message)
-            user_input_queue.task_done()
-            print("6")
->>>>>>> origin/main
+
+
