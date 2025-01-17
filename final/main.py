@@ -1,11 +1,10 @@
 import pyaudio
 import threading
-import queue
 import sounddevice as sd
 
-from faster_whisper import WhisperModel
 from ASR.audio_process import Audio_Processer
-from ASR.asr import ASR
+# from ASR.asr import ASR
+from ASR.model_classes.NeMo import NeMo_ASR as ASR
 from LLM.llm import LLM
 from LLM.prompt_template import Message
 from TTS.tts import TTS
@@ -17,13 +16,21 @@ def main():
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
-    SEC = 1
-# 對話玩第一次后在説話就會卡死，感覺可能是在更新faiss的時候出的問題
+    TIMEOUT_SEC = 0.1
+
     stop_event = threading.Event()
     is_user_talking = threading.Event()
     speaking_event = threading.Event()
 
-    ap = Audio_Processer(chunk=CHUNK, is_user_talking=is_user_talking, stop_event=stop_event)
+    ap = Audio_Processer(
+        chunk=CHUNK, 
+        format=FORMAT, 
+        channels=CHANNELS, 
+        rate=RATE, 
+        is_user_talking=is_user_talking, 
+        stop_event=stop_event
+    )
+    
     asr = ASR(stop_event=stop_event, ap=ap)
     llm = LLM(is_user_talking=is_user_talking, stop_event=stop_event, speaking_event=speaking_event)
     tts = TTS(stop_event=stop_event)
@@ -37,7 +44,7 @@ def main():
 
     try:
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
-        check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,))
+        check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,TIMEOUT_SEC))
         asr_thread = threading.Thread(target=asr.asr_output, args=())
         llm_thread = threading.Thread(target=llm.llm_output, args=(asr.asr_output_queue, user_message, llm_message, rag))
         tts_thread = threading.Thread(target=tts.tts_output, args=(llm.llm_output_queue, speaking_event))

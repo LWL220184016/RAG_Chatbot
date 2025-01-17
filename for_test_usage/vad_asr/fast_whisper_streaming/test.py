@@ -7,15 +7,18 @@ from faster_whisper import WhisperModel
 from final.ASR.audio_process import Audio_Processer
 import threading
 import queue
+import time
 
 if __name__ == "__main__":
     CHUNK = 2048
     SOUND_LEVEL = 20
     model_size = "large-v3"
+    stop_event = threading.Event()
+    is_user_talking = threading.Event()
     # model = WhisperModel(model_size, device="cuda", compute_type="float16")
     model = WhisperModel(model_size)
 
-    ap = Audio_Processer(chunk=CHUNK)
+    ap = Audio_Processer(chunk=CHUNK, stop_event=stop_event, is_user_talking=is_user_talking)
 
     get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
     check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,))
@@ -30,11 +33,14 @@ if __name__ == "__main__":
             except queue.Empty:
                 continue
             processed_data = ap.process_audio2(audio_data=audio_data)
+
+            Time = time.time()
             segments, info = model.transcribe(
                 processed_data, 
                 beam_size=5, 
                 language_detection_threshold=0.7
             )
+            print("time: " + str(Time-time.time()))
             print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
             
             # if info.language_probability > 0.5:

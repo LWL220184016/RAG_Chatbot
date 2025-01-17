@@ -20,6 +20,7 @@ class Audio_Processer():
             is_user_talking: threading.Event = None,
             stop_event: threading.Event = None
         ):
+        
         self.format = format
         self.channels = channels
         self.rate = rate
