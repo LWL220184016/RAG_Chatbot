@@ -17,7 +17,8 @@ class Audio_Processer():
             sec = 1,
             audio_unchecked_queue = queue.Queue(),
             audio_checked_queue = queue.Queue(),
-            stop_event = threading.Event()
+            is_user_talking: threading.Event = None,
+            stop_event: threading.Event = None
         ):
         self.format = format
         self.channels = channels
@@ -28,6 +29,7 @@ class Audio_Processer():
         self.audio_checked_queue = audio_checked_queue
         self.p = pyaudio.PyAudio()
         self.stream = self.p.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
+        self.is_user_talking = is_user_talking
         self.stop_event = stop_event
         self.mel_spectrogram = None
         
@@ -57,6 +59,7 @@ class Audio_Processer():
                 volume_norm = np.linalg.norm(audio_data) / self.chunk
                 
                 if volume_norm > sound_level_threshold:
+                    self.is_user_talking.set()
                     # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
                     frames.extend(frame)
                     record_start_time = time.time()
@@ -69,6 +72,7 @@ class Audio_Processer():
                         self.audio_checked_queue.put(bytes(frames))
                         frames = bytearray()
                         record_start_time = 0
+                        self.is_user_talking.clear()
                         print(f'聲音強度: {volume_norm:.2f}')
             except OSError as e:
                 print(f"OSError: {e}")

@@ -11,19 +11,19 @@ from LLM.prompt_template import Message
 from TTS.tts import TTS
 from RAG.rag import RAG
 
-SOUND_LEVEL = 5
-CHUNK = 2048
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 16000
-SEC = 1
+def main():
+    SOUND_LEVEL = 5
+    CHUNK = 2048
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
+    SEC = 1
 # 對話玩第一次后在説話就會卡死，感覺可能是在更新faiss的時候出的問題
-if __name__ == "__main__":
     stop_event = threading.Event()
     is_user_talking = threading.Event()
     speaking_event = threading.Event()
 
-    ap = Audio_Processer(chunk=CHUNK, stop_event=stop_event)
+    ap = Audio_Processer(chunk=CHUNK, is_user_talking=is_user_talking, stop_event=stop_event)
     asr = ASR(stop_event=stop_event)
     llm = LLM(is_user_talking=is_user_talking, stop_event=stop_event)
     tts = TTS(stop_event=stop_event)
@@ -89,3 +89,6 @@ if __name__ == "__main__":
         ap.stream.close()
         ap.p.terminate()
         print("User stopped the program")
+
+if __name__ == "__main__":
+    main()

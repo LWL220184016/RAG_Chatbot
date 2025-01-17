@@ -13,8 +13,9 @@ class TTS():
             embeddings_dataset: str = "Matthijs/cmu-arctic-xvectors",
             embeddings_split: str = "validation",
             speaker_embeddings: str = None,
-            stop_event = threading.Event()
+            stop_event: threading.Event = None
         ):
+
         self.processor = SpeechT5Processor.from_pretrained(processor) 
         self.model = SpeechT5ForTextToSpeech.from_pretrained(model) 
         self.vocoder = SpeechT5HifiGan.from_pretrained(vocoder)

@@ -6,8 +6,10 @@ from PIL import Image
 # Load model directly
 from transformers import AutoProcessor, AutoModelForImageTextToText
 
-processor = AutoProcessor.from_pretrained("meta-llama/Llama-3.2-11B-Vision-Instruct")
-model = AutoModelForImageTextToText.from_pretrained("meta-llama/Llama-3.2-11B-Vision-Instruct").to('cuda')
+# model_name = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+model_name = "meta-llama/Llama-3.2-11B-Vision-Instruct"
+processor = AutoProcessor.from_pretrained(model_name)
+model = AutoModelForImageTextToText.from_pretrained(model_name).to('cuda')
 
 # Create a pipeline for image-text-to-text generation
 imageTextToText = pipeline("image-text-to-text", model=model, processor=processor, device=0)

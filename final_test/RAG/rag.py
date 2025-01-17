@@ -4,7 +4,11 @@ from langchain.chains import RetrievalQA
 from langchain.schema import Document
 
 class RAG:
-    def __init__(self, embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"):
+    def __init__(
+            self, 
+            embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+        ):
+        
         self.embedding_model = HuggingFaceEmbeddings(model_name=embedding_model)
         self.current_chat = None
         try:

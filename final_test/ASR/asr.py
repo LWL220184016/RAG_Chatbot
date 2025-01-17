@@ -5,13 +5,13 @@ import threading
 
 class ASR():
     def __init__(
-        self, 
-        model: str="large-v3", 
-        device="cuda", 
-        compute_type="float16", 
-        ap: Audio_Processer=None,
-        stop_event = threading.Event()
-    ):
+            self, 
+            model: str="large-v3", 
+            device="cuda", 
+            compute_type="float16", 
+            ap: Audio_Processer=None,
+            stop_event: threading.Event = None
+        ):
     
         self.model = WhisperModel(model, device=device, compute_type=compute_type)
         self.device = device
