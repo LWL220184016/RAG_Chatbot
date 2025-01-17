@@ -1,5 +1,5 @@
 from faster_whisper import WhisperModel
-from audio_process import Audio_Processer
+from ASR.audio_process import Audio_Processer
 import queue
 import threading
 
@@ -21,7 +21,10 @@ class ASR():
 
     def asr_output(self):
         while not self.stop_event.is_set():
-            audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
+            try:
+                audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
+            except queue.Empty:
+                continue
             processed_data = self.ap.process_audio2(audio_data=audio_data)
             segments, info = self.model.transcribe(processed_data, beam_size=5)
             print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
