@@ -60,6 +60,7 @@ class Audio_Processer():
                 volume_norm = np.linalg.norm(audio_data) / self.chunk
                 
                 if volume_norm > sound_level_threshold:
+                    print("\nRecording...")
                     self.is_user_talking.set()
                     # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
                     frames.extend(frame)
@@ -74,7 +75,7 @@ class Audio_Processer():
                         frames = bytearray()
                         record_start_time = 0
                         self.is_user_talking.clear()
-                        print(f'聲音強度: {volume_norm:.2f}')
+                        # print(f'聲音強度: {volume_norm:.2f}')
             except OSError as e:
                 print(f"OSError: {e}")
 

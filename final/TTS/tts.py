@@ -2,7 +2,7 @@ import torch
 from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
 from datasets import load_dataset
 import queue
-import threading
+import multiprocessing
 
 class TTS():
     def __init__(
@@ -13,7 +13,8 @@ class TTS():
             embeddings_dataset: str = "Matthijs/cmu-arctic-xvectors",
             embeddings_split: str = "validation",
             speaker_embeddings: str = None,
-            stop_event: threading.Event = None
+            stop_event = None,
+            audio_queue: multiprocessing.Queue = None,
         ):
 
         self.processor = SpeechT5Processor.from_pretrained(processor) 
@@ -21,7 +22,7 @@ class TTS():
         self.vocoder = SpeechT5HifiGan.from_pretrained(vocoder)
         self.embeddings_dataset = load_dataset(embeddings_dataset, split=embeddings_split) 
         self.speaker_embeddings = torch.tensor(self.embeddings_dataset[7306]["xvector"]).unsqueeze(0) 
-        self.audio_queue = queue.Queue()
+        self.audio_queue = audio_queue
         self.stop_event = stop_event
 
     def tts_output(self, llm_output_queue: queue.Queue, speaking_event):
@@ -32,10 +33,9 @@ class TTS():
             text = llm_output_queue.get()
             while self.audio_queue.qsize() >= 5:
                 pass
-            print("LLM: ", text)
             inputs = self.processor(text=text, return_tensors="pt") 
             audio_chunk = self.model.generate_speech(inputs["input_ids"], self.speaker_embeddings, vocoder=self.vocoder)
             audio_chunk = audio_chunk.cpu().numpy()
             self.audio_queue.put(audio_chunk)
+            print("LLM: ", text)
             speaking_event.set()  # Signal that LLM is speaking
-            llm_output_queue.task_done()

@@ -16,17 +16,18 @@ class RAG:
         except ValueError:
             self.faiss_index = None
 
-    def update_knowledge_base(self, documents):
-        documents = [Document(page_content=doc["text"], metadata=doc["metadata"]) for doc in documents]
+    def update_knowledge_base(self):
+        documents = [Document(page_content=doc["text"], metadata=doc["metadata"]) for doc in self.current_chat]
         document_texts = [doc.page_content for doc in documents]
         # document_embeddings = embedding_model.embed_documents(document_texts) # may need this
-
+        # print("documents: ", documents)
         if self.faiss_index is None: # If no index exists, create one
             self.faiss_index = FAISS.from_documents(documents, self.embedding_model)
 
         else: # Add new documents to the existing index
             self.faiss_index.add_documents(documents)
 
+        print("Saving faiss index")
         self.faiss_index.save_local("faiss_index")
 
     def search(self, llm, query):
@@ -43,6 +44,6 @@ class RAG:
     def update_chat_history(self, user_message, llm_message):
         self.current_chat = [
             {"text": user_message.content, "metadata": {"timestamp": user_message.time, "sender": user_message.user_role}},
-            {"text": llm_message.content, "metadata": {"timestamp": llm_message.time, "sender": llm_message.time}}
+            {"text": llm_message.content, "metadata": {"timestamp": llm_message.time, "sender": llm_message.user_role}}
         ]
         return 

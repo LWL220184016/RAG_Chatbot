@@ -34,8 +34,8 @@ if __name__ == "__main__":
     get_audio_thread.start()
     check_audio_thread.start()
 
+    print("Recording...")
     while not ap.stop_event.is_set():
-        print("Recording...")
         try:
             try:
                 audio_data = ap.audio_checked_queue.get(timeout=0.1)

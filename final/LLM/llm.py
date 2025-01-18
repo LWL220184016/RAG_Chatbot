@@ -1,6 +1,7 @@
-from langchain_ollama import OllamaLLM
 import queue
-import threading
+import multiprocessing
+import time
+from langchain_ollama import OllamaLLM
 from LLM.prompt_template import Message
 
 class LLM:
@@ -10,9 +11,10 @@ class LLM:
             top_k: int = 10,
             top_p: float = 0.95,
             temperature: float = 0.8,
-            is_user_talking: threading.Event = None,
-            stop_event: threading.Event = threading.Event(),
-            speaking_event: threading.Event = threading.Event()
+            is_user_talking = None,
+            stop_event = None,
+            speaking_event = None,
+            llm_output_queue: multiprocessing.Queue = None,
         ):
 
         self.model = OllamaLLM(
@@ -21,7 +23,7 @@ class LLM:
             top_p=top_p,
             temperature=temperature,
         )
-        self.llm_output_queue = queue.Queue()
+        self.llm_output_queue = llm_output_queue
         self.is_user_talking = is_user_talking 
         self.stop_event = stop_event
         self.speaking_event = speaking_event
@@ -30,41 +32,47 @@ class LLM:
 
     def llm_output(
             self,
-            user_input_queue: queue.Queue,
+            user_input_queue: queue.Queue = None,
             user_message: Message = None,
             llm_message: Message = None,
             rag=None
         ):
-        
-        prev_msg = ""
+
+        user_input = ""
+        user_last_talk_time = time.time()
         while not self.stop_event.is_set():
-            try:
-                user_input = ""
+            # try:
                 if not self.is_user_talking.is_set():
+                    if time.time() - user_last_talk_time > 5:
+                        user_input = ""
                     try:
-                        user_input = user_input_queue.get(timeout=1)  # Wait for 1 second
+                        user_input += user_input_queue.get(timeout=0.1) + " "
                     except queue.Empty:
-                        pass
-                else:
+                        continue
+                    if not user_input_queue.empty():
+                        user_input += user_input_queue.get() + " "
+                else: # user is talking
+                    user_last_talk_time = time.time()
                     continue  # Skip if the user is talking
 
-                self.is_user_talking.clear()
-                user_input = prev_msg + " " + user_input
-                print("user_input: " + user_input)
+
+                user_input = user_input
+                print("user_input: " + user_input + "  -----------------------------------------------------user_input")
                 
                 # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
                 memory = rag.search(llm=self.model, query=user_input)
                 
                 # Assuming 'update_content' method exists for Message class
                 msg = user_message.update_content(content=user_input, memory=memory)
-                prev_msg = ""
 
                 self.speaking_event.set()
                 llm_output = ""
                 llm_output_total = ""
-                for output in self.model.invoke(msg):
-                    if self.is_user_talking.is_set():
-                        prev_msg = msg  # Corrected to directly assign msg to prev_msg
+                for output in self.model.stream(msg):
+                    print("output: " + output)
+                    if self.is_user_talking.is_set() or not user_input_queue.empty():
+                        if not self.llm_output_queue.empty():
+                            empty_queue = self.llm_output_queue.get(block=False)
                         break
                     
                     # Directly append to llm_output, reducing queue operations
@@ -77,11 +85,10 @@ class LLM:
                 # Assuming 'update_content' method exists for Message class
                 llm_message.update_content(content=llm_output_total)
                 rag.update_chat_history(user_message, llm_message)
+                rag.update_knowledge_base()
                 llm_output_total = ""
-                user_input_queue.task_done()
+                # user_input = ""
+                
             
-            except Exception as e:
-                print(f"An error occurred: {e}")
-            finally:
-                user_input_queue.task_done()
-
+            # except Exception as e:
+            #     print(f"An error occurred: {e}")
