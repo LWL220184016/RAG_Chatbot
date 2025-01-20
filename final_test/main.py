@@ -89,7 +89,7 @@ def main():
     llm_output_queue = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
 
-    rag = GraphRAG()
+    rag = Graph_RAG()
     user_message = Message("best friend1")
     llm_message = Message("best friend2")
 

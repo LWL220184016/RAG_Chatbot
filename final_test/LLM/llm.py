@@ -81,7 +81,7 @@ class LLM:
 
                 # Assuming 'update_content' method exists for Message class
                 llm_message.update_content(content=llm_output_total)
-                rag.update_chat_history(user_message, llm_message)
-                rag.update_knowledge_base()
+                rag.update_chat_history(user_message, llm_message)////
+                rag.add_dialogue_record()
                 llm_output_total = ""
                 # user_input = ""
