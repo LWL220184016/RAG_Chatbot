@@ -34,14 +34,25 @@ class Neo4J():
             #     today=today, content=content, timestamp=timestamp, speaker=speaker
             # )
     
-    def add_dialogue_record(self, today, dialogue_text, timestamp, speaker):
+    def add_dialogue_record(self, user_message, llm_message):
+        today = datetime.today().strftime('%Y-%m-%d')
+
         with self.driver.session() as session:
             session.run(
                 "MERGE (d:Dialogue {text: $dialogue_text, timestamp: $timestamp, speaker: $speaker}) "
                 "MATCH (c:Chat {date: $today}) "
                 "MERGE (c)-[:SPEAKS]->(d)",
                 today=today,
-                dialogue_text=dialogue_text,
-                timestamp=timestamp,
-                speaker=speaker,
+                dialogue_text=user_message.content,
+                timestamp=user_message.time,
+                speaker=user_message.user_role,
+            )
+            session.run(
+                "MERGE (d:Dialogue {text: $dialogue_text, timestamp: $timestamp, speaker: $speaker}) "
+                "MATCH (c:Chat {date: $today}) "
+                "MERGE (c)-[:SPEAKS]->(d)",
+                today=today,
+                dialogue_text=llm_message.content,
+                timestamp=llm_message.time,
+                speaker=llm_message.user_role,
             )

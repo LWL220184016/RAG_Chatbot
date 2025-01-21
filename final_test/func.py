@@ -1,7 +1,5 @@
 import pyaudio
 import threading
-import sounddevice as sd
-import multiprocessing
 from ASR.audio_process import Audio_Processer
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import NeMo_ASR as ASR
@@ -10,7 +8,6 @@ from LLM.prompt_template import Message
 from TTS.tts import TTS
 from RAG.graph_rag import Graph_RAG
 import torch
-import time
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -60,6 +57,41 @@ def asr_process_func(stop_event, asr_output_queue, is_user_talking):
         ap.stream.close()
         ap.p.terminate()
 
+def asr_process_func_ws(stop_event, asr_output_queue, is_user_talking):
+    try:
+        ap = Audio_Processer(
+            chunk=CHUNK, 
+            format=FORMAT, 
+            channels=CHANNELS, 
+            rate=RATE, 
+            is_user_talking=is_user_talking, 
+            stop_event=stop_event
+        )
+        check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
+        check_audio_thread.start()
+        asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
+        print("asr_process_func asring")
+        asr.asr_output()
+        print("asr_process_func end")
+
+    except KeyboardInterrupt:
+        print("asr_process_func KeyboardInterrupt\n")
+        check_audio_thread.join()
+        check_audio_thread.close()
+        ap.stream.stop_stream()
+        ap.stream.close()
+        ap.p.terminate()
+        torch.cuda.ipc_collect()
+
+    finally:
+        print("asr_process_func finally\n")
+        check_audio_thread.join()
+        check_audio_thread.close()
+        torch.cuda.ipc_collect()
+        ap.stream.stop_stream()
+        ap.stream.close()
+        ap.p.terminate()
+
 def llm_process_func(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, user_message, llm_message, rag):
     try:
         llm = LLM(is_user_talking=is_user_talking, stop_event=stop_event, speaking_event=speaking_event, llm_output_queue=llm_output_queue)
@@ -83,53 +115,3 @@ def tts_process_func(stop_event, llm_output_queue, speaking_event, audio_queue):
         print("tts_process_func finally\n")
         stop_event.set()
         torch.cuda.ipc_collect()
-
-def main():
-    stop_event = multiprocessing.Event()
-    is_user_talking = multiprocessing.Event()
-    speaking_event = multiprocessing.Event()
-
-    asr_output_queue = multiprocessing.Queue()
-    llm_output_queue = multiprocessing.Queue()
-    audio_queue = multiprocessing.Queue()
-
-    rag = Graph_RAG()
-    user_message = Message("best friend1")
-    llm_message = Message("best friend2")
-
-    try:
-        asr_process = multiprocessing.Process(target=asr_process_func, args=(stop_event, asr_output_queue, is_user_talking))
-        llm_process = multiprocessing.Process(target=llm_process_func, args=(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, user_message, llm_message, rag))
-        tts_process = multiprocessing.Process(target=tts_process_func, args=(stop_event, llm_output_queue, speaking_event, audio_queue))
-        
-        asr_process.start()
-        llm_process.start()
-        tts_process.start()
-
-        while not stop_event.is_set():
-            while speaking_event.is_set() or not audio_queue.empty():
-                audio_chunk = audio_queue.get()
-                sd.play(audio_chunk, samplerate=16000, blocking=False)
-                while sd.get_stream().active:
-                    if is_user_talking.is_set():
-                        sd.stop()
-                        if not audio_queue.empty():
-                            audio_chunk = audio_queue.get()
-                        break
-                    time.sleep(0.01)
-            
-    except KeyboardInterrupt:
-        print("main KeyboardInterrupt\n")
-        stop_event.set()
-        asr_process.join()
-        llm_process.join()
-        tts_process.join()
-        asr_process.close()
-        llm_process.close()
-        tts_process.close()
-
-        torch.cuda.ipc_collect()
-        print("User stopped the program\n")
-
-if __name__ == "__main__":
-    main()
