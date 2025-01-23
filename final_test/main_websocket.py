@@ -22,6 +22,7 @@ def main():
     is_user_talking = multiprocessing.Event()
     speaking_event = multiprocessing.Event()
 
+    uncheck_audio_queue = multiprocessing.Queue()
     asr_output_queue = multiprocessing.Queue()
     llm_output_queue = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
@@ -31,8 +32,11 @@ def main():
     llm_message = Message("best friend2")
 
     try:
-        ws_process = multiprocessing.Process(target=run_ws_server, args=(stop_event, asr_output_queue))
-        asr_process = multiprocessing.Process(target=asr_process_func_ws, args=(stop_event, asr_output_queue, is_user_talking))
+        ws_process = multiprocessing.Process(
+            target=run_ws_server,
+            args=(uncheck_audio_queue, asr_output_queue, llm_output_queue, audio_queue)
+        )
+        asr_process = multiprocessing.Process(target=asr_process_func_ws, args=(stop_event, uncheck_audio_queue, asr_output_queue, is_user_talking))
         llm_process = multiprocessing.Process(target=llm_process_func, args=(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, user_message, llm_message, rag))
         tts_process = multiprocessing.Process(target=tts_process_func, args=(stop_event, llm_output_queue, speaking_event, audio_queue))
         

@@ -57,13 +57,14 @@ def asr_process_func(stop_event, asr_output_queue, is_user_talking):
         ap.stream.close()
         ap.p.terminate()
 
-def asr_process_func_ws(stop_event, asr_output_queue, is_user_talking):
+def asr_process_func_ws(stop_event, uncheck_audio_queue, asr_output_queue, is_user_talking):
     try:
         ap = Audio_Processer(
             chunk=CHUNK, 
             format=FORMAT, 
             channels=CHANNELS, 
             rate=RATE, 
+            audio_unchecked_queue=uncheck_audio_queue,
             is_user_talking=is_user_talking, 
             stop_event=stop_event
         )
