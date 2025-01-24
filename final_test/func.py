@@ -116,3 +116,15 @@ def tts_process_func(stop_event, llm_output_queue, speaking_event, audio_queue):
         print("tts_process_func finally\n")
         stop_event.set()
         torch.cuda.ipc_collect()
+
+def tts_process_func_ws(stop_event, llm_output_queue, llm_output_queue_ws, audio_queue, speaking_event):
+    try:
+        tts = TTS(stop_event=stop_event, audio_queue=audio_queue)
+        tts.tts_output_ws(llm_output_queue, llm_output_queue_ws, speaking_event)
+    except KeyboardInterrupt:
+        print("tts_process_func KeyboardInterrupt\n")
+        stop_event.set()
+    finally:
+        print("tts_process_func finally\n")
+        stop_event.set()
+        torch.cuda.ipc_collect()
