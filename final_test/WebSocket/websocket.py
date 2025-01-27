@@ -4,6 +4,7 @@ import asyncio
 import websockets
 import queue
 import time
+import base64
 from websockets.exceptions import ConnectionClosed
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
@@ -55,7 +56,8 @@ async def send_audio_data(websocket, audio_queue):
             except queue.Empty:
                 time.sleep(0.1)
                 continue
-            await websocket.send(f"AUDIO: {audio_chunk}")
+            base64_chunk = base64.b64encode(audio_chunk).decode('utf-8')
+            await websocket.send(f"AUDIO: {base64_chunk}")  # 发送 base64 编码的数据
     except ConnectionClosed:
         print("音频发送通道检测到连接关闭")
     except Exception as e:
