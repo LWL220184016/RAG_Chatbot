@@ -2,7 +2,8 @@ import os
 import sys
 import asyncio
 import websockets
-import multiprocessing
+import queue
+import time
 from websockets.exceptions import ConnectionClosed
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
@@ -27,11 +28,15 @@ async def received_data(websocket, audio_input_queue, text_input_queue):
 async def send_llm_data(websocket, llm_queue):
     try:
         while True:
-            print("waiting llm text---------------------------------------------------------")
-            llm_output = await asyncio.get_event_loop().run_in_executor(
-                None,
-                llm_queue.get
-            )
+            # print("waiting llm text---------------------------------------------------------")
+            try:
+                llm_output = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    llm_queue.get_nowait
+                )
+            except queue.Empty:
+                time.sleep(0.1)
+                continue
             await websocket.send(f"LLM: {llm_output}")
     except ConnectionClosed:
         print("LLM发送通道检测到连接关闭")
@@ -41,11 +46,15 @@ async def send_llm_data(websocket, llm_queue):
 async def send_audio_data(websocket, audio_queue):
     try:
         while True:
-            print("waiting tts audio========================================================")
-            audio_chunk = await asyncio.get_event_loop().run_in_executor(
-                None,
-                audio_queue.get
-            )
+            # print("waiting tts audio========================================================")
+            try:
+                audio_chunk = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    audio_queue.get_nowait
+                )
+            except queue.Empty:
+                time.sleep(0.1)
+                continue
             await websocket.send(f"AUDIO: {audio_chunk}")
     except ConnectionClosed:
         print("音频发送通道检测到连接关闭")

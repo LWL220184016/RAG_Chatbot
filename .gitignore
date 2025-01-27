@@ -1,2 +1,9 @@
 Modelfile
 faiss_index
+final_test/__pycache__/*
+final_test/ASR/__pycache__/*
+final_test/Data_Storage/__pycache__/*
+final_test/LLM/__pycache__/*
+final_test/RAG/__pycache__/*
+final_test/TTS/__pycache__/*
+final_test/WebSocket/__pycache__/*

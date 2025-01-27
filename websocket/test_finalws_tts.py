@@ -65,19 +65,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-# Task exception was never retrieved
-# future: <Task finished name='Task-16' coro=<send_audio_data() done, defined at c:\Users\eafef\Desktop\RAG_chatbot\final_test\WebSocket\websocket.py:26> exception=ConnectionClosedOK(Close(code=1001, reason=''), Close(code=1001, reason=''), True)>
-# Traceback (most recent call last):
-#   File "c:\Users\eafef\Desktop\RAG_chatbot\final_test\WebSocket\websocket.py", line 32, in send_audio_data
-#     await websocket.send(f"AUDIO: {audio_chunk}")
-#   File "C:\Users\eafef\Desktop\RAG_chatbot\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 458, in send
-#     async with self.send_context():
-#   File "c:\Users\eafef\Desktop\python install\Lib\contextlib.py", line 204, in __aenter__
-#     return await anext(self.gen)
-#            ^^^^^^^^^^^^^^^^^^^^^
-#   File "C:\Users\eafef\Desktop\RAG_chatbot\.venv\Lib\site-packages\websockets\asyncio\connection.py", line 934, in send_context  
-#     raise self.protocol.close_exc from original_exc
-# websockets.exceptions.ConnectionClosedOK: received 1001 (going away); then sent 1001 (going away)
