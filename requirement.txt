@@ -1,0 +1,25 @@
+pip install -U bitsandbytes
+
+pip install accelerate>=0.26.0
+
+pip install langchain_community langchain_core langgraph beautifulsoup4 langchain_ollama
+pip install langchain-huggingface pyaudio websockets noisereduce
+pip install sentence-transformers
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+pip install lightning lightrag-hku aioboto3 openai
+
+
+
+# nemo windows:
+pip install nemo-toolkit hydra-core  lhotse einops jiwer librosa pyannote.audio webdataset editdistance ipython
+datasets
+
+# nemo linux
+wget https://github.com/state-spaces/mamba/releases/download/v2.2.2/mamba_ssm-2.2.2+cu118torch2.1cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+pip install mamba_ssm-2.2.2+cu118torch2.1cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+pip install --extra-index-url https://pypi.nvidia.com nemo-toolkit[all]
+
+
+wsl------
+sudo apt install pulseaudio
+ollama
