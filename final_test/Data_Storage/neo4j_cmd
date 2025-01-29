@@ -1,0 +1,17 @@
+# Pull neo4j image from docker hub
+podman pull docker.io/neo4j:latest
+
+# Create a container and run the neo4j image
+podman run -d \
+  --name neo4j \
+  -e NEO4J_AUTH=neo4j/StrongPassword123 \
+  -p 7474:7474 \
+  -p 7687:7687 \
+  -v /home/user/RAG_Chatbot/local_neo4j_storageDir:/data \
+  neo4j:latest
+
+# Run a exist container
+podman start neo4j
+
+# Stop the container
+podman stop neo4j

@@ -34,3 +34,179 @@
 2025-01-23 17:10:19,095 - lightrag - INFO - Load KV llm_response_cache with 0 data
 2025-01-23 17:10:19,095 - lightrag - INFO - Load KV full_docs with 0 data
 2025-01-23 17:10:19,095 - lightrag - INFO - Load KV text_chunks with 0 data
+2025-01-29 01:04:59,060 - lightrag - INFO - Logger initialized for working directory: ./local_neo4j_storageDir
+2025-01-29 01:04:59,060 - lightrag - DEBUG - LightRAG init with param:
+  working_dir = ./local_neo4j_storageDir,
+  embedding_cache_config = {'enabled': False, 'similarity_threshold': 0.95, 'use_llm_check': False},
+  kv_storage = JsonKVStorage,
+  vector_storage = NanoVectorDBStorage,
+  graph_storage = Neo4JStorage,
+  log_level = DEBUG,
+  chunk_token_size = 1200,
+  chunk_overlap_token_size = 100,
+  tiktoken_model_name = gpt-4o-mini,
+  entity_extract_max_gleaning = 1,
+  entity_summary_to_max_tokens = 500,
+  node_embedding_algorithm = node2vec,
+  node2vec_params = {'dimensions': 1536, 'num_walks': 10, 'walk_length': 40, 'window_size': 2, 'iterations': 3, 'random_seed': 3},
+  embedding_func = {'embedding_dim': 384, 'max_token_size': 5000, 'func': <function Graph_RAG.__init__.<locals>.<lambda> at 0x7feeeec19870>, 'concurrent_limit': 16},
+  embedding_batch_num = 32,
+  embedding_func_max_async = 16,
+  llm_model_func = <function hf_model_complete at 0x7feeff35ae60>,
+  llm_model_name = h2oai/h2o-danube3-500m-chat,
+  llm_model_max_token_size = 32768,
+  llm_model_max_async = 16,
+  llm_model_kwargs = {},
+  vector_db_storage_cls_kwargs = {},
+  enable_llm_cache = True,
+  enable_llm_cache_for_entity_extract = True,
+  addon_params = {},
+  convert_response_to_json_func = <function convert_response_to_json at 0x7feeff3583a0>,
+  doc_status_storage = JsonDocStatusStorage,
+  chunking_func = <function chunking_by_token_size at 0x7feeff378700>,
+  chunking_func_kwargs = {}
+
+2025-01-29 01:05:53,932 - lightrag - INFO - Logger initialized for working directory: ./local_neo4j_storageDir
+2025-01-29 01:05:53,932 - lightrag - DEBUG - LightRAG init with param:
+  working_dir = ./local_neo4j_storageDir,
+  embedding_cache_config = {'enabled': False, 'similarity_threshold': 0.95, 'use_llm_check': False},
+  kv_storage = JsonKVStorage,
+  vector_storage = NanoVectorDBStorage,
+  graph_storage = Neo4JStorage,
+  log_level = DEBUG,
+  chunk_token_size = 1200,
+  chunk_overlap_token_size = 100,
+  tiktoken_model_name = gpt-4o-mini,
+  entity_extract_max_gleaning = 1,
+  entity_summary_to_max_tokens = 500,
+  node_embedding_algorithm = node2vec,
+  node2vec_params = {'dimensions': 1536, 'num_walks': 10, 'walk_length': 40, 'window_size': 2, 'iterations': 3, 'random_seed': 3},
+  embedding_func = {'embedding_dim': 384, 'max_token_size': 5000, 'func': <function Graph_RAG.__init__.<locals>.<lambda> at 0x7f40a0521900>, 'concurrent_limit': 16},
+  embedding_batch_num = 32,
+  embedding_func_max_async = 16,
+  llm_model_func = <function hf_model_complete at 0x7f40b4c32ef0>,
+  llm_model_name = h2oai/h2o-danube3-500m-chat,
+  llm_model_max_token_size = 32768,
+  llm_model_max_async = 16,
+  llm_model_kwargs = {},
+  vector_db_storage_cls_kwargs = {},
+  enable_llm_cache = True,
+  enable_llm_cache_for_entity_extract = True,
+  addon_params = {},
+  convert_response_to_json_func = <function convert_response_to_json at 0x7f40b4c30430>,
+  doc_status_storage = JsonDocStatusStorage,
+  chunking_func = <function chunking_by_token_size at 0x7f40b4c50790>,
+  chunking_func_kwargs = {}
+
+2025-01-29 01:05:53,987 - lightrag - INFO - Load KV json_doc_status_storage with 0 data
+2025-01-29 01:05:53,987 - lightrag - INFO - Load KV llm_response_cache with 0 data
+2025-01-29 01:05:53,987 - lightrag - INFO - Load KV full_docs with 0 data
+2025-01-29 01:05:53,988 - lightrag - INFO - Load KV text_chunks with 0 data
+2025-01-29 01:07:11,056 - lightrag - INFO - Logger initialized for working directory: ./local_neo4j_storageDir
+2025-01-29 01:07:11,056 - lightrag - DEBUG - LightRAG init with param:
+  working_dir = ./local_neo4j_storageDir,
+  embedding_cache_config = {'enabled': False, 'similarity_threshold': 0.95, 'use_llm_check': False},
+  kv_storage = JsonKVStorage,
+  vector_storage = NanoVectorDBStorage,
+  graph_storage = Neo4JStorage,
+  log_level = DEBUG,
+  chunk_token_size = 1200,
+  chunk_overlap_token_size = 100,
+  tiktoken_model_name = gpt-4o-mini,
+  entity_extract_max_gleaning = 1,
+  entity_summary_to_max_tokens = 500,
+  node_embedding_algorithm = node2vec,
+  node2vec_params = {'dimensions': 1536, 'num_walks': 10, 'walk_length': 40, 'window_size': 2, 'iterations': 3, 'random_seed': 3},
+  embedding_func = {'embedding_dim': 384, 'max_token_size': 5000, 'func': <function Graph_RAG.__init__.<locals>.<lambda> at 0x7f351845d990>, 'concurrent_limit': 16},
+  embedding_batch_num = 32,
+  embedding_func_max_async = 16,
+  llm_model_func = <function hf_model_complete at 0x7f352cb46f80>,
+  llm_model_name = h2oai/h2o-danube3-500m-chat,
+  llm_model_max_token_size = 32768,
+  llm_model_max_async = 16,
+  llm_model_kwargs = {},
+  vector_db_storage_cls_kwargs = {},
+  enable_llm_cache = True,
+  enable_llm_cache_for_entity_extract = True,
+  addon_params = {},
+  convert_response_to_json_func = <function convert_response_to_json at 0x7f352cb444c0>,
+  doc_status_storage = JsonDocStatusStorage,
+  chunking_func = <function chunking_by_token_size at 0x7f352cb60820>,
+  chunking_func_kwargs = {}
+
+2025-01-29 01:07:11,111 - lightrag - INFO - Load KV json_doc_status_storage with 0 data
+2025-01-29 01:07:11,111 - lightrag - INFO - Load KV llm_response_cache with 0 data
+2025-01-29 01:07:11,111 - lightrag - INFO - Load KV full_docs with 0 data
+2025-01-29 01:07:11,111 - lightrag - INFO - Load KV text_chunks with 0 data
+2025-01-29 01:07:43,188 - lightrag - INFO - Logger initialized for working directory: ./local_neo4j_storageDir
+2025-01-29 01:07:43,188 - lightrag - DEBUG - LightRAG init with param:
+  working_dir = ./local_neo4j_storageDir,
+  embedding_cache_config = {'enabled': False, 'similarity_threshold': 0.95, 'use_llm_check': False},
+  kv_storage = JsonKVStorage,
+  vector_storage = NanoVectorDBStorage,
+  graph_storage = Neo4JStorage,
+  log_level = DEBUG,
+  chunk_token_size = 1200,
+  chunk_overlap_token_size = 100,
+  tiktoken_model_name = gpt-4o-mini,
+  entity_extract_max_gleaning = 1,
+  entity_summary_to_max_tokens = 500,
+  node_embedding_algorithm = node2vec,
+  node2vec_params = {'dimensions': 1536, 'num_walks': 10, 'walk_length': 40, 'window_size': 2, 'iterations': 3, 'random_seed': 3},
+  embedding_func = {'embedding_dim': 384, 'max_token_size': 5000, 'func': <function Graph_RAG.__init__.<locals>.<lambda> at 0x7f52f9ec9990>, 'concurrent_limit': 16},
+  embedding_batch_num = 32,
+  embedding_func_max_async = 16,
+  llm_model_func = <function hf_model_complete at 0x7f530a506f80>,
+  llm_model_name = h2oai/h2o-danube3-500m-chat,
+  llm_model_max_token_size = 32768,
+  llm_model_max_async = 16,
+  llm_model_kwargs = {},
+  vector_db_storage_cls_kwargs = {},
+  enable_llm_cache = True,
+  enable_llm_cache_for_entity_extract = True,
+  addon_params = {},
+  convert_response_to_json_func = <function convert_response_to_json at 0x7f530a5044c0>,
+  doc_status_storage = JsonDocStatusStorage,
+  chunking_func = <function chunking_by_token_size at 0x7f530a524820>,
+  chunking_func_kwargs = {}
+
+2025-01-29 01:07:43,241 - lightrag - INFO - Load KV json_doc_status_storage with 0 data
+2025-01-29 01:07:43,241 - lightrag - INFO - Load KV llm_response_cache with 0 data
+2025-01-29 01:07:43,241 - lightrag - INFO - Load KV full_docs with 0 data
+2025-01-29 01:07:43,241 - lightrag - INFO - Load KV text_chunks with 0 data
+2025-01-29 10:20:58,784 - lightrag - INFO - Logger initialized for working directory: ./local_neo4j_storageDir
+2025-01-29 10:20:58,786 - lightrag - DEBUG - LightRAG init with param:
+  working_dir = ./local_neo4j_storageDir,
+  embedding_cache_config = {'enabled': False, 'similarity_threshold': 0.95, 'use_llm_check': False},
+  kv_storage = JsonKVStorage,
+  vector_storage = NanoVectorDBStorage,
+  graph_storage = Neo4JStorage,
+  log_level = DEBUG,
+  chunk_token_size = 1200,
+  chunk_overlap_token_size = 100,
+  tiktoken_model_name = gpt-4o-mini,
+  entity_extract_max_gleaning = 1,
+  entity_summary_to_max_tokens = 500,
+  node_embedding_algorithm = node2vec,
+  node2vec_params = {'dimensions': 1536, 'num_walks': 10, 'walk_length': 40, 'window_size': 2, 'iterations': 3, 'random_seed': 3},
+  embedding_func = {'embedding_dim': 384, 'max_token_size': 5000, 'func': <function Graph_RAG.__init__.<locals>.<lambda> at 0x7fb56bd4d990>, 'concurrent_limit': 16},
+  embedding_batch_num = 32,
+  embedding_func_max_async = 16,
+  llm_model_func = <function hf_model_complete at 0x7fb5804c6f80>,
+  llm_model_name = h2oai/h2o-danube3-500m-chat,
+  llm_model_max_token_size = 32768,
+  llm_model_max_async = 16,
+  llm_model_kwargs = {},
+  vector_db_storage_cls_kwargs = {},
+  enable_llm_cache = True,
+  enable_llm_cache_for_entity_extract = True,
+  addon_params = {},
+  convert_response_to_json_func = <function convert_response_to_json at 0x7fb5804c44c0>,
+  doc_status_storage = JsonDocStatusStorage,
+  chunking_func = <function chunking_by_token_size at 0x7fb5804e8820>,
+  chunking_func_kwargs = {}
+
+2025-01-29 10:20:58,909 - lightrag - INFO - Load KV json_doc_status_storage with 0 data
+2025-01-29 10:20:58,909 - lightrag - INFO - Load KV llm_response_cache with 0 data
+2025-01-29 10:20:58,909 - lightrag - INFO - Load KV full_docs with 0 data
+2025-01-29 10:20:58,910 - lightrag - INFO - Load KV text_chunks with 0 data
