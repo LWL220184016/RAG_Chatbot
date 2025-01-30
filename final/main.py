@@ -8,7 +8,7 @@ from ASR.model_classes.NeMo import NeMo_ASR as ASR
 from LLM.llm import LLM
 from LLM.prompt_template import Message
 from TTS.tts import TTS
-from RAG.rag import RAG
+from RAG.graph_rag import Graph_RAG
 import torch
 import time
 
@@ -42,6 +42,8 @@ def asr_process_func(stop_event, asr_output_queue, is_user_talking):
         print("asr_process_func KeyboardInterrupt\n")
         get_audio_thread.join()
         check_audio_thread.join()
+        get_audio_thread.close()
+        check_audio_thread.close()
         ap.stream.stop_stream()
         ap.stream.close()
         ap.p.terminate()
@@ -51,6 +53,8 @@ def asr_process_func(stop_event, asr_output_queue, is_user_talking):
         print("asr_process_func finally\n")
         get_audio_thread.join()
         check_audio_thread.join()
+        get_audio_thread.close()
+        check_audio_thread.close()
         torch.cuda.ipc_collect()
         ap.stream.stop_stream()
         ap.stream.close()
@@ -89,7 +93,7 @@ def main():
     llm_output_queue = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
 
-    rag = RAG()
+    rag = Graph_RAG()
     user_message = Message("best friend1")
     llm_message = Message("best friend2")
 
@@ -120,6 +124,10 @@ def main():
         asr_process.join()
         llm_process.join()
         tts_process.join()
+        asr_process.close()
+        llm_process.close()
+        tts_process.close()
+
         torch.cuda.ipc_collect()
         print("User stopped the program\n")
 

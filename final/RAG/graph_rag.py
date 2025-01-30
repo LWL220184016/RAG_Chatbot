@@ -56,12 +56,12 @@ class Graph_RAG:
         with open(file_dir) as f:
             self.rag.insert(f.read())
 
-    def search_rag(self, queue, mode):
+    def search_rag(self, query, mode):
         """
-        queue: what you want to search in the RAG
+        query: what you want to search in the RAG
         mode: naive, local, global, hybrid, mix
         """
-        return self.rag.query(queue, param=QueryParam(mode=mode))
+        return self.rag.query(query, param=QueryParam(mode=mode))
 
         # Perform mix search (Knowledge Graph + Vector Retrieval)
         # Mix mode combines knowledge graph and vector search:
@@ -70,14 +70,14 @@ class Graph_RAG:
         # - Supports image content through HTML img tags
         # - Allows control over retrieval depth via top_k parameter
 
-    def search_rag(self, queue, prompt, mode):
+    def search_rag(self, query, prompt, mode):
         """
-        queue: What you want to search in the RAG
+        query: What you want to search in the RAG
         prompt: What additional requirements do you want in the return
         mode: Naive, local, global, hybrid, mix
         """
         return self.rag.query_with_separate_keyword_extraction(
-            query=queue,
+            query=query,
             prompt=prompt,
             param=QueryParam(mode=mode)
         )

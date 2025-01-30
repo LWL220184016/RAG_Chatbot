@@ -3,6 +3,7 @@ from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5Hif
 from datasets import load_dataset
 import queue
 import multiprocessing
+import time
 
 class TTS():
     def __init__(
@@ -29,7 +30,7 @@ class TTS():
         while not self.stop_event.is_set():
             if llm_output_queue.empty():
                 speaking_event.clear()  # Signal that LLM has finished speaking
-
+            print("waiting user input")
             text = llm_output_queue.get()
             while self.audio_queue.qsize() >= 5:
                 pass
@@ -38,4 +39,26 @@ class TTS():
             audio_chunk = audio_chunk.cpu().numpy()
             self.audio_queue.put(audio_chunk)
             print("LLM: ", text)
+            speaking_event.set()  # Signal that LLM is speaking
+
+    def tts_output_ws(self, llm_output_queue: queue.Queue, llm_output_queue_ws: queue.Queue, speaking_event):
+        print("waiting text")
+        while not self.stop_event.is_set():
+            if llm_output_queue.empty():
+                speaking_event.clear()  # Signal that LLM has finished speaking
+            try:
+                text = llm_output_queue.get(timeout=1)
+            except queue.Empty:
+                continue
+            llm_output_queue_ws.put(text)
+            print("after put llm_output_queue_ws: ", llm_output_queue_ws.qsize())
+            while self.audio_queue.qsize() >= 5:
+                pass
+            inputs = self.processor(text=text, return_tensors="pt") 
+            audio_chunk = self.model.generate_speech(inputs["input_ids"], self.speaker_embeddings, vocoder=self.vocoder)
+            audio_chunk = audio_chunk.cpu().numpy()
+            print(audio_chunk)
+            self.audio_queue.put(audio_chunk)
+            print("after put self.audio_queue: ", self.audio_queue.qsize())
+            time.sleep(1)
             speaking_event.set()  # Signal that LLM is speaking

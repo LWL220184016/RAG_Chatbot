@@ -57,7 +57,8 @@ class LLM:
                 print("user_input: " + user_input + "  -----------------------------------------------------user_input")
                 
                 # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
-                memory = rag.search(llm=self.model, query=user_input)
+                prompt = "return the previous dialogue content relate to the queue"
+                memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
                 
                 # Assuming 'update_content' method exists for Message class
                 msg = user_message.update_content(content=user_input, memory=memory)
@@ -81,7 +82,6 @@ class LLM:
 
                 # Assuming 'update_content' method exists for Message class
                 llm_message.update_content(content=llm_output_total)
-                rag.update_chat_history(user_message, llm_message)
-                rag.update_knowledge_base()
+                rag.add_dialogue_record(user_message, llm_message)
                 llm_output_total = ""
                 # user_input = ""

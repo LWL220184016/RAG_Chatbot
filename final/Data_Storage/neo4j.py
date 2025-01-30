@@ -1,16 +1,18 @@
+import os
 from neo4j import GraphDatabase
 from datetime import datetime
 
+
 class Neo4J():
     def __init__(self):
-        # URI examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
-        self.URI = "<URI for Neo4j database>"
-        self.AUTH = ("<Username>", "<Password>")
+        # URL examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
+        self.URL = os.getenv('NEO4J_URI')
+        self.AUTH = (os.getenv('NEO4J_USERNAME'), os.getenv('NEO4J_PASSWORD'))
         self.driver = self.start_driver()
         self.create_dialogue_node()
 
     def start_driver(self, ):
-        driver = GraphDatabase.driver(self.URI, auth=self.AUTH)
+        driver = GraphDatabase.driver(self.URL, auth=self.AUTH)
         print(str(driver.verify_connectivity()))
         return driver
 
@@ -36,23 +38,22 @@ class Neo4J():
     
     def add_dialogue_record(self, user_message, llm_message):
         today = datetime.today().strftime('%Y-%m-%d')
-
+        
         with self.driver.session() as session:
-            session.run(
-                "MERGE (d:Dialogue {text: $dialogue_text, timestamp: $timestamp, speaker: $speaker}) "
-                "MATCH (c:Chat {date: $today}) "
-                "MERGE (c)-[:SPEAKS]->(d)",
-                today=today,
-                dialogue_text=user_message.content,
-                timestamp=user_message.time,
-                speaker=user_message.user_role,
-            )
-            session.run(
-                "MERGE (d:Dialogue {text: $dialogue_text, timestamp: $timestamp, speaker: $speaker}) "
-                "MATCH (c:Chat {date: $today}) "
-                "MERGE (c)-[:SPEAKS]->(d)",
-                today=today,
-                dialogue_text=llm_message.content,
-                timestamp=llm_message.time,
-                speaker=llm_message.user_role,
-            )
+            # 合并用户消息和AI消息处理
+            for message in [user_message, llm_message]:
+                session.run(
+                    """
+                    MERGE (c:Chat {date: $today})
+                    MERGE (d:Dialogue {
+                        text: $dialogue_text, 
+                        timestamp: $timestamp, 
+                        speaker: $speaker
+                    })
+                    MERGE (c)-[:SPEAKS]->(d)
+                    """,
+                    today=today,
+                    dialogue_text=message.content,
+                    timestamp=message.time,
+                    speaker=message.user_role,
+                )
