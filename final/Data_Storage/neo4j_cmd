@@ -4,6 +4,7 @@ podman pull docker.io/neo4j:latest
 # Create a container and run the neo4j image
 podman run -d \
   --name neo4j \
+  --user neo4j \
   -e NEO4J_AUTH=neo4j/StrongPassword123 \
   -p 7474:7474 \
   -p 7687:7687 \

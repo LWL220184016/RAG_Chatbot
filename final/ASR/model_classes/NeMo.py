@@ -2,6 +2,7 @@ from ASR.audio_process import Audio_Processer
 import queue
 import multiprocessing
 import nemo.collections.asr as nemo_asr
+import traceback
 
 
 class NeMo_ASR():
@@ -27,21 +28,29 @@ class NeMo_ASR():
             #     audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
             # except queue.Empty:
             #     continue
+            print("waiting audio_data")
             audio_data = self.ap.audio_checked_queue.get()
-            processed_data = self.ap.process_audio2(audio_data=audio_data)
-            transcriptions = self.model.transcribe(
-                # encoded_features[0],
-                processed_data,
-                batch_size = 4,
-                return_hypotheses = True,
-                verbose = False,
-            )
-            # print("transcriptions: " + str(transcriptions))
-            hypothesis = transcriptions[0]
-            h = hypothesis[0]
-            # print("score: " + str(h.score))
-            # print("You: " + h.text)
-            if h.score < 50:
+            print("audio_data received")
+            processed_data = self.ap.process_audio_ws1(audio_data=audio_data)
+            try:
+                transcriptions = self.model.transcribe(
+                    # encoded_features[0],
+                    processed_data,
+                    batch_size = 4,
+                    return_hypotheses = True,
+                    verbose = False,
+                )
+                print("transcriptions: " + str(transcriptions))
+                hypothesis = transcriptions[0]
+                h = hypothesis[0]
+                print("score: " + str(h.score))
+                print("You: " + h.text)
+                if h.score < 50:
+                    continue
+                # prompt = input("You: ")
+                self.asr_output_queue.put(h.text)
+            except Exception as e:
+                print("asr_output Exception: " + str(e))
+                traceback.print_exc()
                 continue
-            # prompt = input("You: ")
-            self.asr_output_queue.put(h.text)
+        print("asr_output end")

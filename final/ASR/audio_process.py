@@ -7,6 +7,9 @@ import noisereduce as nr
 import torchaudio
 import torch
 
+from pydub import AudioSegment
+import io
+
 class Audio_Processer():
     def __init__(
             self, 
@@ -17,8 +20,10 @@ class Audio_Processer():
             sec = 1,
             audio_unchecked_queue = queue.Queue(),
             audio_checked_queue = queue.Queue(),
+            startStream = True,
             is_user_talking: threading.Event = None,
-            stop_event: threading.Event = None
+            stop_event: threading.Event = None,
+            input_device_index = 1,
         ):
         
         self.format = format
@@ -29,7 +34,8 @@ class Audio_Processer():
         self.audio_unchecked_queue = audio_unchecked_queue
         self.audio_checked_queue = audio_checked_queue
         self.p = pyaudio.PyAudio()
-        self.stream = self.p.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk)
+        if startStream:
+            self.stream = self.p.open(format=format, channels=channels, rate=rate, input=True, frames_per_buffer=chunk, input_device_index=input_device_index)
         self.is_user_talking = is_user_talking
         self.stop_event = stop_event
         self.mel_spectrogram = None
@@ -117,11 +123,36 @@ class Audio_Processer():
 
         
     def process_audio2(self, audio_data):
-        audio_data = np.frombuffer(audio_data, dtype = np.int16).astype(np.float32) / 32768.0 # audio bytes to float
-        audio_data = (audio_data - np.mean(audio_data)) / np.std(audio_data) # normalize audio float data
-        audio_data = nr.reduce_noise(y = audio_data, sr = self.rate) # reduced noise
-        return audio_data
-    
+        try:
+            audio_data = np.frombuffer(audio_data, dtype = np.int16).astype(np.float32) / 32768.0 # audio bytes to float
+            audio_data = (audio_data - np.mean(audio_data)) / np.std(audio_data) # normalize audio float data
+            audio_data = nr.reduce_noise(y = audio_data, sr = self.rate) # reduced noise
+        
+            return audio_data
+        except ValueError as e:
+            print(f"ValueError: {e}")
+            return None
+
+    def process_audio_ws1(self, audio_data):
+        try:
+            # 转换为 AudioSegment 对象
+            audio = AudioSegment.from_file(io.BytesIO(audio_data), format="webm")
+            
+            # 统一采样率
+            audio = audio.set_frame_rate(16000)
+            
+            # 转换为单声道
+            audio = audio.set_channels(1)
+            
+            # 转换为 numpy 数组
+            samples = np.array(audio.get_array_of_samples()).astype(np.float32)
+            samples /= np.iinfo(audio.array_type).max  # 归一化到 [-1, 1]
+            
+            return samples
+        except Exception as e:
+            print(f"Processing Error: {e}")
+            return None
+
     def process_audio3(self, audio_data):
         audio_data = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0  # Convert bytes to float32
         audio_tensor = torch.tensor(audio_data, dtype=torch.float32)

@@ -11,9 +11,7 @@ from WebSocket.websocket import run_ws_server
 from func import asr_process_func_ws, llm_process_func, tts_process_func_ws
 
 # set environment variable in linux
-# export NEO4J_URI="neo4j://localhost:7687"
-# export NEO4J_USERNAME="username"
-# export NEO4J_PASSWORD="password"
+# export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
 
 SOUND_LEVEL = 10
 CHUNK = 512

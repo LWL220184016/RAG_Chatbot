@@ -21,3 +21,4 @@ final_test/TTS/__pycache__/
 final_test/WebSocket/__pycache__/
 
 local_neo4j_storageDir/
+book.txt

@@ -15,7 +15,8 @@ class Graph_RAG:
     def __init__(
                 self, 
                 working_dir="./local_neo4j_storageDir", 
-                llm_model_name='h2oai/h2o-danube3-500m-chat', 
+                # llm_model_name='h2oai/h2o-danube3-500m-chat', 
+                llm_model_name='deepseek-ai/DeepSeek-R1-Distill-Qwen-14B', 
                 embedding_dim=384,
                 max_token_size=5000,
                 embedding_model_name="sentence-transformers/all-MiniLM-L6-v2",
@@ -56,7 +57,7 @@ class Graph_RAG:
         with open(file_dir) as f:
             self.rag.insert(f.read())
 
-    def search_rag(self, query, mode):
+    def search_rag_noPrompt(self, query, mode):
         """
         query: what you want to search in the RAG
         mode: naive, local, global, hybrid, mix

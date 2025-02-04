@@ -1,5 +1,7 @@
 import pyaudio
 import threading
+import torch
+import traceback
 from ASR.audio_process import Audio_Processer
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import NeMo_ASR as ASR
@@ -7,7 +9,7 @@ from LLM.llm import LLM
 from LLM.prompt_template import Message
 from TTS.tts import TTS
 from RAG.graph_rag import Graph_RAG
-import torch
+
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -64,14 +66,14 @@ def asr_process_func_ws(stop_event, uncheck_audio_queue, asr_output_queue, is_us
             format=FORMAT, 
             channels=CHANNELS, 
             rate=RATE, 
-            audio_unchecked_queue=uncheck_audio_queue,
+            audio_checked_queue=uncheck_audio_queue,
+            startStream=False,
             is_user_talking=is_user_talking, 
-            stop_event=stop_event
+            stop_event=stop_event,
         )
         check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         check_audio_thread.start()
         asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
-        print("asr_process_func asring")
         asr.asr_output()
         print("asr_process_func end")
 
@@ -83,6 +85,11 @@ def asr_process_func_ws(stop_event, uncheck_audio_queue, asr_output_queue, is_us
         ap.stream.close()
         ap.p.terminate()
         torch.cuda.ipc_collect()
+    
+    except Exception as e:
+        print("捕获异常：", e)
+        print("完整的错误信息：")
+        traceback.print_exc()
 
     finally:
         print("asr_process_func finally\n")

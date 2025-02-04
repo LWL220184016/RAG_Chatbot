@@ -5,6 +5,7 @@ import websockets
 import queue
 import time
 import base64
+import json
 from websockets.exceptions import ConnectionClosed
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
@@ -15,16 +16,26 @@ client_tasks = {}
 async def received_data(websocket, audio_input_queue, text_input_queue):
     try:
         async for message in websocket:
-            print(f"Received message: {message}")
-            await asyncio.get_event_loop().run_in_executor(
-                None, 
-                text_input_queue.put,
-                message
-            )
+            if isinstance(message, str):
+                print(f"Received text: {message}")
+                await asyncio.get_event_loop().run_in_executor(
+                    None, 
+                    text_input_queue.put,
+                    message
+                )
+            elif isinstance(message, bytes):
+                print(f"Received audio: len {len(message)}")
+                print(f"Data type: {type(message)}")
+                await asyncio.get_event_loop().run_in_executor(
+                    None, 
+                    audio_input_queue.put,
+                    message
+                )
+                # print("Invalid message received")
     except ConnectionClosed:
         print("接收循环检测到连接关闭")
-    except Exception as e:
-        print(f"receiving loop Exception: {str(e)}")
+    # except Exception as e:
+        # print(f"receiving loop Exception: {str(e)}")
 
 async def send_llm_data(websocket, llm_queue):
     try:
