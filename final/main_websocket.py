@@ -8,7 +8,7 @@ import time
 from LLM.prompt_template import Message
 from RAG.graph_rag import Graph_RAG
 from WebSocket.websocket import run_ws_server
-from func import asr_process_func_ws, llm_process_func, tts_process_func_ws
+from func import asr_process_func_ws, llm_process_func_ws, tts_process_func_ws
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
@@ -27,8 +27,9 @@ def main():
 
     uncheck_audio_queue = multiprocessing.Queue()
     asr_output_queue = multiprocessing.Queue()
+    asr_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the user said
     llm_output_queue = multiprocessing.Queue()
-    llm_output_queue_ws = multiprocessing.Queue()
+    llm_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the llm said
     audio_queue = multiprocessing.Queue()
 
     rag = Graph_RAG()
@@ -39,11 +40,11 @@ def main():
         # asr_output_queue for user text input
         ws_process = multiprocessing.Process(
             target=run_ws_server, 
-            args=(uncheck_audio_queue, asr_output_queue, llm_output_queue_ws, audio_queue)
+            args=(uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, llm_output_queue_ws, audio_queue)
         )
-        asr_process = multiprocessing.Process(target=asr_process_func_ws, args=(stop_event, uncheck_audio_queue, asr_output_queue, is_user_talking))
-        llm_process = multiprocessing.Process(target=llm_process_func, args=(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, user_message, llm_message, rag))
-        tts_process = multiprocessing.Process(target=tts_process_func_ws, args=(stop_event, llm_output_queue, llm_output_queue_ws, audio_queue, speaking_event))
+        asr_process = multiprocessing.Process(target=asr_process_func_ws, args=(stop_event, uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, is_user_talking))
+        llm_process = multiprocessing.Process(target=llm_process_func_ws, args=(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, llm_output_queue_ws, user_message, llm_message, rag))
+        tts_process = multiprocessing.Process(target=tts_process_func_ws, args=(stop_event, llm_output_queue, audio_queue, speaking_event))
         
         
         ws_process.start()

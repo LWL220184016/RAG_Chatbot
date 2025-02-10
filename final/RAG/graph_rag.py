@@ -15,8 +15,7 @@ class Graph_RAG:
     def __init__(
                 self, 
                 working_dir="./local_neo4j_storageDir", 
-                # llm_model_name='h2oai/h2o-danube3-500m-chat', 
-                llm_model_name='deepseek-ai/DeepSeek-R1-Distill-Qwen-14B', 
+                llm_model_name='h2oai/h2o-danube3-500m-chat', 
                 embedding_dim=384,
                 max_token_size=5000,
                 embedding_model_name="sentence-transformers/all-MiniLM-L6-v2",

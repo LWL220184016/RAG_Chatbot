@@ -59,7 +59,7 @@ def asr_process_func(stop_event, asr_output_queue, is_user_talking):
         ap.stream.close()
         ap.p.terminate()
 
-def asr_process_func_ws(stop_event, uncheck_audio_queue, asr_output_queue, is_user_talking):
+def asr_process_func_ws(stop_event, uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, is_user_talking):
     try:
         ap = Audio_Processer(
             chunk=CHUNK, 
@@ -71,18 +71,12 @@ def asr_process_func_ws(stop_event, uncheck_audio_queue, asr_output_queue, is_us
             is_user_talking=is_user_talking, 
             stop_event=stop_event,
         )
-        check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
-        check_audio_thread.start()
         asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
-        asr.asr_output()
+        asr.asr_output_ws(asr_output_queue_ws)
         print("asr_process_func end")
 
     except KeyboardInterrupt:
         print("asr_process_func KeyboardInterrupt\n")
-        check_audio_thread.join()
-        check_audio_thread.close()
-        ap.stream.stop_stream()
-        ap.stream.close()
         ap.p.terminate()
         torch.cuda.ipc_collect()
     
@@ -93,17 +87,25 @@ def asr_process_func_ws(stop_event, uncheck_audio_queue, asr_output_queue, is_us
 
     finally:
         print("asr_process_func finally\n")
-        check_audio_thread.join()
-        check_audio_thread.close()
         torch.cuda.ipc_collect()
-        ap.stream.stop_stream()
-        ap.stream.close()
         ap.p.terminate()
 
 def llm_process_func(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, user_message, llm_message, rag):
     try:
-        llm = LLM(is_user_talking=is_user_talking, stop_event=stop_event, speaking_event=speaking_event, llm_output_queue=llm_output_queue)
+        llm = LLM(model_name="deepseek-r1:14b", is_user_talking=is_user_talking, stop_event=stop_event, speaking_event=speaking_event, llm_output_queue=llm_output_queue)
         llm.llm_output(asr_output_queue, user_message, llm_message, rag)
+    except KeyboardInterrupt:
+        print("llm_process_func KeyboardInterrupt\n")
+        stop_event.set()
+    finally:
+        print("llm_process_func finally\n")
+        stop_event.set()
+        torch.cuda.ipc_collect()
+
+def llm_process_func_ws(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, llm_output_queue_ws, user_message, llm_message, rag):
+    try:
+        llm = LLM(model_name="deepseek-r1:14b", is_user_talking=is_user_talking, stop_event=stop_event, speaking_event=speaking_event, llm_output_queue=llm_output_queue)
+        llm.llm_output_ws(asr_output_queue, llm_output_queue_ws, user_message, llm_message, rag)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()
@@ -124,10 +126,10 @@ def tts_process_func(stop_event, llm_output_queue, speaking_event, audio_queue):
         stop_event.set()
         torch.cuda.ipc_collect()
 
-def tts_process_func_ws(stop_event, llm_output_queue, llm_output_queue_ws, audio_queue, speaking_event):
+def tts_process_func_ws(stop_event, llm_output_queue, audio_queue, speaking_event):
     try:
         tts = TTS(stop_event=stop_event, audio_queue=audio_queue)
-        tts.tts_output_ws(llm_output_queue, llm_output_queue_ws, speaking_event)
+        tts.tts_output_ws(llm_output_queue, speaking_event)
     except KeyboardInterrupt:
         print("tts_process_func KeyboardInterrupt\n")
         stop_event.set()

@@ -3,9 +3,11 @@ import sys
 import asyncio
 import websockets
 import queue
-import time
 import base64
-import json
+import traceback
+import soundfile as sf
+import io
+
 from websockets.exceptions import ConnectionClosed
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
@@ -37,42 +39,54 @@ async def received_data(websocket, audio_input_queue, text_input_queue):
     # except Exception as e:
         # print(f"receiving loop Exception: {str(e)}")
 
-async def send_llm_data(websocket, llm_queue):
+async def send_data(websocket, asr_queue, llm_queue, tts_queue):
     try:
+        sample_rate = 16000
         while True:
+
+            # print("waiting llm text---------------------------------------------------------")
+            try:
+                asr_output = await asyncio.get_event_loop().run_in_executor(
+                    None,
+                    asr_queue.get_nowait
+                )
+                await websocket.send(f"You: {asr_output}")
+            except queue.Empty:
+                asyncio.sleep(0.1)
+                pass
+
             # print("waiting llm text---------------------------------------------------------")
             try:
                 llm_output = await asyncio.get_event_loop().run_in_executor(
                     None,
                     llm_queue.get_nowait
                 )
+                await websocket.send(f"LLM: {llm_output}")
             except queue.Empty:
-                time.sleep(0.1)
-                continue
-            await websocket.send(f"LLM: {llm_output}")
-    except ConnectionClosed:
-        print("LLM发送通道检测到连接关闭")
-    except Exception as e:
-        print(f"send text Exception: {str(e)}")
+                asyncio.sleep(0.1)
+                pass
 
-async def send_audio_data(websocket, audio_queue):
-    try:
-        while True:
             # print("waiting tts audio========================================================")
             try:
                 audio_chunk = await asyncio.get_event_loop().run_in_executor(
                     None,
-                    audio_queue.get_nowait
+                    tts_queue.get_nowait
                 )
+                buffer = io.BytesIO()
+                sf.write(buffer, audio_chunk, sample_rate, format='wav')
+                buffer.seek(0)
+                audio_chunk = buffer.read()
+                base64_chunk = base64.b64encode(audio_chunk).decode('utf-8')
+                await websocket.send(f"AUDIO: {base64_chunk}")  # 发送 base64 编码的数据
             except queue.Empty:
-                time.sleep(0.1)
-                continue
-            base64_chunk = base64.b64encode(audio_chunk).decode('utf-8')
-            await websocket.send(f"AUDIO: {base64_chunk}")  # 发送 base64 编码的数据
+                asyncio.sleep(0.1)
+                pass
+            
     except ConnectionClosed:
-        print("音频发送通道检测到连接关闭")
+        print("LLM发送通道检测到连接关闭")
     except Exception as e:
-        print(f"send audio Exception: {str(e)}")
+        print(f"send text Exception: {str(e)}")
+        print(traceback.format_exc())
 
 async def connection_watcher(websocket):
     """连接状态监控协程"""
@@ -82,7 +96,7 @@ async def connection_watcher(websocket):
     except Exception as e:
         print(f"监控器异常: {str(e)}")
 
-async def handler(websocket, audio_input_queue, text_input_queue, llm_output_queue, audio_queue):
+async def handler(websocket, audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue):
     client_id = websocket.remote_address
     print(f"新连接来自 {client_id}")
     print("websocket.remote_address", websocket.remote_address)
@@ -112,8 +126,7 @@ async def handler(websocket, audio_input_queue, text_input_queue, llm_output_que
         
         tasks = [
             asyncio.create_task(received_data(websocket, audio_input_queue, text_input_queue)),
-            asyncio.create_task(send_llm_data(websocket, llm_output_queue)),
-            asyncio.create_task(send_audio_data(websocket, audio_queue)),
+            asyncio.create_task(send_data(websocket, asr_output_queue, llm_output_queue, tts_queue)),
             watcher_task
         ]
 
@@ -133,8 +146,9 @@ async def handler(websocket, audio_input_queue, text_input_queue, llm_output_que
             print("queue_size: ", 
                   "audio input: ", audio_input_queue.qsize(), 
                   ", text input: ", text_input_queue.qsize(), 
-                  ", text output: ", llm_output_queue.qsize(), 
-                  ", audio output: ", audio_queue.qsize())
+                  ", asr text output: ", asr_output_queue.qsize(),
+                  ", llm text output: ", llm_output_queue.qsize(), 
+                  ", audio output: ", tts_queue.qsize())
             print("开始清理连接...")
             # 取消所有未完成的任务
             for task in tasks:
@@ -153,7 +167,7 @@ async def handler(websocket, audio_input_queue, text_input_queue, llm_output_que
             del client_tasks[client_id]
             print(f"任务 {client_id} 已从client_tasks中移除")
 
-async def ws_main(audio_input_queue, text_input_queue, llm_output_queue, audio_queue):
+async def ws_main(audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue):
     # 配置服务器参数
     server_config = {
         "host": "localhost",
@@ -164,20 +178,20 @@ async def ws_main(audio_input_queue, text_input_queue, llm_output_queue, audio_q
     }
     
     async with websockets.serve(
-        lambda ws: handler(ws, audio_input_queue, text_input_queue, llm_output_queue, audio_queue),
+        lambda ws: handler(ws, audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue),
         **server_config
     ):
         print(f"WebSocket服务器启动在 {server_config['host']}:{server_config['port']}")
         await asyncio.Future()
 
-def run_ws_server(audio_input_queue, text_input_queue, llm_output_queue, audio_queue):
+def run_ws_server(audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue):
     # 配置事件循环
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
     try:
         loop.run_until_complete(
-            ws_main(audio_input_queue, text_input_queue, llm_output_queue, audio_queue)
+            ws_main(audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue)
         )
     except KeyboardInterrupt:
         print("服务器正常关闭")

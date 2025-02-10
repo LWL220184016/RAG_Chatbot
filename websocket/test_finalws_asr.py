@@ -28,19 +28,21 @@ def main():
 
     uncheck_audio_queue = multiprocessing.Queue()
     asr_output_queue = multiprocessing.Queue()
+    asr_output_queue_ws = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
 
     try:
         ws_process = multiprocessing.Process(
             target=run_ws_server, 
-            args=(uncheck_audio_queue, asr_output_queue, asr_output_queue, audio_queue) # The third args should be llm_output_queue_ws, but now testing asr output
+            args=(uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, asr_output_queue, audio_queue)
         )
         asr_process = multiprocessing.Process(
             target=asr_process_func_ws, 
             args=(
                 stop_event, 
                 uncheck_audio_queue, 
-                asr_output_queue,
+                asr_output_queue, 
+                asr_output_queue_ws, 
                 is_user_talking, 
             )
         )

@@ -28,6 +28,7 @@ def main():
 
     uncheck_audio_queue = multiprocessing.Queue()
     asr_output_queue = multiprocessing.Queue()
+    asr_output_queue_ws = multiprocessing.Queue()
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
@@ -35,7 +36,7 @@ def main():
     try:
         ws_process = multiprocessing.Process(
             target=run_ws_server,
-            args=(uncheck_audio_queue, asr_output_queue, llm_output_queue_ws, audio_queue)
+            args=(uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, llm_output_queue_ws, audio_queue)
         )
         tts_process = multiprocessing.Process(
             target=tts_process_func_ws, 

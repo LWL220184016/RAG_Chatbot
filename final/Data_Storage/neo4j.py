@@ -12,7 +12,8 @@ class Neo4J():
         self.create_dialogue_node()
 
     def start_driver(self, ):
-        driver = GraphDatabase.driver(self.URL, auth=self.AUTH)
+        print("start Neo4J driver, uri: ", self.URL)
+        driver = GraphDatabase.driver(uri=self.URL, auth=self.AUTH)
         print(str(driver.verify_connectivity()))
         return driver
 
