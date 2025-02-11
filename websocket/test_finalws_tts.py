@@ -42,10 +42,9 @@ def main():
             target=tts_process_func_ws, 
             args=(
                 stop_event, 
-                asr_output_queue, # Normally it should be llm_output_queue, but llm is not loaded, only tts is tested
-                llm_output_queue_ws,
-                audio_queue,
                 speaking_event, 
+                asr_output_queue, # Normally it should be llm_output_queue, but llm is not loaded, only tts is tested
+                audio_queue,
             )
         )
         
