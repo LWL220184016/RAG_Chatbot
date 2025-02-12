@@ -3,12 +3,12 @@ import multiprocessing
 import time
 from langchain_ollama import OllamaLLM
 from LLM.prompt_template import Message
-from Data_Storage.neo4j import Neo4J
+# from Data_Storage.neo4j import Neo4J
 
 class LLM:
     def __init__(
             self,
-            model_name: str = "llama3.2-vision-latest-friend2",
+            model_name: str = "deepseek-r1-14b-qwen-fd",
             top_k: int = 10,
             top_p: float = 0.95,
             temperature: float = 0.8,
@@ -16,7 +16,7 @@ class LLM:
             stop_event = None,
             speaking_event = None,
             llm_output_queue: multiprocessing.Queue = None,
-            neo4j: Neo4J = Neo4J()
+            # neo4j: Neo4J = Neo4J()
         ):
 
         self.model = OllamaLLM(
@@ -31,7 +31,7 @@ class LLM:
         self.speaking_event = speaking_event
         if self.is_user_talking is None or self.stop_event is None or self.speaking_event is None:
             raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
-        self.neo4j = neo4j
+        # self.neo4j = neo4j
 
     def llm_output(
             self,
@@ -118,10 +118,11 @@ class LLM:
                 
                 # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
                 prompt = "return the previous dialogue content relate to the queue"
-                memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
+                # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
                 
                 # Assuming 'update_content' method exists for Message class
-                msg = user_message.update_content(content=user_input, memory=memory)
+                # msg = user_message.update_content(content=user_input, memory=memory)
+                msg = user_message.update_content(content=user_input, memory=None)
 # have a problem with the rag
                 self.speaking_event.set()
                 llm_output = ""
@@ -144,7 +145,7 @@ class LLM:
                     if output in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in output:
                         llm_output_total += llm_output
                         print("llm output: " + llm_output)
-                        if not is_llm_thinking:
+                        if not is_llm_thinking or "</think>" in output:
                             self.llm_output_queue.put(llm_output)
                             print("after put llm_output_queue: ", self.llm_output_queue.qsize())
                         llm_output_queue_ws.put(llm_output)
@@ -152,5 +153,5 @@ class LLM:
 
                 # Assuming 'update_content' method exists for Message class
                 llm_message.update_content(content=llm_output_total)
-                self.neo4j.add_dialogue_record(user_message, llm_message)
+                # self.neo4j.add_dialogue_record(user_message, llm_message)
                 llm_output_total = ""

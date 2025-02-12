@@ -26,19 +26,6 @@ async def received_data(websocket, audio_input_queue, text_input_queue):
                     message
                 )
 
-                message = "How to generate audio from a numpy array"
-                await asyncio.get_event_loop().run_in_executor(
-                    None, 
-                    text_input_queue.put,
-                    message
-                )
-
-                message = "Converting a NumPy array to WAV"
-                await asyncio.get_event_loop().run_in_executor(
-                    None, 
-                    text_input_queue.put,
-                    message
-                )
             elif isinstance(message, bytes):
                 print(f"Received audio: len {len(message)}")
                 print(f"Data type: {type(message)}")

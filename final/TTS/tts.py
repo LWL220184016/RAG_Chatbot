@@ -27,21 +27,6 @@ class TTS():
         self.stop_event = stop_event
 
     def tts_output(self, llm_output_queue: queue.Queue, speaking_event):
-        while not self.stop_event.is_set():
-            if llm_output_queue.empty():
-                speaking_event.clear()  # Signal that LLM has finished speaking
-            print("waiting user input")
-            text = llm_output_queue.get()
-            while self.audio_queue.qsize() >= 5:
-                pass
-            inputs = self.processor(text=text, return_tensors="pt") 
-            audio_chunk = self.model.generate_speech(inputs["input_ids"], self.speaker_embeddings, vocoder=self.vocoder)
-            audio_chunk = audio_chunk.cpu().numpy()
-            self.audio_queue.put(audio_chunk)
-            print("LLM: ", text)
-            speaking_event.set()  # Signal that LLM is speaking
-
-    def tts_output_ws(self, llm_output_queue: queue.Queue, speaking_event):
         print("waiting text")
         while not self.stop_event.is_set():
             if llm_output_queue.empty():
@@ -56,7 +41,5 @@ class TTS():
             inputs = self.processor(text=text, return_tensors="pt") 
             audio_chunk = self.model.generate_speech(inputs["input_ids"], self.speaker_embeddings, vocoder=self.vocoder)
             audio_chunk = audio_chunk.cpu().numpy()
-            print(audio_chunk)
             self.audio_queue.put(audio_chunk)
-            print("after put self.audio_queue: ", self.audio_queue.qsize())
             speaking_event.set()  # Signal that LLM is speaking
