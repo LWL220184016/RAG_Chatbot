@@ -31,12 +31,12 @@ class TTS():
         while not self.stop_event.is_set():
             if llm_output_queue.empty():
                 speaking_event.clear()  # Signal that LLM has finished speaking
-            # try:
-            #     text = llm_output_queue.get(timeout=1)
-            # except queue.Empty:
-            #     continue
-            text = llm_output_queue.get()
+            try:
+                text = llm_output_queue.get(timeout=1)
+            except queue.Empty:
+                continue
             while self.audio_queue.qsize() >= 5:
+                time.sleep(0.01)
                 pass
             inputs = self.processor(text=text, return_tensors="pt") 
             audio_chunk = self.model.generate_speech(inputs["input_ids"], self.speaker_embeddings, vocoder=self.vocoder)

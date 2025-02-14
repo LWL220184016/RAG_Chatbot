@@ -29,7 +29,10 @@ class NeMo_ASR():
             # except queue.Empty:
             #     continue
             print("waiting audio_data")
-            audio_data = self.ap.audio_checked_queue.get()
+            try:
+                audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
+            except queue.Empty:
+                continue
             print("audio_data received")
             processed_data = self.ap.process_audio_ws1(audio_data=audio_data)
             try:

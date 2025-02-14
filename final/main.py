@@ -2,6 +2,10 @@ import pyaudio
 import threading
 import sounddevice as sd
 import multiprocessing
+import torch
+import time
+import queue
+
 from ASR.audio_process import Audio_Processer
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import NeMo_ASR as ASR
@@ -9,8 +13,6 @@ from LLM.llm import LLM
 from LLM.prompt_template import Message
 from TTS.tts import TTS
 from RAG.graph_rag import Graph_RAG
-import torch
-import time
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -108,7 +110,10 @@ def main():
 
         while not stop_event.is_set():
             while speaking_event.is_set() or not audio_queue.empty():
-                audio_chunk = audio_queue.get()
+                try:
+                    audio_chunk = audio_queue.get()
+                except queue.Empty:
+                    continue
                 sd.play(audio_chunk, samplerate=16000, blocking=False)
                 while sd.get_stream().active:
                     if is_user_talking.is_set():
