@@ -2,7 +2,6 @@ import queue
 import multiprocessing
 import time
 from langchain_ollama import OllamaLLM
-
 from LLM.prompt_template import Message
 # from Data_Storage.neo4j import Neo4J
 

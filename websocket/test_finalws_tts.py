@@ -8,7 +8,7 @@ import multiprocessing
 import pyaudio
 import torch
 from final.WebSocket.websocket import run_ws_server
-from final.func import tts_process_func_ws
+from final.func import tts_process_func
 
 """ 
 asr_output_queue replace llm_output_queue here since it is only testing tts 
@@ -39,7 +39,7 @@ def main():
             args=(uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, llm_output_queue_ws, audio_queue)
         )
         tts_process = multiprocessing.Process(
-            target=tts_process_func_ws, 
+            target=tts_process_func, 
             args=(
                 stop_event, 
                 speaking_event, 
