@@ -1,0 +1,24 @@
+cuda install command:
+    conda install nvidia/label/cuda-12.4.0::cuda-toolkit
+
+cudnn install command:
+
+
+miniconda install command:
+    sudo apt update
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda-installer.sh
+    bash ~/miniconda-installer.sh
+
+# nemo windows:
+    pip install nemo-toolkit hydra-core  lhotse einops jiwer librosa pyannote.audio webdataset editdistance ipython
+    datasets
+
+# nemo linux
+    wget https://github.com/state-spaces/mamba/releases/download/v2.2.2/mamba_ssm-2.2.2+cu118torch2.1cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+    pip install mamba_ssm-2.2.2+cu118torch2.1cxx11abiFALSE-cp310-cp310-linux_x86_64.whl
+    pip install --extra-index-url https://pypi.nvidia.com nemo-toolkit[all]
+
+
+wsl------
+    sudo apt install pulseaudio
+    ollama

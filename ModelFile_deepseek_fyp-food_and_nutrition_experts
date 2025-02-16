@@ -2,7 +2,7 @@
 # To build a new Modelfile based on this, replace FROM with:
 # FROM deepseek-r1:14b
  
-FROM /usr/share/ollama/.ollama/models/blobs/sha256-6e9f90f02bb3b39b59e81916e8cfce9deb45aeaeb9a54a5be4414486b907dc1e
+FROM deepseek-r1:14b
 TEMPLATE """{{- if .System }}<｜You are a food and nutrition experts can provide the most suitable recipes for users according to their needs, you can also answer users' questions about food in detail.｜>{{ .System }}{{ end }}
 {{- range $i, $_ := .Messages }}
 {{- $last := eq (len (slice $.Messages $i)) 1}}
