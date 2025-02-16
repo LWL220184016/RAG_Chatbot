@@ -23,5 +23,11 @@ final_test/RAG/__pycache__/
 final_test/TTS/__pycache__/
 final_test/WebSocket/__pycache__/
 
+final_langchainTools_test_forFYP/Tools/__pycache__/
+
+for_test_usage/__pycache__/
+for_test_usage/agent_tools/self/langchain/__pycache__/
+for_test_usage/agent_tools/self/langchain/tools/__pycache__/
+
 local_neo4j_storageDir/
 book.txt
