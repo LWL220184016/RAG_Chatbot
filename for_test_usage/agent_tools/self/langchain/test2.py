@@ -52,17 +52,91 @@ agent = initialize_agent(
     handle_parsing_errors="Check your output format!",
 )
 
-sys_msg = """系统消息：通过网络搜索验证信息，
-    如果用户要求推荐食谱，你需要通过列点的方式详细说明食谱的每个步骤，食材原料，分量，时间，以及推荐的原因。
-    如果用户要求的是食物的信息，你需要通过列点的方式详细说明食物的营养成分，热量，可能存在的问题等食物相关信息。
-    ；
+# system_message = """系统消息：根据用户的问题通过网络搜索验证信息并以下方模板在最终答案里面通过显示相关信息的来源链接。
+#     如果用户要求推荐食谱，你需要通过以下格式来输出结果(列点不应该和模板一样限定为两个，应该展示你所有认证为正确的信息)：
+#       食谱名称：[食谱的名称]\n
+#       制作步骤：
+#           1. ...\n
+#           2. ...\n
+#       食材名称以及分量：\n
+#           1. ...\n
+#           2. ...\n
+#       制作时间：[制作时间]\n
+#       推荐原因：[推荐的原因]\n\n
+#     如果用户要求的是食物的信息，你需要通过以下格式来输出结果(列点不应该和模板一样限定为两个，应该展示你所有认证为正确的信息)：
+#       食物名称：[食物的名称]\n
+#       营养成分：\n
+#           1. ...\n
+#           2. ...\n
+#       原产地：[原产地]\n
+#       品种：\n
+#           1. ...\n
+#           2. ...\n
+#       可能存在的问题：\n
+#           1. ...\n
+#           2. ...\n
+#     ；
+# """
+
+
+system_message = """
+    根据用户的问题，通过网络搜索验证信息，并按照下方指定模板输出最终答案，包含相关信息来源链接。  
+
+    若用户要求推荐食谱，请按以下格式输出结果(列点不应该和模板一样限定为两个，应该展示你所有认证为正确的信息)：  
+    食谱名称：[食谱的名称]  
+    制作步骤：  
+        1. ...
+        2. ...
+
+    食材名称及分量：  
+        1. ...
+        2. ...
+
+    制作时间：[制作时间]  
+    推荐原因：[推荐的原因]  
+    信息来源：[相关链接]
+
+    若用户要求提供食物信息，请按以下格式输出结果(列点不应该和模板一样限定为两个，应该展示你所有认证为正确的信息)：  
+    食物名称：[食物的名称]  
+    营养成分：  
+        1. ...
+        2. ...
+
+    原产地：[原产地]  
+    品种：  
+        1. ...
+        2. ...
+
+    可能存在的问题：  
+        1. ...
+        2. ...
+
+    信息来源：[相关链接]
+
+    总结：[总结]
+
+    注意：  
+    列点数量应根据验证后的信息灵活调整，不限于模板中的示例数量。  
+    确保所有信息经过验证，来源可靠，并在输出中提供链接。
 """
 
 # 测试用例
-# response = agent.invoke("What's the current time?")
-# response = agent.invoke("当前美国总统是谁？")
-# response = agent.invoke({"input": "Who is the current President of the United States?"})
-# response = agent.invoke({"input": "当前美国总统是谁？"})
-# response = agent.invoke({"input": "What's the current time?"})
-response = agent.invoke({"input": sys_msg + "用户输入：给我一个健康减肥的食谱。"})
+# user_input = agent.invoke("What's the current time?")
+# user_input = agent.invoke("当前美国总统是谁？")
+# user_input = agent.invoke({"input": "Who is the current President of the United States?"})
+# user_input = agent.invoke({"input": "当前美国总统是谁？"})
+# user_input = agent.invoke({"input": "What's the current time?"})
+# user_input = "请推荐一个食谱给我。"
+user_input = "请为我详细介绍一下无花果。"
+
+input = {
+    "system_msg": system_message,
+    "user_input": user_input,
+}
+
+response = agent.invoke({"input": input})
 print("Final Answer:", response['output'])
+print()
+print()
+
+print("response:", response)
