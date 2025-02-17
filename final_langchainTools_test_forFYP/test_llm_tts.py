@@ -1,11 +1,13 @@
 import multiprocessing
 import torch
-
+import queue
+import sounddevice as sd
+import time
 # from LLM.llm_ollama import LLM
 from LLM.llm_google import LLM
 from LLM.prompt_template import get_langchain_PromptTemplate
 # from RAG.graph_rag import Graph_RAG
-from func_fyp import llm_process_func_ws
+from func_fyp import llm_process_func_ws, tts_process_func
 from langchain_community.agent_toolkits.load_tools import load_tools
 from Tools.duckduckgo_searching import duckduckgo_search
 
@@ -19,6 +21,7 @@ def main():
     asr_output_queue = multiprocessing.Queue()
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue()
+    audio_queue = multiprocessing.Queue()
 
     # llm = LLM(
     #     is_user_talking=is_user_talking, 
@@ -47,19 +50,38 @@ def main():
                 # rag,
             )
         )
+        tts_process = multiprocessing.Process(
+            target=tts_process_func, 
+            args=(
+                stop_event, 
+                speaking_event, 
+                llm_output_queue, 
+                audio_queue,
+            )
+        )
         
         llm_process.start()
 
 
         asr_output_queue.put("Hello")
         while not stop_event.is_set():
-            user_input = input("User: ")
-            if user_input == "show":
-                while not llm_output_queue.empty():
-                    output = llm_output_queue.get_nowait()
-                    print(output)
-            else:
-                asr_output_queue.put(user_input)
+            user_input = input(prompt="User: ")
+            asr_output_queue.put(user_input)
+
+
+            # while speaking_event.is_set() or not audio_queue.empty():
+            #     try:
+            #         audio_chunk = audio_queue.get()
+            #     except queue.Empty:
+            #         continue
+            #     sd.play(audio_chunk, samplerate=16000, blocking=False)
+            #     while sd.get_stream().active:
+            #         if is_user_talking.is_set():
+            #             sd.stop()
+            #             if not audio_queue.empty():
+            #                 audio_chunk = audio_queue.get()
+            #             break
+            #         time.sleep(0.01)
             
     except KeyboardInterrupt:
         print("main KeyboardInterrupt\n")

@@ -26,13 +26,13 @@ class LLM:
             stop_event = None,
             speaking_event = None,
             llm_output_queue: multiprocessing.Queue = None,
-            llm_output_queue _ws: multiprocessing.Queue = None, only add it here, others need update
-
+            llm_output_queue_ws: multiprocessing.Queue = None, 
             tools = [],
             # neo4j: Neo4J = Neo4J()
         ):
 
         self.llm_output_queue = llm_output_queue
+        self.llm_output_queue_ws = llm_output_queue_ws
         self.is_user_talking = is_user_talking 
         self.stop_event = stop_event
         self.speaking_event = speaking_event
@@ -40,7 +40,7 @@ class LLM:
             raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
         # self.neo4j = neo4j
 
-        custom_callback = LLMAgentStreamingCallbackHandler(queue=self.llm_output_queue)
+        custom_callback = LLMAgentStreamingCallbackHandler(queue=self.llm_output_queue_ws)
         self.model = ChatGoogleGenerativeAI(
             # model="gemini-1.5-pro",
             model=model_name,
@@ -64,7 +64,6 @@ class LLM:
     def llm_output_ws(
             self,
             user_input_queue: multiprocessing.Queue = None,
-            llm_output_queue_ws: multiprocessing.Queue = None, 
             prompt_template = None,
             rag=None
         ):
@@ -97,7 +96,7 @@ class LLM:
                 llm_output_total = ""
 
                 response = self.agent.invoke(prompt_template.format(user_input=user_input))
-                llm_output_queue_ws.put(response['output'])
+                self.llm_output_queue_ws.put(response['output'])
 
                 for output in response['output']:
                     if self.is_user_talking.is_set() or not user_input_queue.empty():

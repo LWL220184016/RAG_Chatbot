@@ -9,17 +9,14 @@ class LLMAgentStreamingCallbackHandler(BaseCallbackHandler):
         # 流式输出每个 Token（Ollama 的 token 可能包含格式字符）
         self.full_response += token
         # print(f"\033[92m{token}\033[0m", end="", flush=True)  # 绿色高亮输出
-        print(f"\033[95m{token}\033[0m", end="", flush=True)  # 紫色高亮输出
+        # print(f"\033[95m{token}\033[0m", end="", flush=True)  # 紫色高亮输出
         self.queue.put(token)
-        print("<new token> queue size: ", self.queue.qsize(), "=== token: ", token)
 
     def on_agent_action(self, action, **kwargs):
         # Agent 调用工具时触发
         # print(f"\n\033[94m🤖 Action: {action.log}\033[0m")  # 蓝色高亮
         print(f"\n\033[91m🤖 Action: {action.log}\033[0m")  # 红色高亮
         self.queue.put(f"\nAction: {action.log}")
-        print("<new action>!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
 
     def on_tool_end(self, output: str, **kwargs):
         # 工具执行完成
@@ -33,7 +30,7 @@ class LLMAgentStreamingCallbackHandler(BaseCallbackHandler):
         # Agent 完成所有操作
         print(f"\n\033[95m✅ Final Answer: {finish.return_values['output']}\033[0m")
         self.queue.put(f"\nFinal Result: {finish.return_values['output']}")
-        self.queue.put(None)  # 结束信号
+        # self.queue.put(None)  # 结束信号
 
 # class QueueCallbackHandler(BaseCallbackHandler):
 #     """将回调数据存入队列供生成器读取"""
