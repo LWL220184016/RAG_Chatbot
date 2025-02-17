@@ -32,7 +32,7 @@ class LLM:
             agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True,
             handle_parsing_errors="Check your output format!",
-            callbacks=[OllamaStreamingCallbackHandler()],  # 绑定自定义回调
+            callbacks=[LLMAgentStreamingCallbackHandler()],  # 绑定自定义回调
         )
         self.llm_output_queue = llm_output_queue
         self.is_user_talking = is_user_talking 

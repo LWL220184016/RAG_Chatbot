@@ -1,10 +1,9 @@
-import queue
 import multiprocessing
 import time
+import queue
+
 from langchain_google_genai import ChatGoogleGenerativeAI
-
 # from Data_Storage.neo4j import Neo4J
-
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.prompts import PromptTemplate
 from langchain.agents import AgentType, initialize_agent
@@ -13,7 +12,7 @@ from langchain_community.tools import Tool
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from Tools.duckduckgo_searching import duckduckgo_search
-from LLM.ollamaStreamingCallbackHandler import OllamaStreamingCallbackHandler
+from LLM.llmAgentStreamingCallbackHandler import LLMAgentStreamingCallbackHandler
 
 class LLM:
     def __init__(
@@ -21,36 +20,18 @@ class LLM:
             model_name: str = "gemini-1.5-flash",
             temperature: float = 0.0,
             max_tokens: int = None,
-            timeout = None,
-            max_retries = 2,
+            timeout: float = None,
+            max_retries: int = 2,
             is_user_talking = None,
             stop_event = None,
             speaking_event = None,
             llm_output_queue: multiprocessing.Queue = None,
+            llm_output_queue _ws: multiprocessing.Queue = None, only add it here, others need update
+
             tools = [],
             # neo4j: Neo4J = Neo4J()
         ):
 
-        self.model = ChatGoogleGenerativeAI(
-            # model="gemini-1.5-pro",
-            model=model_name,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout=timeout,
-            max_retries=max_retries,
-            streaming=True,  # 启用流式传输
-            callbacks=[StreamingStdOutCallbackHandler()],  # 标准输出回调
-            # other params...
-        )
-
-        self.agent = initialize_agent(
-            tools=tools,
-            llm=self.model,
-            agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True,
-            handle_parsing_errors="Check your output format!",
-            callbacks=[OllamaStreamingCallbackHandler()],  # 绑定自定义回调
-        )
         self.llm_output_queue = llm_output_queue
         self.is_user_talking = is_user_talking 
         self.stop_event = stop_event
@@ -59,10 +40,31 @@ class LLM:
             raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
         # self.neo4j = neo4j
 
+        custom_callback = LLMAgentStreamingCallbackHandler(queue=self.llm_output_queue)
+        self.model = ChatGoogleGenerativeAI(
+            # model="gemini-1.5-pro",
+            model=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout=timeout,
+            max_retries=max_retries,
+            streaming=True,  # 启用流式传输
+            callbacks=[StreamingStdOutCallbackHandler(), custom_callback],  # 标准输出回调
+            # other params...
+        )
+        self.agent = initialize_agent(
+            tools=tools,
+            llm=self.model,
+            agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+            # verbose=True,
+            handle_parsing_errors="Check your output format!",
+            callbacks=[custom_callback],  # 绑定自定义回调
+        )
+
     def llm_output_ws(
             self,
-            user_input_queue: queue.Queue = None,
-            llm_output_queue_ws: queue.Queue = None, 
+            user_input_queue: multiprocessing.Queue = None,
+            llm_output_queue_ws: multiprocessing.Queue = None, 
             prompt_template = None,
             rag=None
         ):
@@ -93,8 +95,11 @@ class LLM:
                 self.speaking_event.set()
                 llm_output = ""
                 llm_output_total = ""
-                is_llm_thinking = False
-                for output in self.agent.invoke(prompt_template.format(user_input=user_input)):
+
+                response = self.agent.invoke(prompt_template.format(user_input=user_input))
+                llm_output_queue_ws.put(response['output'])
+
+                for output in response['output']:
                     if self.is_user_talking.is_set() or not user_input_queue.empty():
                         if not self.llm_output_queue.empty():
                             empty_queue = self.llm_output_queue.get(block=False)
@@ -102,19 +107,10 @@ class LLM:
                     
                     # Directly append to llm_output, reducing queue operations
                     llm_output += output
-                    if output == "<think>" and not is_llm_thinking:
-                        is_llm_thinking = True
-                        print("is_llm_thinking = True")
-                    elif output == "</think>" and is_llm_thinking:
-                        is_llm_thinking = False
-                        print("is_llm_thinking = False")
-                    if output in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in output:
+                    if output in ["，", ",", "。", ".", "？", "?", "！", "!"] in output:
                         llm_output_total += llm_output
                         print("llm output: " + llm_output)
-                        if not is_llm_thinking or "</think>" in output:
-                            self.llm_output_queue.put(llm_output)
-                            print("after put llm_output_queue: ", self.llm_output_queue.qsize())
-                        llm_output_queue_ws.put(llm_output)
+                        self.llm_output_queue.put(llm_output)
                         llm_output = ""
 
                 # self.neo4j.add_dialogue_record(user_message, llm_message)

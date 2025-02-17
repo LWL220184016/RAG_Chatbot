@@ -10,8 +10,22 @@ from func_fyp import llm_process_func_ws
 from langchain_community.agent_toolkits.load_tools import load_tools
 from Tools.duckduckgo_searching import duckduckgo_search
 
+def show_queue_len(stop_event, queue):
+    while not stop_event.is_set():
+        print("queue size: ", queue.qsize())
+        llm_msg = queue.get()
+        print("queue.get: ", llm_msg)
+
 def main():
     tools=[duckduckgo_search]
+    
+    stop_event = multiprocessing.Event()
+    is_user_talking = multiprocessing.Event()
+    speaking_event = multiprocessing.Event()
+
+    asr_output_queue = multiprocessing.Queue()
+    llm_output_queue = multiprocessing.Queue()
+    llm_output_queue_ws = multiprocessing.Queue()
 
     llm = LLM(
         is_user_talking=is_user_talking, 
@@ -20,14 +34,6 @@ def main():
         llm_output_queue=llm_output_queue,
         tools=tools
     )
-
-    stop_event = multiprocessing.Event()
-    is_user_talking = multiprocessing.Event()
-    speaking_event = multiprocessing.Event()
-
-    asr_output_queue = multiprocessing.Queue()
-    llm_output_queue = multiprocessing.Queue()
-    llm_output_queue_ws = multiprocessing.Queue()
 
     # rag = Graph_RAG()
     prompt_template = get_langchain_PromptTemplate()
@@ -50,6 +56,8 @@ def main():
         
         llm_process.start()
 
+        show_queue_len_thread = threading.Thread(target=show_queue_len, args=(stop_event, llm_output_queue,))
+        show_queue_len_thread.start()
 
 
         while not stop_event.is_set():
@@ -61,9 +69,11 @@ def main():
         stop_event.set()
         llm_process.join()
         llm_process.close()
-
+        show_queue_len_thread.join()
+        
         torch.cuda.ipc_collect()
         print("User stopped the program\n")
+
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 from langchain.callbacks.base import BaseCallbackHandler
 
-class OllamaStreamingCallbackHandler(BaseCallbackHandler):
+class LLMAgentStreamingCallbackHandler(BaseCallbackHandler):
     def ___init__(self):
         self.full_response = ""  # 用于缓存完整响应
     

@@ -10,7 +10,7 @@ from langchain_ollama import OllamaLLM
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from tools.duckduckgo_searching import duckduckgo_search
-from ollamaStreamingCallbackHandler import OllamaStreamingCallbackHandler
+from llmAgentStreamingCallbackHandler import LLMAgentStreamingCallbackHandler
 
 # 初始化模型（降低随机性）
 llm = OllamaLLM(
@@ -55,7 +55,7 @@ agent = initialize_agent(
     agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
     handle_parsing_errors="Check your output format!",
-    callbacks=[OllamaStreamingCallbackHandler()],  # 绑定自定义回调
+    callbacks=[LLMAgentStreamingCallbackHandler()],  # 绑定自定义回调
 )
 
 # system_message = """系统消息：根据用户的问题通过网络搜索验证信息并以下方模板在最终答案里面通过显示相关信息的来源链接。
