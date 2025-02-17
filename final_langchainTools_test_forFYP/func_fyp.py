@@ -1,4 +1,3 @@
-import pyaudio
 import threading
 import torch
 import traceback
@@ -8,17 +7,9 @@ from ASR.audio_process import Audio_Processer
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import ASR
 from LLM.llm_ollama import LLM
-from LLM.prompt_template import Message
 from TTS.tts_transformers import TTS
 from RAG.graph_rag import Graph_RAG
 
-
-SOUND_LEVEL = 10
-CHUNK = 512
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 16000
-TIMEOUT_SEC = 0.3
 
 def asr_process_func(
         ap: Audio_Processer, 
@@ -26,7 +17,14 @@ def asr_process_func(
         is_user_talking: threading.Event,
         asr_output_queue: multiprocessing.Queue, 
         ):
-    
+    import pyaudio
+    SOUND_LEVEL = 10
+    CHUNK = 512
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
+    TIMEOUT_SEC = 0.3
+
     try:
         if ap is None:
             ap = Audio_Processer(
@@ -76,6 +74,11 @@ def asr_process_func_ws(
         asr_output_queue: multiprocessing.Queue, 
         asr_output_queue_ws: multiprocessing.Queue, 
         ):
+    import pyaudio
+    CHUNK = 512
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
 
     try:
         if ap is None:
@@ -116,8 +119,7 @@ def llm_process_func_ws(
         asr_output_queue: multiprocessing.Queue, 
         llm_output_queue: multiprocessing.Queue, 
         llm_output_queue_ws: multiprocessing.Queue, 
-        user_message: Message, 
-        llm_message: Message, 
+        prompt_template,
         rag,
         ):
     
@@ -129,7 +131,7 @@ def llm_process_func_ws(
                 speaking_event=speaking_event, 
                 llm_output_queue=llm_output_queue
             )
-        llm.llm_output_ws(asr_output_queue, llm_output_queue_ws, user_message, llm_message, rag)
+        llm.llm_output_ws(asr_output_queue, llm_output_queue_ws, prompt_template, rag)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()

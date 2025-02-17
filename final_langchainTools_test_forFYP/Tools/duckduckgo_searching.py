@@ -79,7 +79,7 @@ def duckduckgo_search(
 # 示例使用
 if __name__ == "__main__":
     # 测试搜索
-    # print(duckduckgo_search.run("最新AI发展 news", 2))
+    print(duckduckgo_search.run("最新AI发展 news", 2))
     
     # 整合到LangChain Agent
     from langchain.agents import initialize_agent
@@ -101,5 +101,5 @@ if __name__ == "__main__":
         verbose=True
     )
     
-    response = agent.run("请用工具进行网络搜索并告诉我OpenAI最近所有消息。")
+    response = agent.run("OpenAI最近发布了什么重要更新？")
     print(response)

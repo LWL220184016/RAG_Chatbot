@@ -1,6 +1,6 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
-from llm import LLM
+from final.LLM.llm_ollama import LLM
 import threading
 
 class TF_LLM(LLM):

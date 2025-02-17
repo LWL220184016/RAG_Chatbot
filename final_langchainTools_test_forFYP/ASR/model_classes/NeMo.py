@@ -5,7 +5,7 @@ import nemo.collections.asr as nemo_asr
 import traceback
 
 
-class NeMo_ASR():
+class ASR():
     def __init__(
             self, 
             model: str="nvidia/parakeet-rnnt-1.1b", 

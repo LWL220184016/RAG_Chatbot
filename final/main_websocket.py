@@ -41,12 +41,48 @@ def main():
         # asr_output_queue for user text input
         ws_process = multiprocessing.Process(
             target=run_ws_server, 
-            args=(uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, llm_output_queue_ws, audio_queue)
+            args=(
+                uncheck_audio_queue, 
+                asr_output_queue, 
+                asr_output_queue_ws, 
+                llm_output_queue_ws, 
+                audio_queue
+            )
         )
-        asr_process = multiprocessing.Process(target=asr_process_func_ws, args=(stop_event, uncheck_audio_queue, asr_output_queue, asr_output_queue_ws, is_user_talking))
-        llm_process = multiprocessing.Process(target=llm_process_func_ws, args=(stop_event, is_user_talking, speaking_event, asr_output_queue, llm_output_queue, llm_output_queue_ws, user_message, llm_message, rag))
-        tts_process = multiprocessing.Process(target=tts_process_func, args=(stop_event, speaking_event, llm_output_queue, audio_queue))
-        
+        asr_process = multiprocessing.Process(
+            target=asr_process_func_ws, 
+            args=(
+                stop_event, 
+                is_user_talking, 
+                uncheck_audio_queue, 
+                asr_output_queue, 
+                asr_output_queue_ws, 
+            )
+        )
+        llm_process = multiprocessing.Process(
+            target=llm_process_func_ws, 
+            args=(
+                stop_event, 
+                is_user_talking, 
+                speaking_event, 
+                asr_output_queue, 
+                llm_output_queue, 
+                llm_output_queue_ws, 
+                user_message, 
+                llm_message, 
+                rag
+            )
+        )
+        tts_process = multiprocessing.Process(
+            target=tts_process_func, 
+            args=(
+                stop_event, 
+                llm_output_queue, 
+                speaking_event, 
+                audio_queue
+            )
+        )
+
         
         ws_process.start()
         asr_process.start()
