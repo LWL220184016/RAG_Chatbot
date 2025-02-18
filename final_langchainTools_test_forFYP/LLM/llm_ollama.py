@@ -57,7 +57,7 @@ class LLM:
             tools=tools,
             llm=self.model,
             agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=False,
+            verbose=True,
             handle_parsing_errors="Check your output format!",
             callbacks=[custom_callback],  # 绑定自定义回调
         )
@@ -153,5 +153,5 @@ class LLM:
 
             # self.neo4j.add_dialogue_record(user_message, llm_message)
             llm_output_total = ""
-尝试在 LLMAgentStreamingCallbackHandler 的 on_llm_new_token 方法中添加侦测，判断 action 是否 Final Answer
-如果是 Final Answer，就将其放入 llm_output_queue 中，否则放入 llm_output_queue_ws 中
+# 尝试在 LLMAgentStreamingCallbackHandler 的 on_llm_new_token 方法中添加侦测，判断 action 是否 Final Answer
+# 如果是 Final Answer，就将其放入 llm_output_queue 中，否则放入 llm_output_queue_ws 中

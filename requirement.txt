@@ -5,6 +5,7 @@ duckduckgo_search  --For langchain tools
 sudo apt-get update
 sudo apt-get install portaudio19-dev
 pip install pyaudio noisereduce pydub
+pip install lightning lightrag-hku aioboto3 openai nano_vectordb neo4j 
 
 
 

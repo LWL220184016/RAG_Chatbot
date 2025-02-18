@@ -1,8 +1,8 @@
 import multiprocessing
 import torch
 
-# from LLM.llm_ollama import LLM
-from LLM.llm_google import LLM
+from LLM.llm_ollama import LLM
+# from LLM.llm_google import LLM
 from LLM.prompt_template import get_langchain_PromptTemplate
 # from RAG.graph_rag import Graph_RAG
 from func_fyp import llm_process_func_ws
@@ -27,7 +27,14 @@ def main():
     #     llm_output_queue=llm_output_queue,
     #     tools=tools
     # )
-    llm = None
+    llm = LLM(
+        is_user_talking=is_user_talking, 
+        stop_event=stop_event, 
+        speaking_event=speaking_event, 
+        llm_output_queue=llm_output_queue,
+        llm_output_queue_ws=llm_output_queue_ws,
+        tools=tools
+    )
 
     # rag = Graph_RAG()
     prompt_template = get_langchain_PromptTemplate()
