@@ -1,4 +1,5 @@
 from langchain.callbacks.base import BaseCallbackHandler
+from collections import deque
 
 class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
     def __init__(self, is_user_talking, user_input_queue, llm_output_queue, llm_output_queue_ws):
@@ -8,27 +9,25 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         self.llm_output_queue_ws = llm_output_queue_ws
         self.llm_output = ""  # 用于缓存分段响应然後輸入 tts
         self.full_response = ""  # 用于缓存完整响应
-        self.is_agent_action = False
-        self.is_llm_thinking = False
-        self.token_window = []  # 滑动窗口
+        self.is_final_answer = False
+        self.is_put_to_llm_output_queue = False
+        self.token_window = deque(maxlen=9)  # 滑动窗口
     
     def on_llm_new_token(self, token: str, **kwargs) -> None:
         # 流式输出每个 Token（Ollama 的 token 可能包含格式字符）
         self.full_response += token
-        # print(f"\033[95m{token}\033[0m", end="", flush=True)  # 紫色高亮输出
+        print(f"\033[95m|\033[0m", end="", flush=True)  # 紫色高亮输出
 
         # 更新滑动窗口
         self.token_window.append(token)
-        if len(self.token_window) > 4:  # 假设 ' "Final Answer",\n' 是由 4 个 token 组成
-            self.token_window.pop(0)
-
+        self.llm_output_queue_ws.put(token)
         # 检查滑动窗口中的 token 是否匹配 ' "Final Answer",\n'
-        print("----------------" + "".join(self.token_window) + "----------------")
-        if "".join(self.token_window) == ' "Final Answer",\n':
-            self.is_agent_action = True
+        if not self.is_final_answer and "".join(self.token_window) == 'Final Answer",\n  "action_input": "':
+            self.is_final_answer = True
+            self.is_put_to_llm_output_queue = True
             print("\n\033[91m🤖 Action: Final Answer\033[0m") #
 
-        if self.is_agent_action:
+        elif self.is_final_answer:
             if self.is_user_talking.is_set() or not self.user_input_queue.empty():
                 if not self.llm_output_queue.empty():
                     empty_queue = self.llm_output_queue.get(block=False)
@@ -36,20 +35,18 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
             
             # Directly append to llm_output, reducing queue operations
             self.llm_output += token
-            if "<think>" in token and not self.is_llm_thinking:
-                self.is_llm_thinking = True
-                print("self.is_llm_thinking = True")
 
-            elif "</think>" in token and self.is_llm_thinking:
-                self.is_llm_thinking = False
-                print("self.is_llm_thinking = False")
+            if '"' in token:
+                self.is_final_answer = False
+                return
 
-            if token in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in token:
-                print("\n\n   ---llm token: " + self.llm_output + "---\n\n")
-                if not self.is_llm_thinking and "</think>" in token:
-                    self.llm_output_queue.put(self.llm_output)
-                self.llm_output_queue_ws.put(self.llm_output)
-                llm_output = ""
+            if any(punct in token for punct in ["，", ",", "。", ".", "？", "?", "！", "!"]):
+                self.llm_output_queue.put(self.llm_output)
+                self.llm_output = ""
+                
+                1. 放棄在 on_llm_new_token 中進行分段處理，改為在 on_agent_finish 中進行分段處理
+                2. 嘗試不用 langchain 的情況下通過提示詞嘗試讓模型生成 json 或者 code 的 tools 呼叫
+                3. 在抱抱臉的 dc 群組中詢問我對 langchain 的理解是不是正確的，現在 langchain 表現不好是否因爲我對 langchain 的使用錯誤
 
             # self.neo4j.add_dialogue_record(user_message, llm_message)
 
@@ -73,7 +70,11 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         # print(f"\n\033[95m✅ Final Answer: {finish.return_values['output']}\033[0m")
         # self.queue.put(f"\nFinal Result: {finish.return_values['output']}")
         # self.queue.put(None)  # 结束信号
-        self.is_agent_action = False
+        if self.is_put_to_llm_output_queue:
+            self.is_final_answer = False
+            self.is_put_to_llm_output_queue = False
+        else:
+            self.llm_output_queue.put(finish.return_values['output'])
         pass
 
 class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
