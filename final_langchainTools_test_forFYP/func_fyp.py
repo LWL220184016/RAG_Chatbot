@@ -1,13 +1,14 @@
+# import pyaudio
 import threading
 import torch
 import traceback
 import multiprocessing.queues
 
 # from ASR.audio_process import Audio_Processer
-# # from ASR.asr import ASR
+# from ASR.asr import ASR
 # from ASR.model_classes.NeMo import ASR
 from LLM.llm_ollama import LLM
-from TTS.tts_transformers import TTS
+# from TTS.tts_transformers import TTS
 # from RAG.graph_rag import Graph_RAG
 
 
@@ -17,7 +18,6 @@ from TTS.tts_transformers import TTS
 #         is_user_talking: threading.Event,
 #         asr_output_queue: multiprocessing.Queue, 
 #         ):
-#     import pyaudio
 #     SOUND_LEVEL = 10
 #     CHUNK = 512
 #     FORMAT = pyaudio.paInt16
@@ -48,8 +48,6 @@ from TTS.tts_transformers import TTS
 #         print("asr_process_func KeyboardInterrupt\n")
 #         get_audio_thread.join()
 #         check_audio_thread.join()
-#         get_audio_thread.close()
-#         check_audio_thread.close()
 #         ap.stream.stop_stream()
 #         ap.stream.close()
 #         ap.p.terminate()
@@ -59,8 +57,6 @@ from TTS.tts_transformers import TTS
 #         print("asr_process_func finally\n")
 #         get_audio_thread.join()
 #         check_audio_thread.join()
-#         get_audio_thread.close()
-#         check_audio_thread.close()
 #         torch.cuda.ipc_collect()
 #         ap.stream.stop_stream()
 #         ap.stream.close()
@@ -74,7 +70,6 @@ from TTS.tts_transformers import TTS
 #         asr_output_queue: multiprocessing.Queue, 
 #         asr_output_queue_ws: multiprocessing.Queue, 
 #         ):
-#     import pyaudio
 #     CHUNK = 512
 #     FORMAT = pyaudio.paInt16
 #     CHANNELS = 1
@@ -129,10 +124,11 @@ def llm_process_func_ws(
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event, 
                 speaking_event=speaking_event, 
+                user_input_queue=asr_output_queue,
                 llm_output_queue=llm_output_queue,
                 llm_output_queue_ws=llm_output_queue_ws,
             )
-        llm.llm_output_ws(asr_output_queue, prompt_template, rag)
+        llm.llm_output_ws(prompt_template, rag)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()
@@ -141,21 +137,22 @@ def llm_process_func_ws(
         stop_event.set()
         torch.cuda.ipc_collect()
 
-def tts_process_func(
-        tts: TTS, 
-        stop_event: threading.Event, 
-        speaking_event: threading.Event, 
-        llm_output_queue: multiprocessing.Queue, 
-        audio_queue: multiprocessing.Queue
-    ):
-    try:
-        if tts is None:
-            tts = TTS(stop_event=stop_event, audio_queue=audio_queue)
-        tts.tts_output(llm_output_queue, speaking_event)
-    except KeyboardInterrupt:
-        print("tts_process_func KeyboardInterrupt\n")
-        stop_event.set()
-    finally:
-        print("tts_process_func finally\n")
-        stop_event.set()
-        torch.cuda.ipc_collect()
+# def tts_process_func(
+#         tts: TTS, 
+#         stop_event: threading.Event, 
+#         speaking_event: threading.Event, 
+#         llm_output_queue: multiprocessing.Queue, 
+#         audio_queue: multiprocessing.Queue
+#     ):
+    
+#     try:
+#         if tts is None:
+#             tts = TTS(stop_event=stop_event, audio_queue=audio_queue)
+#         tts.tts_output(llm_output_queue, speaking_event)
+#     except KeyboardInterrupt:
+#         print("tts_process_func KeyboardInterrupt\n")
+#         stop_event.set()
+#     finally:
+#         print("tts_process_func finally\n")
+#         stop_event.set()
+#         torch.cuda.ipc_collect()

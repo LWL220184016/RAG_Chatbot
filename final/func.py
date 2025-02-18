@@ -5,7 +5,7 @@ import traceback
 import multiprocessing.queues
 
 from ASR.audio_process import Audio_Processer
-# from ASR.asr import ASR
+# from ASR.model_classes.faster_whisper import ASR
 from ASR.model_classes.NeMo import ASR
 from LLM.llm_ollama import LLM
 from LLM.prompt_template import Message
@@ -13,19 +13,18 @@ from TTS.tts_transformers import TTS
 from RAG.graph_rag import Graph_RAG
 
 
-SOUND_LEVEL = 10
-CHUNK = 512
-FORMAT = pyaudio.paInt16
-CHANNELS = 1
-RATE = 16000
-TIMEOUT_SEC = 0.3
-
 def asr_process_func(
         ap: Audio_Processer, 
         stop_event: threading.Event, 
         is_user_talking: threading.Event,
         asr_output_queue: multiprocessing.Queue, 
         ):
+    SOUND_LEVEL = 10
+    CHUNK = 512
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
+    TIMEOUT_SEC = 0.3
     
     try:
         if ap is None:
@@ -50,8 +49,6 @@ def asr_process_func(
         print("asr_process_func KeyboardInterrupt\n")
         get_audio_thread.join()
         check_audio_thread.join()
-        get_audio_thread.close()
-        check_audio_thread.close()
         ap.stream.stop_stream()
         ap.stream.close()
         ap.p.terminate()
@@ -61,8 +58,6 @@ def asr_process_func(
         print("asr_process_func finally\n")
         get_audio_thread.join()
         check_audio_thread.join()
-        get_audio_thread.close()
-        check_audio_thread.close()
         torch.cuda.ipc_collect()
         ap.stream.stop_stream()
         ap.stream.close()
@@ -76,6 +71,10 @@ def asr_process_func_ws(
         asr_output_queue: multiprocessing.Queue, 
         asr_output_queue_ws: multiprocessing.Queue, 
         ):
+    CHUNK = 512
+    FORMAT = pyaudio.paInt16
+    CHANNELS = 1
+    RATE = 16000
 
     try:
         if ap is None:
@@ -118,7 +117,7 @@ def llm_process_func_ws(
         llm_output_queue_ws: multiprocessing.Queue, 
         user_message: Message, 
         llm_message: Message, 
-        rag,
+        rag = None,
         ):
     
     try:
@@ -145,6 +144,7 @@ def tts_process_func(
         llm_output_queue: multiprocessing.Queue, 
         audio_queue: multiprocessing.Queue
     ):
+    
     try:
         if tts is None:
             tts = TTS(stop_event=stop_event, audio_queue=audio_queue)

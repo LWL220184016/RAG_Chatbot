@@ -2,10 +2,17 @@ import os
 from neo4j import GraphDatabase
 from datetime import datetime
 
-
 class Neo4J():
     def __init__(self):
-        # URL examples: "neo4j://localhost", "neo4j+s://xxx.databases.neo4j.io"
+        """
+        You should run the following commands in the terminal before running the code:
+
+        URL examples: 
+            export NEO4J_URI="neo4j://localhost" or "neo4j+s://xxx.databases.neo4j.io" 
+        AUTH examples: 
+            export NEO4J_USERNAME="username"
+            export NEO4J_PASSWORD="password"
+        """
         self.URL = os.getenv('NEO4J_URI')
         self.AUTH = (os.getenv('NEO4J_USERNAME'), os.getenv('NEO4J_PASSWORD'))
         self.driver = self.start_driver()
@@ -35,7 +42,16 @@ class Neo4J():
             #     today=today, content=content, timestamp=timestamp, speaker=speaker
             # )
     
-    def add_dialogue_record(self, user_message, llm_message):
+    def add_dialogue_record(
+            self, 
+            user_message, 
+            llm_message, 
+        ):
+        """
+        user_message & llm_message:
+            Class Message in LLM.prompt_template
+        """
+
         today = datetime.today().strftime('%Y-%m-%d')
         
         with self.driver.session() as session:

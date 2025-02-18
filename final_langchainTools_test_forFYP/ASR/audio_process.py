@@ -1,8 +1,7 @@
 import pyaudio
-import queue
+import multiprocessing.queues
 import numpy as np
 import time
-import threading
 import noisereduce as nr
 import torchaudio
 import torch
@@ -11,26 +10,39 @@ from pydub import AudioSegment
 import io
 
 class Audio_Processer():
+    """
+    startStream: bool
+        If True, start stream when init. 
+        Should not use in server client approach and Web Socket, 
+        because the stream is use to get audio data from microphone. 
+
+        when using server client approach, the audio data should 
+        be sent from client to server.
+
+    is_user_talking: multiprocessing.Event
+        For stop llm invoking when user is talking
+
+    stop_event: multiprocessing.Event 
+        For stop all threads and multiprocessing
+    """
     def __init__(
             self, 
-            chunk = 512,
-            format = pyaudio.paInt16,
-            channels = 1,
-            rate = 16000,
-            sec = 1,
-            audio_unchecked_queue = queue.Queue(),
-            audio_checked_queue = queue.Queue(),
-            startStream = True,
-            is_user_talking: threading.Event = None,
-            stop_event: threading.Event = None,
-            input_device_index = 1,
+            chunk: int = 512, 
+            format = pyaudio.paInt16, 
+            channels: int = 1, 
+            rate: int = 16000, 
+            audio_unchecked_queue: multiprocessing.Queue = None, 
+            audio_checked_queue: multiprocessing.Queue = None, 
+            startStream: bool = True,
+            is_user_talking = None,
+            stop_event = None,
+            input_device_index: int = 1, 
         ):
         
         self.format = format
         self.channels = channels
         self.rate = rate
         self.chunk = chunk
-        self.sec = sec
         self.audio_unchecked_queue = audio_unchecked_queue
         self.audio_checked_queue = audio_checked_queue
         self.p = pyaudio.PyAudio()
@@ -40,7 +52,14 @@ class Audio_Processer():
         self.stop_event = stop_event
         self.mel_spectrogram = None
         
-    def set_mel_spectrogram(self, rate=None, n_mels=80, n_fft=400, hop_length=160):
+    def set_mel_spectrogram(
+            self, 
+            rate: int = None, 
+            n_mels: int = 80, 
+            n_fft: int = 400, 
+            hop_length: int = 160
+        ):
+
         if rate is None:
             rate = self.rate
 
@@ -55,7 +74,12 @@ class Audio_Processer():
         while not self.stop_event.is_set():
             self.audio_unchecked_queue.put(self.stream.read(self.chunk, exception_on_overflow=exception_on_overflow))
     
-    def detect_sound(self, sound_level_threshold = 100, timeout_sec=0.5):
+    def detect_sound(
+            self, 
+            sound_level_threshold: int = 100, 
+            timeout_sec: float = 0.5
+        ):
+
         frames = bytearray()
         record_start_time = 0
         while not self.stop_event.is_set(): # 加入一個參數輸入chunk 數量或者毫秒，當聲音強度低過閾值時，等待一段時間，再檢查聲音強度
@@ -85,7 +109,12 @@ class Audio_Processer():
             except OSError as e:
                 print(f"OSError: {e}")
 
-    def detect_sound_not_extend(self, sound_level_threshold = 100, timeout_sec=0.5):
+    def detect_sound_not_extend(
+            self, 
+            sound_level_threshold: int = 100, 
+            timeout_sec: float = 0.5
+        ):
+
         # frames = bytearray()
         record_start_time = 0
         while not self.stop_event.is_set(): # 加入一個參數輸入chunk 數量或者毫秒，當聲音強度低過閾值時，等待一段時間，再檢查聲音強度
@@ -113,7 +142,7 @@ class Audio_Processer():
             except OSError as e:
                 print(f"OSError: {e}")
 
-    def process_audio1(self, audio_data, asr_processor, device, torch_dtype):
+    def process_audio1(self, audio_data, asr_processor, device, torch_dtype) -> None:
         audio_data = np.frombuffer(audio_data, dtype = np.int16).astype(np.float32) / 32768.0 # audio bytes to float
         # audio_data = normalize_audio(audio_data)
         audio_data = asr_processor(
@@ -122,7 +151,11 @@ class Audio_Processer():
         audio_data = audio_data.to(device, dtype=torch_dtype)
 
         
-    def process_audio2(self, audio_data):
+    def process_audio2(
+            self, 
+            audio_data: bytes,
+        ) -> np.ndarray:
+
         try:
             audio_data = np.frombuffer(audio_data, dtype = np.int16).astype(np.float32) / 32768.0 # audio bytes to float
             audio_data = (audio_data - np.mean(audio_data)) / np.std(audio_data) # normalize audio float data
@@ -133,27 +166,35 @@ class Audio_Processer():
             print(f"ValueError: {e}")
             return None
 
-    def process_audio_ws1(self, audio_data):
+    def process_audio_ws1(
+            self, 
+            audio_data: bytes,
+        ) -> np.ndarray:
+
         try:
-            # 转换为 AudioSegment 对象
+            # Convert to AudioSegment object
             audio = AudioSegment.from_file(io.BytesIO(audio_data), format="webm")
             
-            # 统一采样率
+            # Unify the sampling rate
             audio = audio.set_frame_rate(16000)
             
-            # 转换为单声道
+            # Convert to mono(单声道)
             audio = audio.set_channels(1)
             
-            # 转换为 numpy 数组
+            # Convert to numpy array
             samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-            samples /= np.iinfo(audio.array_type).max  # 归一化到 [-1, 1]
+            samples /= np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
             
             return samples
         except Exception as e:
             print(f"Processing Error: {e}")
             return None
 
-    def process_audio3(self, audio_data):
+    def process_audio3(
+            self, 
+            audio_data: bytes,
+        ) -> torch.Tensor:
+
         audio_data = np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0  # Convert bytes to float32
         audio_tensor = torch.tensor(audio_data, dtype=torch.float32)
         mel = self.mel_spectrogram(audio_tensor)

@@ -12,7 +12,7 @@ from langchain_community.tools import Tool
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from Tools.duckduckgo_searching import duckduckgo_search
-from LLM.llmAgentStreamingCallbackHandler import LLMAgentStreamingCallbackHandler
+from LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
 
 class LLM:
     def __init__(
@@ -25,12 +25,14 @@ class LLM:
             is_user_talking = None,
             stop_event = None,
             speaking_event = None,
+            user_input_queue: multiprocessing.Queue = None,
             llm_output_queue: multiprocessing.Queue = None,
             llm_output_queue_ws: multiprocessing.Queue = None, 
             tools = [],
             # neo4j: Neo4J = Neo4J()
         ):
 
+        self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
         self.is_user_talking = is_user_talking 
@@ -39,8 +41,13 @@ class LLM:
         if self.is_user_talking is None or self.stop_event is None or self.speaking_event is None:
             raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
         # self.neo4j = neo4j
-
-        custom_callback = LLMAgentStreamingCallbackHandler(queue=self.llm_output_queue_ws)
+        
+        custom_callback = GoogleAgentStreamingCallbackHandler(
+            is_user_talking=self.is_user_talking, 
+            user_input_queue=self.user_input_queue, 
+            llm_output_queue=self.llm_output_queue, 
+            llm_output_queue_ws=self.llm_output_queue_ws, 
+        )
         self.model = ChatGoogleGenerativeAI(
             # model="gemini-1.5-pro",
             model=model_name,
@@ -56,14 +63,13 @@ class LLM:
             tools=tools,
             llm=self.model,
             agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-            # verbose=True,
+            verbose=True,
             handle_parsing_errors="Check your output format!",
             callbacks=[custom_callback],  # 绑定自定义回调
         )
 
     def llm_output_ws(
             self,
-            user_input_queue: multiprocessing.Queue = None,
             prompt_template = None,
             rag=None
         ):
@@ -71,46 +77,26 @@ class LLM:
         user_input = ""
         user_last_talk_time = time.time()
         while not self.stop_event.is_set():
-                if not self.is_user_talking.is_set():
-                    if time.time() - user_last_talk_time > 5:
-                        user_input = ""
-                    try:
-                        user_input += user_input_queue.get(timeout=0.1) + " "
-                    except queue.Empty:
-                        continue
-                    if not user_input_queue.empty():
-                        user_input += user_input_queue.get() + " "
-                else: # user is talking
-                    user_last_talk_time = time.time()
-                    continue  # Skip if the user is talking
+            if not self.is_user_talking.is_set():
+                if time.time() - user_last_talk_time > 5:
+                    user_input = ""
+                try:
+                    user_input += self.user_input_queue.get(timeout=0.1) + " "
+                except queue.Empty:
+                    continue
+                if not self.user_input_queue.empty():
+                    user_input += self.user_input_queue.get() + " "
+            else: # user is talking
+                user_last_talk_time = time.time()
+                continue  # Skip if the user is talking
 
-                print("user_input: " + user_input + "  -----------------------------------------------------user_input")
-                
-                # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
-                prompt = "return the previous dialogue content relate to the queue"
-                # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
-                
+            print("user_input: " + user_input + "  -----------------------------------------------------user_input")
+            
+            # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
+            prompt = "return the previous dialogue content relate to the queue"
+            # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
+            
 # have a problem with the rag
-                self.speaking_event.set()
-                llm_output = ""
-                llm_output_total = ""
-
-                response = self.agent.invoke(prompt_template.format(user_input=user_input))
-                self.llm_output_queue_ws.put(response['output'])
-
-                for output in response['output']:
-                    if self.is_user_talking.is_set() or not user_input_queue.empty():
-                        if not self.llm_output_queue.empty():
-                            empty_queue = self.llm_output_queue.get(block=False)
-                        break
-                    
-                    # Directly append to llm_output, reducing queue operations
-                    llm_output += output
-                    if output in ["，", ",", "。", ".", "？", "?", "！", "!"] in output:
-                        llm_output_total += llm_output
-                        print("llm output: " + llm_output)
-                        self.llm_output_queue.put(llm_output)
-                        llm_output = ""
-
-                # self.neo4j.add_dialogue_record(user_message, llm_message)
-                llm_output_total = ""
+            self.speaking_event.set()
+            self.agent.invoke(prompt_template.format(user_input=user_input))
+            

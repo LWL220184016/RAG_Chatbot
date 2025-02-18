@@ -3,6 +3,7 @@ import sys
 import asyncio
 import websockets
 import queue
+import multiprocessing.queues
 import base64
 import traceback
 import soundfile as sf
@@ -15,7 +16,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 # 全局字典，用于跟踪每个客户端的处理任务
 client_tasks = {}
 
-async def received_data(websocket, audio_input_queue, text_input_queue):
+async def received_data(
+        websocket, 
+        audio_input_queue: multiprocessing.Queue = None, 
+        text_input_queue: multiprocessing.Queue = None, 
+    ):
+
     try:
         async for message in websocket:
             if isinstance(message, str):
@@ -40,12 +46,17 @@ async def received_data(websocket, audio_input_queue, text_input_queue):
     # except Exception as e:
         # print(f"receiving loop Exception: {str(e)}")
 
-async def send_data(websocket, asr_queue, llm_queue, tts_queue):
+async def send_data(
+        websocket, 
+        asr_queue: multiprocessing.Queue = None, 
+        llm_queue: multiprocessing.Queue = None, 
+        tts_queue: multiprocessing.Queue = None, 
+    ):
+
     try:
         sample_rate = 16000
         while True:
 
-            # print("waiting llm text---------------------------------------------------------")
             try:
                 asr_output = await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -56,7 +67,6 @@ async def send_data(websocket, asr_queue, llm_queue, tts_queue):
                 asyncio.sleep(0.1)
                 pass
 
-            # print("waiting llm text---------------------------------------------------------")
             try:
                 llm_output = await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -67,7 +77,6 @@ async def send_data(websocket, asr_queue, llm_queue, tts_queue):
                 asyncio.sleep(0.1)
                 pass
 
-            # print("waiting tts audio========================================================")
             try:
                 audio_chunk = await asyncio.get_event_loop().run_in_executor(
                     None,
@@ -97,7 +106,15 @@ async def connection_watcher(websocket):
     except Exception as e:
         print(f"监控器异常: {str(e)}")
 
-async def handler(websocket, audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue):
+async def handler(
+        websocket, 
+        audio_input_queue: multiprocessing.Queue = None, 
+        text_input_queue: multiprocessing.Queue = None, 
+        asr_output_queue: multiprocessing.Queue = None, 
+        llm_output_queue: multiprocessing.Queue = None, 
+        tts_queue: multiprocessing.Queue = None, 
+    ):
+
     client_id = websocket.remote_address
     print(f"新连接来自 {client_id}")
     print("websocket.remote_address", websocket.remote_address)
@@ -168,11 +185,20 @@ async def handler(websocket, audio_input_queue, text_input_queue, asr_output_que
             del client_tasks[client_id]
             print(f"任务 {client_id} 已从client_tasks中移除")
 
-async def ws_main(audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue):
+async def ws_main(
+        host: str = "localhost",
+        port: int = 6789,
+        audio_input_queue: multiprocessing.Queue = None, 
+        text_input_queue: multiprocessing.Queue = None, 
+        asr_output_queue: multiprocessing.Queue = None, 
+        llm_output_queue: multiprocessing.Queue = None, 
+        tts_queue: multiprocessing.Queue = None, 
+    ):
+
     # 配置服务器参数
     server_config = {
-        "host": "localhost",
-        "port": 6789,
+        "host": host,
+        "port": port,
         "ping_interval": 1,
         "ping_timeout": 1,
         "close_timeout": 1
@@ -185,14 +211,31 @@ async def ws_main(audio_input_queue, text_input_queue, asr_output_queue, llm_out
         print(f"WebSocket服务器启动在 {server_config['host']}:{server_config['port']}")
         await asyncio.Future()
 
-def run_ws_server(audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue):
+def run_ws_server(
+        host: str = "localhost",
+        port: int = 6789,
+        audio_input_queue: multiprocessing.Queue = None, 
+        text_input_queue: multiprocessing.Queue = None, 
+        asr_output_queue: multiprocessing.Queue = None, 
+        llm_output_queue: multiprocessing.Queue = None, 
+        tts_queue: multiprocessing.Queue = None, 
+    ):
+
     # 配置事件循环
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
     
     try:
         loop.run_until_complete(
-            ws_main(audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue)
+            ws_main(
+                host,
+                port,
+                audio_input_queue, 
+                text_input_queue, 
+                asr_output_queue, 
+                llm_output_queue, 
+                tts_queue
+            )
         )
     except KeyboardInterrupt:
         print("服务器正常关闭")

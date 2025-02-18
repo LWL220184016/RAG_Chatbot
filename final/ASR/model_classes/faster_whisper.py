@@ -1,22 +1,23 @@
 from faster_whisper import WhisperModel
 from ASR.audio_process import Audio_Processer
 import queue
-import threading
+import multiprocessing
 
-class Faster_Whisper_ASR():
+class ASR():
     def __init__(
             self, 
-            model: str="large-v3", 
-            device="cuda", 
-            compute_type="float16", 
+            model: str = "large-v3", 
+            device: str = "cuda", 
+            compute_type: str = "float16", 
             ap: Audio_Processer=None,
-            stop_event: threading.Event = None
+            stop_event = None, 
+            asr_output_queue: multiprocessing.Queue = None, 
         ):
     
         self.model = WhisperModel(model, device=device, compute_type=compute_type)
         self.device = device
         self.ap = ap
-        self.asr_output_queue = queue.Queue()
+        self.asr_output_queue = asr_output_queue
         self.stop_event = stop_event
 
     def asr_output(self):

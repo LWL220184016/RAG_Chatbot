@@ -15,7 +15,7 @@ from langchain_community.tools import Tool
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from Tools.duckduckgo_searching import duckduckgo_search
-from LLM.llmAgentStreamingCallbackHandler import LLMAgentStreamingCallbackHandler
+from LLM.llmAgentStreamingCallbackHandler import OllamaAgentStreamingCallbackHandler
 
 class LLM:
     def __init__(
@@ -27,13 +27,14 @@ class LLM:
             is_user_talking = None,
             stop_event = None,
             speaking_event = None,
+            user_input_queue: multiprocessing.Queue = None,
             llm_output_queue: multiprocessing.Queue = None,
             llm_output_queue_ws: multiprocessing.Queue = None,
             tools = [],
             # neo4j: Neo4J = Neo4J()
         ):
 
-        
+        self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
         self.is_user_talking = is_user_talking 
@@ -43,8 +44,13 @@ class LLM:
             raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
         # self.neo4j = neo4j
 
-        self.callback_queue = multiprocessing.Queue()
-        custom_callback = LLMAgentStreamingCallbackHandler(queue=self.callback_queue)
+        # self.callback_queue = multiprocessing.Queue()
+        custom_callback = OllamaAgentStreamingCallbackHandler(
+            is_user_talking=self.is_user_talking, 
+            user_input_queue=self.user_input_queue, 
+            llm_output_queue=self.llm_output_queue,
+            llm_output_queue_ws=self.llm_output_queue_ws,
+        )
         self.model = OllamaLLM(
             model=model_name,
             top_k=top_k,
@@ -64,7 +70,6 @@ class LLM:
 
     def llm_output_ws(
             self,
-            user_input_queue: multiprocessing.Queue = None,
             prompt_template = None,
             rag=None
         ):
@@ -72,22 +77,17 @@ class LLM:
         user_input = ""
         user_last_talk_time = time.time()
 
-        check_llm_output_thread = threading.Thread(
-            target=self.check_llm_output, 
-            args=(user_input_queue,)
-        )
         try:
-            check_llm_output_thread.start()
             while not self.stop_event.is_set():
                 if not self.is_user_talking.is_set():
                     if time.time() - user_last_talk_time > 5:
                         user_input = ""
                     try:
-                        user_input += user_input_queue.get(timeout=0.1) + " "
+                        user_input += self.user_input_queue.get(timeout=0.1) + " "
                     except queue.Empty:
                         continue
-                    if not user_input_queue.empty():
-                        user_input += user_input_queue.get() + " "
+                    if not self.user_input_queue.empty():
+                        user_input += self.user_input_queue.get() + " "
                 else: # user is talking
                     user_last_talk_time = time.time()
                     continue  # Skip if the user is talking
@@ -104,54 +104,53 @@ class LLM:
         except KeyboardInterrupt:
             print("llm_output_ws KeyboardInterrupt\n")
             self.stop_event.set()
-            check_llm_output_thread.join()
             
             # torch.cuda.ipc_collect()
             print("User stopped the program\n")
 
-    def check_llm_output(
-            self, 
-            user_input_queue: multiprocessing.Queue, 
-        ):
-        llm_output = ""
-        llm_output_total = ""
-        is_llm_thinking = False
+#     def check_llm_output(
+#             self, 
+#             user_input_queue: multiprocessing.Queue, 
+#         ):
+#         llm_output = ""
+#         llm_output_total = ""
+#         is_llm_thinking = False
 
-        while not self.stop_event.is_set():
-            try:
-                output = self.callback_queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-            if self.is_user_talking.is_set() or not user_input_queue.empty():
-                if not self.llm_output_queue.empty():
-                    empty_queue = self.llm_output_queue.get(block=False)
-                    empty_queue = self.callback_queue.get(block=False)
-                break
+#         while not self.stop_event.is_set():
+#             try:
+#                 output = self.callback_queue.get(timeout=0.1)
+#             except queue.Empty:
+#                 continue
+#             if self.is_user_talking.is_set() or not user_input_queue.empty():
+#                 if not self.llm_output_queue.empty():
+#                     empty_queue = self.llm_output_queue.get(block=False)
+#                     empty_queue = self.callback_queue.get(block=False)
+#                 break
 
-            if output == None:
-                llm_output = ""
-                llm_output_total = ""
-                is_llm_thinking = False
-                continue
+#             if output == None:
+#                 llm_output = ""
+#                 llm_output_total = ""
+#                 is_llm_thinking = False
+#                 continue
             
-            # Directly append to llm_output, reducing queue operations
-            llm_output += output
-            if "<think>" in output and not is_llm_thinking:
-                is_llm_thinking = True
-                print("is_llm_thinking = True")
-            elif "</think>" in output and is_llm_thinking:
-                is_llm_thinking = False
-                print("is_llm_thinking = False")
-            if output in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in output:
-                llm_output_total += llm_output
-                print("\n\n   ---llm output: " + llm_output + "---\n\n")
-                if not is_llm_thinking and "</think>" in output:
-                    self.llm_output_queue.put(llm_output)
-                self.llm_output_queue_ws.put(llm_output)
-                llm_output = ""
+#             # Directly append to llm_output, reducing queue operations
+#             llm_output += output
+#             if "<think>" in output and not is_llm_thinking:
+#                 is_llm_thinking = True
+#                 print("is_llm_thinking = True")
+#             elif "</think>" in output and is_llm_thinking:
+#                 is_llm_thinking = False
+#                 print("is_llm_thinking = False")
+#             if output in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in output:
+#                 llm_output_total += llm_output
+#                 print("\n\n   ---llm output: " + llm_output + "---\n\n")
+#                 if not is_llm_thinking and "</think>" in output:
+#                     self.llm_output_queue.put(llm_output)
+#                 self.llm_output_queue_ws.put(llm_output)
+#                 llm_output = ""
 
 
-            # self.neo4j.add_dialogue_record(user_message, llm_message)
-            llm_output_total = ""
-# 尝试在 LLMAgentStreamingCallbackHandler 的 on_llm_new_token 方法中添加侦测，判断 action 是否 Final Answer
-# 如果是 Final Answer，就将其放入 llm_output_queue 中，否则放入 llm_output_queue_ws 中
+#             # self.neo4j.add_dialogue_record(user_message, llm_message)
+#             llm_output_total = ""
+# # 尝试在 OllamaAgentStreamingCallbackHandler 的 on_llm_new_token 方法中添加侦测，判断 action 是否 Final Answer
+# # 如果是 Final Answer，就将其放入 llm_output_queue 中，否则放入 llm_output_queue_ws 中

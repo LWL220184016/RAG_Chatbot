@@ -12,6 +12,8 @@ from func_fyp import asr_process_func_ws, llm_process_func_ws, tts_process_func
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
+ws_host = "localhost"
+ws_port = 6789
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -25,7 +27,7 @@ def main():
     is_user_talking = multiprocessing.Event()
     speaking_event = multiprocessing.Event()
 
-    uncheck_audio_queue = multiprocessing.Queue()
+    client_audio_queue = multiprocessing.Queue()
     asr_output_queue = multiprocessing.Queue()
     asr_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the user said
     llm_output_queue = multiprocessing.Queue()
@@ -41,11 +43,13 @@ def main():
         ws_process = multiprocessing.Process(
             target=run_ws_server, 
             args=(
-                uncheck_audio_queue, 
+                ws_host, 
+                ws_port, 
+                client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
                 llm_output_queue_ws, 
-                audio_queue
+                audio_queue, 
             )
         )
         asr_process = multiprocessing.Process(
@@ -53,7 +57,7 @@ def main():
             args=(
                 stop_event, 
                 is_user_talking, 
-                uncheck_audio_queue, 
+                client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
             )
@@ -68,7 +72,7 @@ def main():
                 llm_output_queue, 
                 llm_output_queue_ws, 
                 prompt_template, 
-                rag
+                rag, 
             )
         )
         tts_process = multiprocessing.Process(

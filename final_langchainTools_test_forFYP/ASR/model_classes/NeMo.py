@@ -8,11 +8,11 @@ import traceback
 class ASR():
     def __init__(
             self, 
-            model: str="nvidia/parakeet-rnnt-1.1b", 
-            device="cuda", 
-            ap: Audio_Processer=None,
-            stop_event = None,
-            asr_output_queue: multiprocessing.Queue = None,
+            model: str = "nvidia/parakeet-rnnt-1.1b", 
+            device: str = "cuda", 
+            ap: Audio_Processer = None, 
+            stop_event = None, 
+            asr_output_queue: multiprocessing.Queue = None, 
         ):
     
         self.model = nemo_asr.models.ASRModel.from_pretrained(model)
