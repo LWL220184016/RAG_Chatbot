@@ -128,7 +128,7 @@ def llm_process_func_ws(
                 llm_output_queue=llm_output_queue,
                 llm_output_queue_ws=llm_output_queue_ws,
             )
-        llm.llm_output_ws(prompt_template, rag)
+        llm.agent_output_ws(prompt_template, rag)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()

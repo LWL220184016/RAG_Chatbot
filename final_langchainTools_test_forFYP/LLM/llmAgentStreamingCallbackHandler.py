@@ -14,39 +14,39 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         self.token_window = deque(maxlen=9)  # 滑动窗口
     
     def on_llm_new_token(self, token: str, **kwargs) -> None:
-        # 流式输出每个 Token（Ollama 的 token 可能包含格式字符）
-        self.full_response += token
-        print(f"\033[95m|\033[0m", end="", flush=True)  # 紫色高亮输出
+        # # 流式输出每个 Token（Ollama 的 token 可能包含格式字符）
+        # self.full_response += token
+        # print(f"\033[95m|\033[0m", end="", flush=True)  # 紫色高亮输出
 
-        # 更新滑动窗口
-        self.token_window.append(token)
-        self.llm_output_queue_ws.put(token)
-        # 检查滑动窗口中的 token 是否匹配 ' "Final Answer",\n'
-        if not self.is_final_answer and "".join(self.token_window) == 'Final Answer",\n  "action_input": "':
-            self.is_final_answer = True
-            self.is_put_to_llm_output_queue = True
-            print("\n\033[91m🤖 Action: Final Answer\033[0m") #
+        # # 更新滑动窗口
+        # self.token_window.append(token)
+        # self.llm_output_queue_ws.put(token)
+        # # 检查滑动窗口中的 token 是否匹配 ' "Final Answer",\n'
+        # if not self.is_final_answer and "".join(self.token_window) == 'Final Answer",\n  "action_input": "':
+        #     self.is_final_answer = True
+        #     self.is_put_to_llm_output_queue = True
+        #     print("\n\033[91m🤖 Action: Final Answer\033[0m") #
 
-        elif self.is_final_answer:
-            if self.is_user_talking.is_set() or not self.user_input_queue.empty():
-                if not self.llm_output_queue.empty():
-                    empty_queue = self.llm_output_queue.get(block=False)
-                return
+        # elif self.is_final_answer:
+        #     if self.is_user_talking.is_set() or not self.user_input_queue.empty():
+        #         if not self.llm_output_queue.empty():
+        #             empty_queue = self.llm_output_queue.get(block=False)
+        #         return
             
-            # Directly append to llm_output, reducing queue operations
-            self.llm_output += token
+        #     # Directly append to llm_output, reducing queue operations
+        #     self.llm_output += token
 
-            if '"' in token:
-                self.is_final_answer = False
-                return
+        #     if '"' in token:
+        #         self.is_final_answer = False
+        #         return
 
-            if any(punct in token for punct in ["，", ",", "。", ".", "？", "?", "！", "!"]):
-                self.llm_output_queue.put(self.llm_output)
-                self.llm_output = ""
+        #     if any(punct in token for punct in ["，", ",", "。", ".", "？", "?", "！", "!"]):
+        #         self.llm_output_queue.put(self.llm_output)
+        #         self.llm_output = ""
                 
-                1. 放棄在 on_llm_new_token 中進行分段處理，改為在 on_agent_finish 中進行分段處理
-                2. 嘗試不用 langchain 的情況下通過提示詞嘗試讓模型生成 json 或者 code 的 tools 呼叫
-                3. 在抱抱臉的 dc 群組中詢問我對 langchain 的理解是不是正確的，現在 langchain 表現不好是否因爲我對 langchain 的使用錯誤
+1. 放棄在 on_llm_new_token 中進行分段處理，改為在 on_agent_finish 中進行分段處理
+2. 嘗試不用 langchain 的情況下通過提示詞嘗試讓模型生成 json 或者 code 的 tools 呼叫
+3. 在抱抱臉的 dc 群組中詢問我對 langchain 的理解是不是正確的，現在 langchain 表現不好是否因爲我對 langchain 的使用錯誤
 
             # self.neo4j.add_dialogue_record(user_message, llm_message)
 
@@ -67,14 +67,27 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
 
     def on_agent_finish(self, finish, **kwargs):
         # Agent 完成所有操作
-        # print(f"\n\033[95m✅ Final Answer: {finish.return_values['output']}\033[0m")
-        # self.queue.put(f"\nFinal Result: {finish.return_values['output']}")
-        # self.queue.put(None)  # 结束信号
-        if self.is_put_to_llm_output_queue:
-            self.is_final_answer = False
-            self.is_put_to_llm_output_queue = False
-        else:
-            self.llm_output_queue.put(finish.return_values['output'])
+        output = finish.return_values['output']
+        print(f"\n\033[38;5;208m🔍 return_values['output']: {output}\033[0m")  # 橙色高亮 (256-color)
+        self.llm_output_queue_ws.put(output)
+        llm_output = ""
+
+        for words in output:
+            if self.is_user_talking.is_set() or not self.user_input_queue.empty():
+                if not self.llm_output_queue.empty():
+                    empty_queue = self.llm_output_queue.get(block=False)
+                break
+            
+            # Directly append to llm_output, reducing queue operations
+            llm_output += words
+            if "<|IS|>" in llm_output: break
+
+            if words in ["，", ",", "。", ".", "？", "?", "！", "!"]:
+                self.llm_output_queue.put(llm_output)
+                # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
+                llm_output = ""
+
+        # self.neo4j.add_dialogue_record(user_message, llm_message)
         pass
 
 class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):

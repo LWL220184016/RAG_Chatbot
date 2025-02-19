@@ -68,7 +68,7 @@ class LLM:
             callbacks=[custom_callback],  # 绑定自定义回调
         )
 
-    def llm_output_ws(
+    def agent_output_ws(
             self,
             prompt_template = None,
             rag=None
