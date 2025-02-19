@@ -22,18 +22,18 @@ class ASR():
         self.asr_output_queue = asr_output_queue
         self.stop_event = stop_event
 
-    def asr_output(self):
+    def asr_output(self, is_asr_ready_event):
+        print("asr waiting audio")
+        is_asr_ready_event.set()
         while not self.stop_event.is_set():
             # try:
             #     audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
             # except queue.Empty:
             #     continue
-            print("waiting audio_data")
             try:
                 audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
             except queue.Empty:
                 continue
-            print("audio_data received")
             processed_data = self.ap.process_audio_ws1(audio_data=audio_data)
             try:
                 transcriptions = self.model.transcribe(
@@ -58,15 +58,15 @@ class ASR():
                 continue
         print("asr_output end")
 
-    def asr_output_ws(self, asr_output_queue_ws):
+    def asr_output_ws(self, is_asr_ready_event, asr_output_queue_ws):
+        print("asr waiting audio")
+        is_asr_ready_event.set()
         while not self.stop_event.is_set():
             # try:
             #     audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
             # except queue.Empty:
             #     continue
-            print("waiting audio_data")
             audio_data = self.ap.audio_checked_queue.get()
-            print("audio_data received")
             processed_data = self.ap.process_audio_ws1(audio_data=audio_data)
             try:
                 transcriptions = self.model.transcribe(

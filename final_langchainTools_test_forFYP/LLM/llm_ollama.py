@@ -70,10 +70,13 @@ class LLM:
 
     def agent_output_ws(
             self,
+            is_llm_ready_event: threading.Event,
             prompt_template = None,
             rag=None
         ):
 
+        print("llm waiting text")
+        is_llm_ready_event.set()
         user_input = ""
         user_last_talk_time = time.time()
 

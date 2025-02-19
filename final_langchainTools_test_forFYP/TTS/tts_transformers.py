@@ -26,8 +26,9 @@ class TTS():
         self.audio_queue = audio_queue
         self.stop_event = stop_event
 
-    def tts_output(self, llm_output_queue: queue.Queue, speaking_event):
-        print("waiting text")
+    def tts_output(self, speaking_event, is_tts_ready_event, llm_output_queue: queue.Queue):
+        print("tts waiting text")
+        is_tts_ready_event.set()
         while not self.stop_event.is_set():
             if llm_output_queue.empty():
                 speaking_event.clear()  # Signal that LLM has finished speaking

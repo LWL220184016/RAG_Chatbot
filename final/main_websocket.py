@@ -5,13 +5,18 @@ import torch
 import time
 
 # from ASR.asr import ASR
-from LLM.prompt_template import Message
+from LLM.llm_ollama import LLM
+from TTS.tts_transformers import TTS
 # from RAG.graph_rag import Graph_RAG
+from LLM.prompt_template import Message
 from WebSocket.websocket import run_ws_server
 from func import asr_process_func_ws, llm_process_func_ws, tts_process_func
+from Tools.duckduckgo_searching import duckduckgo_search
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
+ws_host = "localhost"
+ws_port = 6789
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -21,16 +26,32 @@ RATE = 16000
 TIMEOUT_SEC = 0.3
 
 def main():
+    tools=[duckduckgo_search]
+
+    is_asr_ready_event = multiprocessing.Event()
+    is_llm_ready_event = multiprocessing.Event()
+    is_tts_ready_event = multiprocessing.Event()
+
     stop_event = multiprocessing.Event()
     is_user_talking = multiprocessing.Event()
     speaking_event = multiprocessing.Event()
 
-    uncheck_audio_queue = multiprocessing.Queue()
+    audio_data_from_client_queue = multiprocessing.Queue()
     asr_output_queue = multiprocessing.Queue()
     asr_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the user said
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the llm said
     audio_queue = multiprocessing.Queue()
+
+    llm = LLM(
+        is_user_talking=is_user_talking, 
+        stop_event=stop_event, 
+        speaking_event=speaking_event, 
+        user_input_queue=asr_output_queue,
+        llm_output_queue=llm_output_queue,
+        llm_output_queue_ws=llm_output_queue_ws,
+        # tools=tools
+    )
 
     # rag = Graph_RAG()
     rag = None
@@ -42,11 +63,16 @@ def main():
         ws_process = multiprocessing.Process(
             target=run_ws_server, 
             args=(
-                uncheck_audio_queue, 
+                ws_host, 
+                ws_port, 
+                is_asr_ready_event, 
+                is_llm_ready_event, 
+                is_tts_ready_event, 
+                audio_data_from_client_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
                 llm_output_queue_ws, 
-                audio_queue
+                audio_queue, 
             )
         )
         asr_process = multiprocessing.Process(
@@ -54,7 +80,8 @@ def main():
             args=(
                 stop_event, 
                 is_user_talking, 
-                uncheck_audio_queue, 
+                is_asr_ready_event, 
+                audio_data_from_client_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
             )
@@ -65,21 +92,23 @@ def main():
                 stop_event, 
                 is_user_talking, 
                 speaking_event, 
+                is_llm_ready_event, 
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws, 
-                user_message, 
-                llm_message, 
-                rag
+                user_message, llm_message, 
+                rag, 
+                llm, 
             )
         )
         tts_process = multiprocessing.Process(
             target=tts_process_func, 
             args=(
                 stop_event, 
-                llm_output_queue, 
                 speaking_event, 
-                audio_queue
+                is_tts_ready_event, 
+                llm_output_queue, 
+                audio_queue,
             )
         )
 
@@ -90,17 +119,20 @@ def main():
         tts_process.start()
 
         while not stop_event.is_set():
-            while speaking_event.is_set() or not audio_queue.empty():
-                audio_chunk = audio_queue.get()
-                sd.play(audio_chunk, samplerate=16000, blocking=False)
-                while sd.get_stream().active:
-                    if is_user_talking.is_set():
-                        sd.stop()
-                        if not audio_queue.empty():
-                            audio_chunk = audio_queue.get()
-                        break
-                    time.sleep(0.01)
-            
+            # while speaking_event.is_set() or not audio_queue.empty():
+            #     audio_chunk = audio_queue.get()
+            #     sd.play(audio_chunk, samplerate=16000, blocking=False)
+            #     while sd.get_stream().active:
+            #         if is_user_talking.is_set():
+            #             sd.stop()
+            #             if not audio_queue.empty():
+            #                 audio_chunk = audio_queue.get()
+            #             break
+            #         time.sleep(0.01)
+
+
+            time.sleep(1)
+
     except KeyboardInterrupt:
         print("main KeyboardInterrupt\n")
         stop_event.set()

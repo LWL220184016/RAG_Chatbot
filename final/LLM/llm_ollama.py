@@ -1,5 +1,6 @@
 import queue
 import multiprocessing
+import threading
 import time
 from langchain_ollama import OllamaLLM
 
@@ -36,6 +37,7 @@ class LLM:
 
     def llm_output_ws(
             self,
+            is_llm_ready_event: threading.Event = None, # type: ignore
             user_input_queue: queue.Queue = None,
             llm_output_queue_ws: queue.Queue = None, 
             user_message: Message = None,
@@ -43,6 +45,8 @@ class LLM:
             rag=None
         ):
 
+        print("llm waiting text")
+        is_llm_ready_event.set()
         user_input = ""
         user_last_talk_time = time.time()
         while not self.stop_event.is_set():

@@ -8,6 +8,7 @@ import base64
 import traceback
 import soundfile as sf
 import io
+import time
 
 from websockets.exceptions import ConnectionClosed
 
@@ -214,12 +215,18 @@ async def ws_main(
 def run_ws_server(
         host: str = "localhost",
         port: int = 6789,
+        is_asr_ready_event = None, 
+        is_llm_ready_event = None, 
+        is_tts_ready_event = None, 
         audio_input_queue: multiprocessing.Queue = None, 
         text_input_queue: multiprocessing.Queue = None, 
         asr_output_queue: multiprocessing.Queue = None, 
         llm_output_queue: multiprocessing.Queue = None, 
         tts_queue: multiprocessing.Queue = None, 
     ):
+
+    while not all([is_asr_ready_event.is_set(), is_llm_ready_event.is_set(), is_tts_ready_event.is_set()]):
+        time.sleep(0.1)
 
     # 配置事件循环
     loop = asyncio.new_event_loop()

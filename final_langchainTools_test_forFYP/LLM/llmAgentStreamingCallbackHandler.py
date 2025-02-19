@@ -9,7 +9,7 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         self.llm_output_queue_ws = llm_output_queue_ws
         self.llm_output = ""  # 用于缓存分段响应然後輸入 tts
         self.full_response = ""  # 用于缓存完整响应
-        self.is_final_answer = False
+        # self.is_final_answer = False
         self.is_put_to_llm_output_queue = False
         self.token_window = deque(maxlen=9)  # 滑动窗口
     
@@ -43,11 +43,10 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         #     if any(punct in token for punct in ["，", ",", "。", ".", "？", "?", "！", "!"]):
         #         self.llm_output_queue.put(self.llm_output)
         #         self.llm_output = ""
-                
-1. 放棄在 on_llm_new_token 中進行分段處理，改為在 on_agent_finish 中進行分段處理
-2. 嘗試不用 langchain 的情況下通過提示詞嘗試讓模型生成 json 或者 code 的 tools 呼叫
-3. 在抱抱臉的 dc 群組中詢問我對 langchain 的理解是不是正確的，現在 langchain 表現不好是否因爲我對 langchain 的使用錯誤
-
+        pass
+# 2. 嘗試不用 langchain 的情況下通過提示詞嘗試讓模型生成 json 或者 code 的 tools 呼叫
+# 3. 在抱抱臉的 dc 群組中詢問我對 langchain 的理解是不是正確的，現在 langchain 表現不好是否因爲我對 langchain 的使用錯誤
+4. 通過修改提示詞模板和 OllamaAgentStreamingCallbackHandler 來解決 ollama 運行的模型有時候輸出 </think> 有時候沒有輸出的問題，這會導致無法吧正確的内容輸出到 tts
             # self.neo4j.add_dialogue_record(user_message, llm_message)
 
     def on_agent_action(self, action, **kwargs):
@@ -69,7 +68,6 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         # Agent 完成所有操作
         output = finish.return_values['output']
         print(f"\n\033[38;5;208m🔍 return_values['output']: {output}\033[0m")  # 橙色高亮 (256-color)
-        self.llm_output_queue_ws.put(output)
         llm_output = ""
 
         for words in output:
@@ -80,15 +78,23 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
             
             # Directly append to llm_output, reducing queue operations
             llm_output += words
-            if "<|IS|>" in llm_output: break
 
-            if words in ["，", ",", "。", ".", "？", "?", "！", "!"]:
-                self.llm_output_queue.put(llm_output)
+            if words in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in words:
+                
+                if self.is_put_to_llm_output_queue:
+                    self.llm_output_queue.put(llm_output)
+                self.llm_output_queue_ws.put(llm_output)
+                if "</think>" in llm_output: self.is_put_to_llm_output_queue = True
+                if "<|IS|>" in llm_output: self.is_put_to_llm_output_queue = False
+
                 # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
                 llm_output = ""
 
         # self.neo4j.add_dialogue_record(user_message, llm_message)
         pass
+
+    def on_error(self, error, **kwargs):
+        print(f"\n🔥 Error: {str(error)}")
 
 class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
     def __init__(self, is_user_talking, user_input_queue, llm_output_queue, llm_output_queue_ws):
