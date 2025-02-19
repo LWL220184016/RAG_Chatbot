@@ -46,7 +46,7 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         pass
 # 2. 嘗試不用 langchain 的情況下通過提示詞嘗試讓模型生成 json 或者 code 的 tools 呼叫
 # 3. 在抱抱臉的 dc 群組中詢問我對 langchain 的理解是不是正確的，現在 langchain 表現不好是否因爲我對 langchain 的使用錯誤
-4. 通過修改提示詞模板和 OllamaAgentStreamingCallbackHandler 來解決 ollama 運行的模型有時候輸出 </think> 有時候沒有輸出的問題，這會導致無法吧正確的内容輸出到 tts
+# 4. 通過修改提示詞模板和 OllamaAgentStreamingCallbackHandler 來解決 ollama 運行的模型有時候輸出 </think> 有時候沒有輸出的問題，這會導致無法吧正確的内容輸出到 tts
             # self.neo4j.add_dialogue_record(user_message, llm_message)
 
     def on_agent_action(self, action, **kwargs):
