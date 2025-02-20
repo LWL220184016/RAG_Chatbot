@@ -1,9 +1,10 @@
 import multiprocessing
 import torch
 
-from LLM.llm_ollama import LLM
+# from LLM.llm_ollama import LLM
 # from LLM.llm_google import LLM
-from LLM.prompt_template import get_langchain_PromptTemplate
+from LLM.llm_transformers import LLM
+from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 # from RAG.graph_rag import Graph_RAG
 from func_fyp import llm_process_func_ws
 from langchain_community.agent_toolkits.load_tools import load_tools
@@ -12,6 +13,8 @@ from Tools.duckduckgo_searching import duckduckgo_search
 def main():
     tools=[duckduckgo_search]
     
+    is_llm_ready_event = multiprocessing.Event()
+
     stop_event = multiprocessing.Event()
     is_user_talking = multiprocessing.Event()
     speaking_event = multiprocessing.Event()
@@ -21,6 +24,9 @@ def main():
     llm_output_queue_ws = multiprocessing.Queue()
 
     llm = LLM(
+        # model_name="deepseek-r1_14b_FYP4",
+        # torch_dtype=torch.float32,
+        # device="cuda:0",
         is_user_talking=is_user_talking, 
         stop_event=stop_event, 
         speaking_event=speaking_event, 
@@ -31,21 +37,23 @@ def main():
     )
 
     # rag = Graph_RAG()
-    prompt_template = get_langchain_PromptTemplate()
+    rag = None
+    prompt_template = get_langchain_PromptTemplate_Chinese2()
 
     try:
         llm_process = multiprocessing.Process(
             target=llm_process_func_ws, 
             args=(
-                llm,
                 stop_event, 
                 is_user_talking, 
                 speaking_event, 
+                is_llm_ready_event, 
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws,
                 prompt_template,
-                # rag,
+                rag,
+                llm,
             )
         )
         
@@ -73,4 +81,5 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.set_start_method('spawn')
     main()

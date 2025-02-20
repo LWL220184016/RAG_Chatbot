@@ -26,7 +26,7 @@ if __name__ == "__main__":
     stop_event = threading.Event()
     is_user_talking = threading.Event()
 
-    ap = Audio_Processer(chunk=CHUNK, stop_event=stop_event, is_user_talking=is_user_talking)
+    ap = Audio_Processer(chunk=CHUNK, is_user_talking=is_user_talking, stop_event=stop_event)
 
     get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
     check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,))

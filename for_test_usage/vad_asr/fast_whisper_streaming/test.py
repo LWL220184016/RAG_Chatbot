@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # model = WhisperModel(model_size, device="cuda", compute_type="float16")
     model = WhisperModel(model_size)
 
-    ap = Audio_Processer(chunk=CHUNK, stop_event=stop_event, is_user_talking=is_user_talking)
+    ap = Audio_Processer(chunk=CHUNK, is_user_talking=is_user_talking, stop_event=stop_event)
 
     get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
     check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL,))

@@ -19,29 +19,29 @@ from LLM.llmAgentStreamingCallbackHandler import OllamaAgentStreamingCallbackHan
 
 class LLM:
     def __init__(
-            self,
-            model_name: str = "deepseek-r1:14b",
-            top_k: int = 10,
-            top_p: float = 0.95,
-            temperature: float = 0.8,
-            is_user_talking = None,
-            stop_event = None,
-            speaking_event = None,
-            user_input_queue: multiprocessing.Queue = None,
-            llm_output_queue: multiprocessing.Queue = None,
-            llm_output_queue_ws: multiprocessing.Queue = None,
-            tools = [],
+            self, 
+            model_name: str = "deepseek-r1:14b", 
+            top_k: int = 10, 
+            top_p: float = 0.95, 
+            temperature: float = 0.8, 
+            is_user_talking = None, 
+            stop_event = None, 
+            speaking_event = None, 
+            user_input_queue: multiprocessing.Queue = None, 
+            llm_output_queue: multiprocessing.Queue = None, 
+            llm_output_queue_ws: multiprocessing.Queue = None, 
+            tools = [], 
             # neo4j: Neo4J = Neo4J()
         ):
 
-        self.user_input_queue = user_input_queue
-        self.llm_output_queue = llm_output_queue
-        self.llm_output_queue_ws = llm_output_queue_ws
         self.is_user_talking = is_user_talking 
         self.stop_event = stop_event
         self.speaking_event = speaking_event
         if self.is_user_talking is None or self.stop_event is None or self.speaking_event is None:
             raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
+        self.user_input_queue = user_input_queue
+        self.llm_output_queue = llm_output_queue
+        self.llm_output_queue_ws = llm_output_queue_ws
         # self.neo4j = neo4j
 
         # self.callback_queue = multiprocessing.Queue()
@@ -113,25 +113,26 @@ class LLM:
 
     def llm_output_ws(
             self,
-            user_input_queue: queue.Queue = None,
-            llm_output_queue_ws: queue.Queue = None, 
-            user_message: Message = None,
-            llm_message: Message = None,
+            is_llm_ready_event: threading.Event,
+            prompt_template = None,
             rag=None
         ):
 
+        print("llm waiting text")
+        is_llm_ready_event.set()
         user_input = ""
         user_last_talk_time = time.time()
+
         while not self.stop_event.is_set():
                 if not self.is_user_talking.is_set():
                     if time.time() - user_last_talk_time > 5:
                         user_input = ""
                     try:
-                        user_input += user_input_queue.get(timeout=0.1) + " "
+                        user_input += self.user_input_queue.get(timeout=0.1) + " "
                     except queue.Empty:
                         continue
-                    if not user_input_queue.empty():
-                        user_input += user_input_queue.get() + " "
+                    if not self.user_input_queue.empty():
+                        user_input += self.user_input_queue.get() + " "
                 else: # user is talking
                     user_last_talk_time = time.time()
                     continue  # Skip if the user is talking
@@ -144,14 +145,15 @@ class LLM:
                 
                 # Assuming 'update_content' method exists for Message class
                 # msg = user_message.update_content(content=user_input, memory=memory)
-                msg = user_message.update_content(content=user_input, memory=None)
+                # msg = user_message.update_content(content=user_input, memory=None)
 # have a problem with the rag
                 self.speaking_event.set()
                 llm_output = ""
                 llm_output_total = ""
                 is_llm_thinking = False
-                for output in self.model.stream(msg):
-                    if self.is_user_talking.is_set() or not user_input_queue.empty():
+                # self.agent.invoke(prompt_template.format(user_input=user_input))
+                for output in self.model.stream(user_input):
+                    if self.is_user_talking.is_set() or not self.user_input_queue.empty():
                         if not self.llm_output_queue.empty():
                             empty_queue = self.llm_output_queue.get(block=False)
                         break
@@ -170,10 +172,10 @@ class LLM:
                         if not is_llm_thinking or "</think>" in output:
                             self.llm_output_queue.put(llm_output)
                             print("after put llm_output_queue: ", self.llm_output_queue.qsize())
-                        llm_output_queue_ws.put(llm_output)
+                        self.llm_output_queue_ws.put(llm_output)
                         llm_output = ""
 
                 # Assuming 'update_content' method exists for Message class
-                llm_message.update_content(content=llm_output_total)
+                # llm_message.update_content(content=llm_output_total)
                 # self.neo4j.add_dialogue_record(user_message, llm_message)
                 llm_output_total = ""
