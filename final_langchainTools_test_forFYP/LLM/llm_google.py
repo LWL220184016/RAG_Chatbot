@@ -57,7 +57,6 @@ class LLM:
             max_retries=max_retries,
             streaming=True,  # 启用流式传输
             callbacks=[StreamingStdOutCallbackHandler(), custom_callback],  # 标准输出回调
-            # other params...
         )
         self.agent = initialize_agent(
             tools=tools,

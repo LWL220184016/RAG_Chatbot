@@ -2,8 +2,8 @@ import multiprocessing
 import torch
 
 # from LLM.llm_ollama import LLM
-# from LLM.llm_google import LLM
-from LLM.llm_transformers import LLM
+from LLM.llm_google import LLM
+# from LLM.llm_transformers import LLM
 from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 # from RAG.graph_rag import Graph_RAG
 from func_fyp import llm_process_func_ws
