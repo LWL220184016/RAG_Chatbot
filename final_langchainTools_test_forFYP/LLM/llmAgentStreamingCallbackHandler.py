@@ -51,6 +51,7 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
 # 4. 通過修改提示詞模板和 OllamaAgentStreamingCallbackHandler 來解決 ollama 運行的模型有時候輸出 </think> 有時候沒有輸出的問題，這會導致無法吧正確的内容輸出到 tts
 5. 搜索的信息中嘗試包含食物或者食譜的圖片
 6. 在食譜和食物的數據頁面添加一個按鈕，當用戶點擊時，會生成總結
+7. MemGPT for llm memory
 
 
     def on_agent_action(self, action, **kwargs):
