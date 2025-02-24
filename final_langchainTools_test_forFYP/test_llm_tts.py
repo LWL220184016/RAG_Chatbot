@@ -3,11 +3,11 @@ import torch
 import queue
 import sounddevice as sd
 import time
-# from LLM.llm_ollama import LLM
-from LLM.llm_google import LLM
+# from LLM.llm_ollama import LLM_Ollama as LLM
+from LLM.llm_google import LLM_Google as LLM
 from LLM.prompt_template import get_langchain_PromptTemplate
 # from RAG.graph_rag import Graph_RAG
-from func_fyp import llm_process_func_ws, tts_process_func
+from func_fyp import llm_agent_process_func_ws, tts_process_func
 from langchain_community.agent_toolkits.load_tools import load_tools
 from Tools.duckduckgo_searching import duckduckgo_search
 
@@ -37,7 +37,7 @@ def main():
 
     try:
         llm_process = multiprocessing.Process(
-            target=llm_process_func_ws, 
+            target=llm_agent_process_func_ws, 
             args=(
                 llm,
                 stop_event, 

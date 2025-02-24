@@ -8,12 +8,12 @@ import queue
 from ASR.audio_process import Audio_Processer
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import ASR
-# from LLM.llm_ollama import LLM
-from LLM.llm_google import LLM
+# from LLM.llm_ollama import LLM_Ollama as LLM
+from LLM.llm_google import LLM_Google as LLM
 from LLM.prompt_template import get_langchain_PromptTemplate
 from TTS.tts_transformers import TTS
 from RAG.graph_rag import Graph_RAG
-from func_fyp import asr_process_func, llm_process_func_ws, tts_process_func
+from func_fyp import asr_process_func, llm_agent_process_func_ws, tts_process_func
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -45,7 +45,7 @@ def main():
             )
         )
         llm_process = multiprocessing.Process(
-            target=llm_process_func_ws, 
+            target=llm_agent_process_func_ws, 
             args=(
                 stop_event, 
                 is_user_talking, 

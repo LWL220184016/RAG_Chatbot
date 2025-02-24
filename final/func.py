@@ -7,7 +7,7 @@ import multiprocessing.queues
 from ASR.audio_process import Audio_Processer
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import ASR
-from LLM.llm_ollama import LLM
+from final.LLM.llm_ollama import LLM_Ollama as LLM
 from TTS.tts_transformers import TTS
 # from RAG.graph_rag import Graph_RAG
 
@@ -110,7 +110,39 @@ def asr_process_func_ws(
         torch.cuda.ipc_collect()
         ap.p.terminate()
 
-def llm_process_func_ws(
+def llm_agent_process_func_ws(
+        stop_event: threading.Event, 
+        is_user_talking: threading.Event, 
+        speaking_event: threading.Event, 
+        is_llm_ready_event: threading.Event,
+        asr_output_queue: multiprocessing.Queue, 
+        llm_output_queue: multiprocessing.Queue, 
+        llm_output_queue_ws: multiprocessing.Queue, 
+        prompt_template, 
+        rag = None, 
+        llm: LLM = None, 
+    ):
+    
+    try:
+        if llm is None:
+            llm = LLM(
+                is_user_talking=is_user_talking, 
+                stop_event=stop_event, 
+                speaking_event=speaking_event, 
+                user_input_queue=asr_output_queue,
+                llm_output_queue=llm_output_queue,
+                llm_output_queue_ws=llm_output_queue_ws,
+            )
+        llm.llm_output_ws(is_llm_ready_event, prompt_template, rag)
+    except KeyboardInterrupt:
+        print("llm_process_func KeyboardInterrupt\n")
+        stop_event.set()
+    finally:
+        print("llm_process_func finally\n")
+        stop_event.set()
+        torch.cuda.ipc_collect()
+
+def llm_model_process_func_ws(
         stop_event: threading.Event, 
         is_user_talking: threading.Event, 
         speaking_event: threading.Event, 

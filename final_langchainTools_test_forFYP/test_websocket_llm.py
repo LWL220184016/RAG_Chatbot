@@ -2,12 +2,12 @@ import multiprocessing
 import torch
 import time
 
-# from LLM.llm_ollama import LLM
-from LLM.llm_google import LLM
-from LLM.prompt_template import get_langchain_PromptTemplate
+# from LLM.llm_ollama import LLM_Ollama as LLM
+from LLM.llm_google import LLM_Google as LLM
+from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 # from RAG.graph_rag import Graph_RAG
 from WebSocket.websocket import run_ws_server
-from func_fyp import llm_process_func_ws
+from func_fyp import llm_agent_process_func_ws
 from Tools.duckduckgo_searching import duckduckgo_search
 
 # set environment variable in linux
@@ -17,6 +17,10 @@ WS_PORT = 6789
 
 def main():
     tools=[duckduckgo_search]
+
+    is_asr_ready_event = multiprocessing.Event()
+    is_llm_ready_event = multiprocessing.Event()
+    is_tts_ready_event = multiprocessing.Event()
 
     stop_event = multiprocessing.Event()
     is_user_talking = multiprocessing.Event()
@@ -41,7 +45,7 @@ def main():
 
     # rag = Graph_RAG()
     rag = None
-    prompt_template = get_langchain_PromptTemplate()
+    prompt_template = get_langchain_PromptTemplate_Chinese2()
 
     try:
         # asr_output_queue for user text input
@@ -50,6 +54,9 @@ def main():
             args=(
                 WS_HOST, 
                 WS_PORT, 
+                is_asr_ready_event, 
+                is_llm_ready_event, 
+                is_tts_ready_event, 
                 client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
@@ -58,17 +65,18 @@ def main():
             )
         )
         llm_process = multiprocessing.Process(
-            target=llm_process_func_ws, 
+            target=llm_agent_process_func_ws, 
             args=(
-                llm, 
                 stop_event, 
                 is_user_talking, 
                 speaking_event, 
+                is_llm_ready_event, 
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws, 
                 prompt_template, 
                 rag, 
+                llm, 
             )
         )
 

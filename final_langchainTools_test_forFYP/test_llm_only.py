@@ -1,12 +1,12 @@
 import multiprocessing
 import torch
 
-# from LLM.llm_ollama import LLM
-# from LLM.llm_google import LLM
-from LLM.llm_transformers import LLM
+# from LLM.llm_ollama import LLM_Ollama as LLM
+from LLM.llm_google import LLM_Google as LLM
+# from LLM.llm_transformers import LLM_Transformers as LLM
 from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 # from RAG.graph_rag import Graph_RAG
-from func_fyp import llm_process_func_ws
+from func_fyp import llm_agent_process_func_ws
 from langchain_community.agent_toolkits.load_tools import load_tools
 from Tools.duckduckgo_searching import duckduckgo_search
 
@@ -42,7 +42,7 @@ def main():
 
     try:
         llm_process = multiprocessing.Process(
-            target=llm_process_func_ws, 
+            target=llm_agent_process_func_ws, 
             args=(
                 stop_event, 
                 is_user_talking, 
@@ -81,5 +81,5 @@ def main():
 
 
 if __name__ == "__main__":
-    multiprocessing.set_start_method('spawn')
+    # multiprocessing.set_start_method('spawn')
     main()

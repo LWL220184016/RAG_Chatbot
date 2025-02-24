@@ -5,12 +5,12 @@ import torch
 import time
 
 # from ASR.asr import ASR
-from LLM.llm_ollama import LLM
+from final_langchainTools_test_forFYP.LLM.llm_ollama import LLM_Ollama as LLM
 from TTS.tts_transformers import TTS
 # from RAG.graph_rag import Graph_RAG
 from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 from WebSocket.websocket import run_ws_server
-from func_fyp import asr_process_func_ws, llm_process_func_ws, tts_process_func
+from func_fyp import asr_process_func_ws, llm_agent_process_func_ws, tts_process_func
 from Tools.duckduckgo_searching import duckduckgo_search
 
 # set environment variable in linux
@@ -87,7 +87,7 @@ def main():
             )
         )
         llm_process = multiprocessing.Process(
-            target=llm_process_func_ws, 
+            target=llm_agent_process_func_ws, 
             args=(
                 stop_event, 
                 is_user_talking, 
