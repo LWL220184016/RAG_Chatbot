@@ -6,6 +6,7 @@ import time
 
 from llm import LLM
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
+from langchain.agents import AgentType, initialize_agent
 
 class LLM_Transformers(LLM):
     def __init__(
