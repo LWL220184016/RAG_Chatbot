@@ -1,6 +1,6 @@
 import multiprocessing
 
-from llm import LLM
+from LLM.llm import LLM
 from langchain_google_genai import ChatGoogleGenerativeAI
 # from Data_Storage.neo4j import Neo4J
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
