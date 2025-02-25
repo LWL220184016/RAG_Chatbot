@@ -1,14 +1,13 @@
 import multiprocessing
 
-from LLM.llm import LLM
+from final_langchainTools_test_forFYP.LLM.llm import LLM
 from langchain_google_genai import ChatGoogleGenerativeAI
 # from Data_Storage.neo4j import Neo4J
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.agents import AgentType, initialize_agent
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from Tools.duckduckgo_searching import duckduckgo_search
-from LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
+from final_langchainTools_test_forFYP.LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
 
 class LLM_Google(LLM):
     def __init__(
