@@ -1,7 +1,6 @@
 import multiprocessing
 
 from llm import LLM
-# from Data_Storage.neo4j import Neo4J
 from langchain_ollama import OllamaLLM
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.agents import AgentType, initialize_agent
@@ -24,7 +23,7 @@ class LLM_Ollama(LLM):
             llm_output_queue: multiprocessing.Queue = None, 
             llm_output_queue_ws: multiprocessing.Queue = None, 
             tools = [], 
-            # neo4j: Neo4J = Neo4J()
+            neo4j = None,
         ):
         
         super().__init__(
@@ -36,6 +35,7 @@ class LLM_Ollama(LLM):
             llm_output_queue, 
             llm_output_queue_ws, 
             tools, 
+            neo4j, 
         )
 
         self.is_user_talking = is_user_talking 
@@ -46,13 +46,13 @@ class LLM_Ollama(LLM):
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
-        # self.neo4j = neo4j
 
         custom_callback = OllamaAgentStreamingCallbackHandler(
             is_user_talking=self.is_user_talking, 
             user_input_queue=self.user_input_queue, 
             llm_output_queue=self.llm_output_queue,
             llm_output_queue_ws=self.llm_output_queue_ws,
+            neo4j=neo4j,
         )
         self.model = OllamaLLM(
             model=model_name,

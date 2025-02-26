@@ -168,5 +168,4 @@ class LLM_Transformers(LLM):
 
 #             # Assuming 'update_content' method exists for Message class
 #             # llm_message.update_content(content=llm_output_total)
-#             # self.neo4j.add_dialogue_record(user_message, llm_message)
 #             llm_output_total = ""

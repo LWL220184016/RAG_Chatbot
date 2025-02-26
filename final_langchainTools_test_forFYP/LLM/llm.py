@@ -2,7 +2,7 @@ import queue
 import multiprocessing
 import time
 
-# from Data_Storage.neo4j import Neo4J
+from Data_Storage.neo4j import Neo4J
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 class LLM:
@@ -16,7 +16,7 @@ class LLM:
             llm_output_queue: multiprocessing.Queue = None, 
             llm_output_queue_ws: multiprocessing.Queue = None, 
             tools = [], 
-            # neo4j: Neo4J = Neo4J()
+            neo4j: Neo4J = Neo4J()
         ):
 
         self.is_user_talking = is_user_talking 
@@ -27,7 +27,7 @@ class LLM:
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
-        # self.neo4j = neo4j
+        self.neo4j = neo4j
 
     
     def agent_output_ws(
@@ -62,11 +62,11 @@ class LLM:
                 
                 # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
                 prompt = "return the previous dialogue content relate to the queue"
-                # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
+                memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
             
 # have a problem with the rag
                 self.speaking_event.set()
-                agent.invoke(prompt_template.format(user_input=user_input))
+                agent.invoke(prompt_template.format(user_input=user_input, memory=memory))
         except KeyboardInterrupt:
             print("agent_output_ws KeyboardInterrupt\n")
             self.stop_event.set()
@@ -102,22 +102,16 @@ class LLM:
                     continue  # Skip if the user is talking
 
                 print("user_input: " + user_input + "  -----------------------------------------------------user_input")
-                
-                # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
                 prompt = "return the previous dialogue content relate to the queue"
-                # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
+                memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
                 
-                # Assuming 'update_content' method exists for Message class
-                # msg = user_message.update_content(content=user_input, memory=memory)
-                # msg = user_message.update_content(content=user_input, memory=None)
 # have a problem with the rag
                 self.speaking_event.set()
                 llm_output = ""
                 llm_output_total = ""
                 is_llm_thinking = False
 
-                # self.agent.invoke(prompt_template.format(user_input=user_input))
-                for output in model.stream(user_input):
+                for output in model.stream(prompt_template.format(user_input=user_input, memory=memory)):
                     if self.is_user_talking.is_set() or not self.user_input_queue.empty():
                         if not self.llm_output_queue.empty():
                             empty_queue = self.llm_output_queue.get(block=False)
@@ -140,7 +134,6 @@ class LLM:
                         self.llm_output_queue_ws.put(llm_output)
                         llm_output = ""
 
-                # Assuming 'update_content' method exists for Message class
                 # llm_message.update_content(content=llm_output_total)
-                # self.neo4j.add_dialogue_record(user_message, llm_message)
+                self.neo4j.add_dialogue_record(user_input, llm_output_total)
                 llm_output_total = ""

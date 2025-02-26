@@ -1,0 +1,7 @@
+# check linux folder permissions
+ls -ld [directory name]
+
+# check linux file permissions
+ls -l [file name]
+
+

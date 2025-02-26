@@ -2,11 +2,13 @@ from langchain.callbacks.base import BaseCallbackHandler
 from collections import deque
 
 class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
-    def __init__(self, is_user_talking, user_input_queue, llm_output_queue, llm_output_queue_ws):
+    def __init__(self, is_user_talking, user_input_queue, llm_output_queue, llm_output_queue_ws, neo4j):
         self.is_user_talking = is_user_talking
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
+        self.neo4j = neo4j
+
         self.llm_output = ""  # 用于缓存分段响应然後輸入 tts
         self.full_response = ""  # 用于缓存完整响应
         # self.is_final_answer = False
@@ -84,21 +86,21 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
                 if "</think>" in llm_output: self.is_put_to_llm_output_queue = True
                 if "<|IS|>" in llm_output: self.is_put_to_llm_output_queue = False
 
-                # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
                 llm_output = ""
 
-        # self.neo4j.add_dialogue_record(user_message, llm_message)
+        self.neo4j.add_dialogue_record(output)
         pass
 
     def on_error(self, error, **kwargs):
         print(f"\n🔥 Error: {str(error)}")
 
 class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
-    def __init__(self, is_user_talking, user_input_queue, llm_output_queue, llm_output_queue_ws):
+    def __init__(self, is_user_talking, user_input_queue, llm_output_queue, llm_output_queue_ws, neo4j):
         self.is_user_talking = is_user_talking
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
+        self.neo4j = neo4j
 
     def on_agent_action(self, action, **kwargs):
         # Agent 调用工具时触发
@@ -129,5 +131,5 @@ class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
                 # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
                 llm_output = ""
 
-        # self.neo4j.add_dialogue_record(user_message, llm_message)
+        self.neo4j.add_dialogue_record(output)
         pass

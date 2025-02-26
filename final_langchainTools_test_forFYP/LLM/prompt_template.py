@@ -84,11 +84,13 @@ def get_langchain_PromptTemplate_Chinese2():
     """<|IS|>: 用于标记来源信息的链接，避免 URL 进入 TTS """
 
     prompt_template = PromptTemplate(
-        input_variables=["user_input"],
+        input_variables=["user_input", "memory"], # 用戶輸入和歷史對話要點
         template="""
             用户问题：{user_input}
 
-            **任务目标：** 分析用户的问题，**仅回答**食物相关的问题。如果问题与食物无关，请**拒绝回答**。
+            历史对话要点：{memory} 
+
+            **任务目标：** 分析用户的问题以及历史对话要点，**仅回答**食物相关的问题。如果问题与食物无关，请**拒绝回答**。
 
             **回答流程：**
 

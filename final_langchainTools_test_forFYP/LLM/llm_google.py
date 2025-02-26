@@ -1,31 +1,30 @@
 import multiprocessing
 
-from final_langchainTools_test_forFYP.LLM.llm import LLM
+from LLM.llm import LLM
 from langchain_google_genai import ChatGoogleGenerativeAI
-# from Data_Storage.neo4j import Neo4J
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.agents import AgentType, initialize_agent
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from final_langchainTools_test_forFYP.LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
+from LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
 
 class LLM_Google(LLM):
     def __init__(
-            self,
-            temperature: float = 0.0,
-            max_tokens: int = None,
-            timeout: float = None,
-            max_retries: int = 2,
+            self, 
+            temperature: float = 0.0, 
+            max_tokens: int = None, 
+            timeout: float = None, 
+            max_retries: int = 2, 
 
-            model_name: str = "gemini-1.5-flash",
-            is_user_talking = None,
-            stop_event = None,
-            speaking_event = None,
-            user_input_queue: multiprocessing.Queue = None,
-            llm_output_queue: multiprocessing.Queue = None,
+            model_name: str = "gemini-1.5-flash", 
+            is_user_talking = None, 
+            stop_event = None, 
+            speaking_event = None, 
+            user_input_queue: multiprocessing.Queue = None, 
+            llm_output_queue: multiprocessing.Queue = None, 
             llm_output_queue_ws: multiprocessing.Queue = None, 
-            tools = [],
-            # neo4j: Neo4J = Neo4J()
+            tools = [], 
+            neo4j = None, 
         ):
 
         super().__init__(
@@ -37,6 +36,7 @@ class LLM_Google(LLM):
             llm_output_queue, 
             llm_output_queue_ws, 
             tools, 
+            neo4j, 
         )
 
         self.user_input_queue = user_input_queue
@@ -47,38 +47,38 @@ class LLM_Google(LLM):
         self.speaking_event = speaking_event
         if self.is_user_talking is None or self.stop_event is None or self.speaking_event is None:
             raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
-        # self.neo4j = neo4j
         
         custom_callback = GoogleAgentStreamingCallbackHandler(
             is_user_talking=self.is_user_talking, 
             user_input_queue=self.user_input_queue, 
             llm_output_queue=self.llm_output_queue, 
             llm_output_queue_ws=self.llm_output_queue_ws, 
+            neo4j=neo4j, 
         )
         self.model = ChatGoogleGenerativeAI(
-            # model="gemini-1.5-pro",
-            model=model_name,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            timeout=timeout,
-            max_retries=max_retries,
+            # model="gemini-1.5-pro", 
+            model=model_name, 
+            temperature=temperature, 
+            max_tokens=max_tokens, 
+            timeout=timeout, 
+            max_retries=max_retries, 
             streaming=True,  # 启用流式传输
             callbacks=[StreamingStdOutCallbackHandler(), custom_callback],  # 标准输出回调
         )
         self.agent = initialize_agent(
-            tools=tools,
-            llm=self.model,
-            agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True,
-            handle_parsing_errors="Check your output format!",
-            callbacks=[custom_callback],  # 绑定自定义回调
+            tools=tools, 
+            llm=self.model, 
+            agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, 
+            verbose=True, 
+            handle_parsing_errors="Check your output format!", 
+            callbacks=[custom_callback],  # 绑定自定义回调 
         )
 
     def agent_output_ws(
-            self,
+            self, 
             is_llm_ready_event, 
-            prompt_template = None,
-            rag=None
+            prompt_template = None, 
+            rag=None 
         ):
 
         # 在這裡傳遞必要的參數給父類別的方法

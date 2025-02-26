@@ -4,10 +4,11 @@ import multiprocessing
 import torch
 import time
 
-# from ASR.asr import ASR
-from final_langchainTools_test_forFYP.LLM.llm_ollama import LLM_Ollama as LLM
+# from LLM.llm_ollama import LLM_Ollama as LLM
+from LLM.llm_google import LLM_Google as LLM
+# from LLM.llm_transformers import LLM_Transformers as LLM
 from TTS.tts_transformers import TTS
-# from RAG.graph_rag import Graph_RAG
+from RAG.graph_rag import Graph_RAG
 from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 from WebSocket.websocket import run_ws_server
 from func_fyp import asr_process_func_ws, llm_agent_process_func_ws, tts_process_func
@@ -54,8 +55,8 @@ def main():
         tools=tools, 
     )
 
-    # rag = Graph_RAG()
-    rag = None
+    rag = Graph_RAG()
+    # rag = None
     prompt_template = get_langchain_PromptTemplate_Chinese2()
 
     try:

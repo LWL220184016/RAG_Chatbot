@@ -68,7 +68,7 @@ class Neo4J():
                     MERGE (c)-[:SPEAKS]->(d)
                     """,
                     today=today,
-                    dialogue_text=message.content,
+                    dialogue_text=message,
                     timestamp=message.time,
                     speaker=message.user_role,
                 )

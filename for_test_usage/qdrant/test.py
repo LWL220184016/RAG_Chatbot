@@ -78,11 +78,6 @@ for m in msg:
             }
         }
     )
-# test result:
-# 不同语言之间 may 不互通
-
-# need to add and test:
-# meta data
 
 # Insert (upsert) the points into the collection
 client.upsert(collection_name=collection_name, points=points)

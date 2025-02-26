@@ -1,5 +1,4 @@
 # https://github.com/HKUDS/LightRAG
-# for handle memory, can also consider run mem0 in Podman
 
 # export NEO4J_URI="neo4j://localhost:7687"
 # export NEO4J_USERNAME="neo4j"
@@ -7,7 +6,7 @@
 
 import os
 from lightrag import LightRAG, QueryParam
-from lightrag.llm import hf_model_complete, hf_embedding
+from lightrag.llm import hf_model_complete, hf_embedding  目前問題，這個套件沒有這個函數，上班要做的是找到解決方法，然後統一代碼格式
 from transformers import AutoModel, AutoTokenizer
 from lightrag.utils import EmbeddingFunc
 
@@ -31,14 +30,14 @@ class Graph_RAG:
 
         # Initialize LightRAG with Hugging Face model
         self.rag = LightRAG(
-            working_dir=working_dir,
+            working_dir=working_dir, 
             llm_model_func=hf_model_complete,  # Use Hugging Face model for text generation
             llm_model_name=llm_model_name,  # Model name from Hugging Face
             # Use Hugging Face embedding function
-            embedding_func=EmbeddingFunc(
-                embedding_dim=embedding_dim,
-                max_token_size=max_token_size,
-                func=lambda texts: hf_embedding(
+            embedding_func=EmbeddingFunc( 
+                embedding_dim=embedding_dim, 
+                max_token_size=max_token_size, 
+                func=lambda texts: hf_embedding( 
                     texts,
                     tokenizer=AutoTokenizer.from_pretrained(embedding_model_name),
                     embed_model=AutoModel.from_pretrained(embedding_model_name)
