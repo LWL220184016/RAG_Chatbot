@@ -1,6 +1,9 @@
+import datetime
+
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance
 from embedding_model.embedder import Embedder
+from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 
 # Initialize the Qdrant client (assuming a local instance running on default port)
 client = QdrantClient(host="localhost", port=6333)
@@ -53,19 +56,33 @@ for m in msg:
     print(f"PointID: {pointID}")
     print(f"Msg: {m}")
     print(f"Vector size: {embeddings.shape}")
-    print(f"Vector: {embeddings}")
+    # print(f"Vector: {embeddings}")
+    time = datetime.datetime.now().isoformat()
+    meta_data = {
+        "language": "en" if m.isascii() else "zh"
+
+        # "source": "None",
+        # "timestamp": time,
+        # "metadata": {
+        #     "length": len(m),
+        #     "language": "en" if m.isascii() else "zh"
+        # }
+    }
     points.append(
         {
             "id": pointID,
             "vector": embeddings[0].tolist(),
-            "payload": {"msg": m}
+            "payload": {
+                "msg": m,
+                **meta_data  # Merge additional JSON data into the payload
+            }
         }
     )
-test result:
-不同语言之间 may 不互通
+# test result:
+# 不同语言之间 may 不互通
 
-need to add and test:
-meta data
+# need to add and test:
+# meta data
 
 # Insert (upsert) the points into the collection
 client.upsert(collection_name=collection_name, points=points)
@@ -76,14 +93,33 @@ while True:
     query = input("Enter a query: ")
     query_vector = embedder.embed([query])
 
+    print("Filter(language, ) empty if you don't want to filter")
+    user_filter = input("example(language=en): ")
+    if user_filter.startswith("language="):
+        language = user_filter.split("=")[1]
+        filter_condition = Filter(
+            must=[
+                FieldCondition(
+                    key="language",
+                    match=MatchValue(value=language)
+                )
+            ]
+        )
+    else:
+        filter_condition = None
+
+    query_vector = embedder.embed([query])
+
     # Perform a search for the top 2 nearest neighbors
-    search_result = client.search(
+    search_result = client.query_points(
         collection_name=collection_name,
-        query_vector=query_vector[0],
-        limit=2
+        query=query_vector[0],
+        limit=2,
+        query_filter=filter_condition
     )
 
     # Print out the search results
     print("Search results:")
     for hit in search_result:
-        print(f"ID: {hit.id}, Score: {hit.score}, Payload: {hit.payload}")
+        print(hit)
+        # print(f"ID: {hit.id}, Score: {hit.score}, Payload: {hit.payload}")
