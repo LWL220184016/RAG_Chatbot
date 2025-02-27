@@ -5,7 +5,7 @@ duckduckgo_search  --For langchain tools
 sudo apt-get update
 sudo apt-get install portaudio19-dev
 pip install pyaudio noisereduce pydub
-pip install lightning lightrag-hku aioboto3 openai nano_vectordb neo4j 
+pip install neo4j 
 
 
 # for run model with transformers
@@ -20,7 +20,6 @@ pip install langchain_community langchain_core langgraph beautifulsoup4 langchai
 pip install langchain-huggingface websockets noisereduce
 pip install sentence-transformers
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
-pip install lightning lightrag-hku aioboto3 openai nano_vectordb neo4j 
 
 
 

@@ -9,8 +9,6 @@ from ASR.audio_process import Audio_Processer
 from ASR.model_classes.NeMo import ASR
 from final.LLM.llm_ollama import LLM_Ollama as LLM
 from TTS.tts_transformers import TTS
-# from RAG.graph_rag import Graph_RAG
-
 
 def asr_process_func(
         stop_event: threading.Event, 
@@ -119,7 +117,6 @@ def llm_agent_process_func_ws(
         llm_output_queue: multiprocessing.Queue, 
         llm_output_queue_ws: multiprocessing.Queue, 
         prompt_template, 
-        rag = None, 
         llm: LLM = None, 
     ):
     
@@ -133,7 +130,7 @@ def llm_agent_process_func_ws(
                 llm_output_queue=llm_output_queue,
                 llm_output_queue_ws=llm_output_queue_ws,
             )
-        llm.llm_output_ws(is_llm_ready_event, prompt_template, rag)
+        llm.llm_output_ws(is_llm_ready_event, prompt_template)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()
@@ -151,7 +148,6 @@ def llm_model_process_func_ws(
         llm_output_queue: multiprocessing.Queue, 
         llm_output_queue_ws: multiprocessing.Queue, 
         prompt_template, 
-        rag = None, 
         llm: LLM = None, 
     ):
     
@@ -165,7 +161,7 @@ def llm_model_process_func_ws(
                 llm_output_queue=llm_output_queue,
                 llm_output_queue_ws=llm_output_queue_ws,
             )
-        llm.llm_output_ws(is_llm_ready_event, prompt_template, rag)
+        llm.llm_output_ws(is_llm_ready_event, prompt_template)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()

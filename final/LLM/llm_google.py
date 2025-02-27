@@ -81,17 +81,15 @@ class LLM_Google(LLM):
             is_llm_ready_event, 
             user_message: Message = None,
             llm_message: Message = None,
-            rag=None
         ):
 
         # 在這裡傳遞必要的參數給父類別的方法
-        super().agent_output_ws(self.agent, is_llm_ready_event, user_message, llm_message, rag)
+        super().agent_output_ws(self.agent, is_llm_ready_event, user_message, llm_message)
 
     def llm_output_ws(self, 
             is_llm_ready_event, 
             user_message: Message = None,
             llm_message: Message = None,
-            rag=None, 
         ):
         
         raise NotImplementedError("llm_output_ws() in llm_google is not implemented yet.")

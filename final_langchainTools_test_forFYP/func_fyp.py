@@ -117,12 +117,11 @@ def llm_agent_process_func_ws(
         llm_output_queue: multiprocessing.Queue, 
         llm_output_queue_ws: multiprocessing.Queue, 
         prompt_template, 
-        rag = None, 
         llm = None, 
     ):
     
     try:
-        llm.agent_output_ws(is_llm_ready_event, prompt_template, rag)
+        llm.agent_output_ws(is_llm_ready_event, prompt_template)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()
@@ -140,12 +139,11 @@ def llm_model_process_func_ws(
         llm_output_queue: multiprocessing.Queue, 
         llm_output_queue_ws: multiprocessing.Queue, 
         prompt_template, 
-        rag = None, 
         llm = None, 
     ):
     
     try:
-        llm.llm_output_ws(is_llm_ready_event, prompt_template, rag)
+        llm.llm_output_ws(is_llm_ready_event, prompt_template)
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()

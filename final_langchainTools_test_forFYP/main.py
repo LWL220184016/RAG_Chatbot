@@ -12,7 +12,6 @@ from ASR.model_classes.NeMo import ASR
 from LLM.llm_google import LLM_Google as LLM
 from LLM.prompt_template import get_langchain_PromptTemplate
 from TTS.tts_transformers import TTS
-from RAG.graph_rag import Graph_RAG
 from func_fyp import asr_process_func, llm_agent_process_func_ws, tts_process_func
 
 SOUND_LEVEL = 10
@@ -32,7 +31,6 @@ def main():
     llm_output_queue_ws = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
 
-    rag = Graph_RAG()
     prompt_template = get_langchain_PromptTemplate()
 
     try:
@@ -54,7 +52,6 @@ def main():
                 llm_output_queue, 
                 llm_output_queue_ws,
                 prompt_template,
-                rag,
             )
         )
         tts_process = multiprocessing.Process(

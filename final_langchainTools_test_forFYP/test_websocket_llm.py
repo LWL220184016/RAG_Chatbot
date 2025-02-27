@@ -5,7 +5,6 @@ import time
 # from LLM.llm_ollama import LLM_Ollama as LLM
 from LLM.llm_google import LLM_Google as LLM
 from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
-# from RAG.graph_rag import Graph_RAG
 from WebSocket.websocket import run_ws_server
 from func_fyp import llm_agent_process_func_ws
 from Tools.duckduckgo_searching import duckduckgo_search
@@ -43,8 +42,6 @@ def main():
         tools=tools
     )
 
-    # rag = Graph_RAG()
-    rag = None
     prompt_template = get_langchain_PromptTemplate_Chinese2()
 
     try:
@@ -75,7 +72,6 @@ def main():
                 llm_output_queue, 
                 llm_output_queue_ws, 
                 prompt_template, 
-                rag, 
                 llm, 
             )
         )

@@ -81,7 +81,6 @@ class LLM_Transformers(LLM):
             is_llm_ready_event, 
             user_message: Message = None,
             llm_message: Message = None,
-            rag=None
         ):
         
         raise NotImplementedError("agent_output_ws() in llm_transformers is not implemented yet.")
@@ -91,17 +90,15 @@ class LLM_Transformers(LLM):
             is_llm_ready_event: threading.Event,
             user_message: Message = None,
             llm_message: Message = None,
-            rag=None
         ):
         
         # 在這裡傳遞必要的參數給父類別的方法
-        super().llm_output_ws(self.model, is_llm_ready_event, user_message, llm_message, rag)
+        super().llm_output_ws(self.model, is_llm_ready_event, user_message, llm_message)
 
 #     def llm_output_ws(
 #             self,
 #             is_llm_ready_event: threading.Event,
 #             prompt_template = None,
-#             rag=None
 #         ):
 
 #         print("llm waiting text")
@@ -125,14 +122,12 @@ class LLM_Transformers(LLM):
 
 #                 print("user_input: " + user_input + "  -----------------------------------------------------user_input")
                 
-#                 # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
 #                 prompt = "return the previous chat content relate to the queue"
 #                 # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
                 
 #                 # Assuming 'update_content' method exists for Message class
 #                 # msg = user_message.update_content(content=user_input, memory=memory)
 
-# # have a problem with the rag
 #                 self.speaking_event.set()
 #                 llm_output = ""
 #                 llm_output_total = ""

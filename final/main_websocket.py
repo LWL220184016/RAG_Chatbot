@@ -7,7 +7,6 @@ import time
 # from ASR.asr import ASR
 from final.LLM.llm_ollama import LLM_Ollama as LLM
 from TTS.tts_transformers import TTS
-# from RAG.graph_rag import Graph_RAG
 from LLM.prompt_template import Message
 from WebSocket.websocket import run_ws_server
 from func import asr_process_func_ws, llm_model_process_func_ws, tts_process_func
@@ -53,8 +52,6 @@ def main():
         # tools=tools
     )
 
-    # rag = Graph_RAG()
-    rag = None
     user_message = Message("best friend1")
     llm_message = Message("best friend2")
 
@@ -97,7 +94,6 @@ def main():
                 llm_output_queue, 
                 llm_output_queue_ws, 
                 user_message, llm_message, 
-                rag, 
                 llm, 
             )
         )

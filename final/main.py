@@ -12,7 +12,6 @@ from ASR.model_classes.NeMo import ASR
 from final.LLM.llm_ollama import LLM_Ollama as LLM
 from LLM.prompt_template import Message
 from final.TTS.tts_transformers import TTS
-from RAG.graph_rag import Graph_RAG
 from final.func import asr_process_func, llm_model_process_func_ws, tts_process_func
 
 SOUND_LEVEL = 10
@@ -32,7 +31,6 @@ def main():
     llm_output_queue_ws = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
 
-    rag = Graph_RAG()
     user_message = Message("best friend1")
     llm_message = Message("best friend2")
 
@@ -56,7 +54,6 @@ def main():
                 llm_output_queue_ws, 
                 user_message, 
                 llm_message, 
-                rag
             )
         )
         tts_process = multiprocessing.Process(

@@ -76,19 +76,17 @@ class LLM_Ollama(LLM):
             is_llm_ready_event, 
             user_message: Message = None,
             llm_message: Message = None,
-            rag=None
         ):
 
         # 在這裡傳遞必要的參數給父類別的方法
-        super().agent_output_ws(self.agent, is_llm_ready_event, user_message, llm_message, rag)
+        super().agent_output_ws(self.agent, is_llm_ready_event, user_message, llm_message)
 
     def llm_output_ws(
             self, 
             is_llm_ready_event, 
             user_message: Message = None,
             llm_message: Message = None,
-            rag=None, 
         ):
         
         # 在這裡傳遞必要的參數給父類別的方法
-        super().llm_output_ws(self.model, is_llm_ready_event, user_message, llm_message, rag)
+        super().llm_output_ws(self.model, is_llm_ready_event, user_message, llm_message)
