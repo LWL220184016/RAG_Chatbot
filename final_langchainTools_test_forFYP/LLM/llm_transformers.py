@@ -25,6 +25,7 @@ class LLM_Transformers(LLM):
         llm_output_queue: multiprocessing.Queue = None,
         llm_output_queue_ws: multiprocessing.Queue = None,
         tools = [],
+        database = None,
     ):
         
         super().__init__(
@@ -36,6 +37,7 @@ class LLM_Transformers(LLM):
             llm_output_queue, 
             llm_output_queue_ws, 
             tools, 
+            database,
         )
 
         self.is_user_talking = is_user_talking
@@ -80,7 +82,6 @@ class LLM_Transformers(LLM):
             self,
             is_llm_ready_event, 
             prompt_template = None,
-            rag=None
         ):
         
         raise NotImplementedError("agent_output_ws() in llm_transformers is not implemented yet.")
@@ -89,11 +90,10 @@ class LLM_Transformers(LLM):
             self,
             is_llm_ready_event: threading.Event,
             prompt_template = None,
-            rag=None
         ):
         
         # 在這裡傳遞必要的參數給父類別的方法
-        super().llm_output_ws(self.model, is_llm_ready_event, prompt_template, rag)
+        super().llm_output_ws(self.model, is_llm_ready_event, prompt_template)
 
 #         print("llm waiting text")
 #         is_llm_ready_event.set()
@@ -116,14 +116,12 @@ class LLM_Transformers(LLM):
 
 #             print("user_input: " + user_input + "  -----------------------------------------------------user_input")
 
-#             # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
-#             prompt = "return the previous dialogue content relate to the queue"
+#             prompt = "return the previous chat content relate to the queue"
 #             # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
 
 #             # Assuming 'update_content' method exists for Message class
 #             # msg = user_message.update_content(content=user_input, memory=memory)
 
-# # have a problem with the rag
 #             self.speaking_event.set()
 #             llm_output = ""
 #             llm_output_total = ""

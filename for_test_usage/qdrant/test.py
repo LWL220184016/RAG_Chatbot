@@ -21,6 +21,7 @@ client.recreate_collection(
         "distance": Distance.COSINE
     }
 )
+# client.delete_collection(collection_name)
 
 # Define some simple data points with vectors and payloads
 points = []

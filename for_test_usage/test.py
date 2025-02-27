@@ -1,4 +1,4 @@
 from datetime import datetime
 
-today = datetime.today().strftime('%Y-%m-%d')
+today = datetime.today().strftime('%Y-%m')
 print(today)

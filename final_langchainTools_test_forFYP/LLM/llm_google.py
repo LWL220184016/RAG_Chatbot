@@ -24,7 +24,7 @@ class LLM_Google(LLM):
             llm_output_queue: multiprocessing.Queue = None, 
             llm_output_queue_ws: multiprocessing.Queue = None, 
             tools = [], 
-            neo4j = None, 
+            database = None, 
         ):
 
         super().__init__(
@@ -36,7 +36,7 @@ class LLM_Google(LLM):
             llm_output_queue, 
             llm_output_queue_ws, 
             tools, 
-            neo4j, 
+            database, 
         )
 
         self.user_input_queue = user_input_queue
@@ -53,7 +53,7 @@ class LLM_Google(LLM):
             user_input_queue=self.user_input_queue, 
             llm_output_queue=self.llm_output_queue, 
             llm_output_queue_ws=self.llm_output_queue_ws, 
-            neo4j=neo4j, 
+            database=database, 
         )
         self.model = ChatGoogleGenerativeAI(
             # model="gemini-1.5-pro", 
@@ -78,16 +78,14 @@ class LLM_Google(LLM):
             self, 
             is_llm_ready_event, 
             prompt_template = None, 
-            rag=None 
         ):
 
         # 在這裡傳遞必要的參數給父類別的方法
-        super().agent_output_ws(self.agent, is_llm_ready_event, prompt_template, rag)
+        super().agent_output_ws(self.agent, is_llm_ready_event, prompt_template)
 
     def llm_output_ws(self, 
             is_llm_ready_event, 
             prompt_template = None, 
-            rag=None, 
         ):
         
         raise NotImplementedError("llm_output_ws() in llm_google is not implemented yet.")

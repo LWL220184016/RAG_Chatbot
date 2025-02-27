@@ -65,7 +65,7 @@ class LLM:
                 print("user_input: " + user_input + "  -----------------------------------------------------user_input")
                 
                 # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
-                prompt = "return the previous dialogue content relate to the queue"
+                prompt = "return the previous chat content relate to the queue"
                 # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
             
 # have a problem with the rag
@@ -110,7 +110,7 @@ class LLM:
                 print("user_input: " + user_input + "  -----------------------------------------------------user_input")
                 
                 # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
-                prompt = "return the previous dialogue content relate to the queue"
+                prompt = "return the previous chat content relate to the queue"
                 # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
                 
                 # Assuming 'update_content' method exists for Message class
@@ -148,5 +148,5 @@ class LLM:
 
                 # Assuming 'update_content' method exists for Message class
                 # llm_message.update_content(content=llm_output_total)
-                # self.neo4j.add_dialogue_record(user_message, llm_message)
+                # self.neo4j.add_chat_record(user_message, llm_message)
                 llm_output_total = ""

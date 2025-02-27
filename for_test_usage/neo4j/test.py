@@ -16,5 +16,5 @@ if __name__ == "__main__":
     user_message.update_content("What is the weather like today?")
     llm_message.update_content("The weather is sunny today.")
 
-    neo4j.add_dialogue_record(user_message, llm_message)
+    neo4j.add_chat_record(user_message, llm_message)
     print("Neo4J record added")

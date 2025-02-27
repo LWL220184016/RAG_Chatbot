@@ -17,7 +17,7 @@ class LocalQdrantClient:
     def __init__(self, host="localhost", port=6333, collection_name="memories"):
         self.client = QdrantClient(host=host, port=port)
         self.collection_name = collection_name
-        self.client.recreate_collection(
+        self.client.recreate_dataset(
             collection_name=self.collection_name,
             vectors_config=VectorParams(size=384, distance=Distance.COSINE)
         )
