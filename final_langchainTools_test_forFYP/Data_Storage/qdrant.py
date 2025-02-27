@@ -3,19 +3,19 @@ import datetime
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance
-from embedding_model.embedder import Embedder
 from qdrant_client.http.models import Filter, FieldCondition, MatchValue
-from database import Database_Handler
+from Data_Storage.embedding_model.embedder import Embedder
+from Data_Storage.database import Database_Handler
 
 class Qdrant_Handler(Database_Handler):
     def __init__(
             self, 
             vector_size: int = 768, 
             embedder: Embedder = Embedder(), 
-            dataID: int = None,
+            dataID: int = 0,
         ):
 
-        super(dataID)
+        super().__init__()
         self.client = QdrantClient(
             host = os.getenv('QDRANT_HOST'), 
             port = os.getenv('QDRANT_PORT'), 
@@ -23,8 +23,7 @@ class Qdrant_Handler(Database_Handler):
 
         self.vector_size = vector_size  # For demonstration, we use a low-dimensional vector
         self.embedder = embedder
-        self.dataID = 0
-
+        self.dataID = dataID
 
     def create_dataset(
             self, 
@@ -32,7 +31,7 @@ class Qdrant_Handler(Database_Handler):
         ):
 
         if collection_name is None:
-            collection_name = super().get_newest_chat_name()
+            collection_name = Database_Handler.get_newest_chat_name()
 
         if not self.client.collection_exists(collection_name):
             self.client.create_dataset(
@@ -54,7 +53,7 @@ class Qdrant_Handler(Database_Handler):
         ):
         
         if collection_name is None:
-            collection_name = super().get_newest_chat_name()
+            collection_name = Database_Handler.get_newest_chat_name()
 
         self.dataID += 1
         embeddings = self.embedder.embed([msg])
@@ -95,7 +94,7 @@ class Qdrant_Handler(Database_Handler):
         ):
 
         if collection_name is None:
-            collection_name = super().get_newest_chat_name()
+            collection_name = Database_Handler.get_newest_chat_name()
 
         query_vector = self.embedder.embed([query])
         if user_filter.startswith("language="):

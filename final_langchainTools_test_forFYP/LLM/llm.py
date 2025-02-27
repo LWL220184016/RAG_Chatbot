@@ -1,5 +1,7 @@
 import queue
 import multiprocessing
+# Commenting out to allow using the default 'fork' start method on Linux
+# multiprocessing.set_start_method('spawn', force=False)
 import time
 
 from Data_Storage.database import Database_Handler

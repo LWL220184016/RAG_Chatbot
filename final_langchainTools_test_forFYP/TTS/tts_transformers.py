@@ -1,9 +1,10 @@
+import multiprocessing
+import queue
+import time
 import torch
+
 from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5HifiGan
 from datasets import load_dataset
-import queue
-import multiprocessing
-import time
 
 class TTS():
     def __init__(

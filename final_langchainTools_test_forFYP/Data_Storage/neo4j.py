@@ -32,7 +32,7 @@ class Neo4J(Database_Handler):
         ):
 
         if node_name is None:
-            node_name = super().get_newest_chat_name()
+            node_name = Database_Handler.get_newest_chat_name()
 
         print(f"create Chat {node_name} node in Neo4J if not exist", node_name)
         # MERGE checks for the existence of a node with the specified properties 
@@ -65,7 +65,7 @@ class Neo4J(Database_Handler):
         
         self.dataID += 1
         if node_name is None:
-            node_name = super().get_newest_chat_name()
+            node_name = Database_Handler.get_newest_chat_name()
 
         time = datetime.now().isoformat()
         with self.driver.session() as session:

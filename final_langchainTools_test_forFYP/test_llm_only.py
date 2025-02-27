@@ -9,6 +9,11 @@ from func_fyp import llm_agent_process_func_ws
 from langchain_community.agent_toolkits.load_tools import load_tools
 from Tools.duckduckgo_searching import duckduckgo_search
 
+from Data_Storage.qdrant import Qdrant_Handler
+from Data_Storage.embedding_model.embedder import Embedder
+# export QDRANT_HOST=localhost
+# export QDRANT_PORT=6333
+
 def main():
     tools=[duckduckgo_search]
     
@@ -22,18 +27,20 @@ def main():
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue()
 
-    llm = LLM(
-        # model_name="deepseek-r1_14b_FYP4",
-        # torch_dtype=torch.float32,
-        # device="cuda:0",
+    embedder = Embedder()
+    llm = LLM( 
+        # model_name="deepseek-r1_14b_FYP4", 
+        # torch_dtype=torch.float32, 
+        # device="cuda:0", 
         is_user_talking=is_user_talking, 
         stop_event=stop_event, 
         speaking_event=speaking_event, 
-        user_input_queue=asr_output_queue,
-        llm_output_queue=llm_output_queue,
-        llm_output_queue_ws=llm_output_queue_ws,
-        tools=tools
-    )
+        user_input_queue=asr_output_queue, 
+        llm_output_queue=llm_output_queue, 
+        llm_output_queue_ws=llm_output_queue_ws, 
+        tools=tools, 
+        database=Qdrant_Handler(embedder=embedder), 嘗試吧 embedder model 塞到另一個進程或者線程來解決 RuntimeError: Cannot re-initialize CUDA in forked subprocess. To use CUDA with multiprocessing, you must use the 'spawn' start method
+    ) 
 
     prompt_template = get_langchain_PromptTemplate_Chinese2()
 
