@@ -83,9 +83,27 @@ class LLM_Google(LLM):
         # 在這裡傳遞必要的參數給父類別的方法
         super().agent_output_ws(self.agent, is_llm_ready_event, prompt_template)
 
-    def llm_output_ws(self, 
+    def llm_output_ws(
+            self, 
             is_llm_ready_event, 
             prompt_template = None, 
         ):
         
         raise NotImplementedError("llm_output_ws() in llm_google is not implemented yet.")
+
+    def agent_memory_output_ws(
+            self, 
+            is_llm_ready_event, 
+            prompt_template = None, 
+        ):
+
+        # 在這裡傳遞必要的參數給父類別的方法
+        super().agent_memory_output_ws(self.agent, is_llm_ready_event, prompt_template)
+
+    def llm_memory_output_ws(
+            self, 
+            is_llm_ready_event, 
+            prompt_template = None, 
+        ):
+        
+        raise NotImplementedError("llm_memory_output_ws() in llm_google is not implemented yet.")

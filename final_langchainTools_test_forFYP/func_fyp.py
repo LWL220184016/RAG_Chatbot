@@ -121,7 +121,10 @@ def llm_agent_process_func_ws(
     ):
     
     try:
-        llm.agent_output_ws(is_llm_ready_event, prompt_template)
+        llm.agent_output_ws(
+            is_llm_ready_event=is_llm_ready_event, 
+            prompt_template=prompt_template
+        )
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()
@@ -143,7 +146,62 @@ def llm_model_process_func_ws(
     ):
     
     try:
-        llm.llm_output_ws(is_llm_ready_event, prompt_template)
+        llm.llm_output_ws(
+            is_llm_ready_event=is_llm_ready_event, 
+            prompt_template=prompt_template
+        )
+    except KeyboardInterrupt:
+        print("llm_process_func KeyboardInterrupt\n")
+        stop_event.set()
+    finally:
+        print("llm_process_func finally\n")
+        stop_event.set()
+        torch.cuda.ipc_collect()
+
+# 從資料庫取得聊天記錄
+def llm_memory_agent_process_func_ws(
+        stop_event: threading.Event, 
+        is_user_talking: threading.Event, 
+        speaking_event: threading.Event, 
+        is_llm_ready_event: threading.Event,
+        asr_output_queue: multiprocessing.Queue, 
+        llm_output_queue: multiprocessing.Queue, 
+        llm_output_queue_ws: multiprocessing.Queue, 
+        prompt_template, 
+        llm = None, 
+    ):
+    
+    try:
+        llm.agent_memory_output_ws(
+            is_llm_ready_event=is_llm_ready_event, 
+            prompt_template=prompt_template
+        )
+    except KeyboardInterrupt:
+        print("llm_process_func KeyboardInterrupt\n")
+        stop_event.set()
+    finally:
+        print("llm_process_func finally\n")
+        stop_event.set()
+        torch.cuda.ipc_collect()
+
+# 從資料庫取得聊天記錄
+def llm_memory_model_process_func_ws(
+        stop_event: threading.Event, 
+        is_user_talking: threading.Event, 
+        speaking_event: threading.Event, 
+        is_llm_ready_event: threading.Event,
+        asr_output_queue: multiprocessing.Queue, 
+        llm_output_queue: multiprocessing.Queue, 
+        llm_output_queue_ws: multiprocessing.Queue, 
+        prompt_template, 
+        llm = None, 
+    ):
+    
+    try:
+        llm.llm_memory_output_ws(
+            is_llm_ready_event=is_llm_ready_event, 
+            prompt_template=prompt_template
+        )
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()

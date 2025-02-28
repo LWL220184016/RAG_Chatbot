@@ -167,3 +167,21 @@ class LLM_Transformers(LLM):
 #             # Assuming 'update_content' method exists for Message class
 #             # llm_message.update_content(content=llm_output_total)
 #             llm_output_total = ""
+
+
+    def agent_memory_output_ws(
+            self,
+            is_llm_ready_event, 
+            prompt_template = None,
+        ):
+        
+        raise NotImplementedError("agent_memory_output_ws() in llm_transformers is not implemented yet.")
+
+    def llm_memory_output_ws(
+            self,
+            is_llm_ready_event: threading.Event,
+            prompt_template = None,
+        ):
+        
+        # 在這裡傳遞必要的參數給父類別的方法
+        super().llm_memory_output_ws(self.model, is_llm_ready_event, prompt_template)

@@ -144,21 +144,23 @@ class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
         print(f"\n\033[38;5;208m🔍 return_values['output']: {output}\033[0m")  # 橙色高亮 (256-color)
         self.llm_output_queue_ws.put(output)
         llm_output = ""
+        try:
+            for words in output:
+                if self.is_user_talking.is_set() or not self.user_input_queue.empty():
+                    if not self.llm_output_queue.empty():
+                        empty_queue = self.llm_output_queue.get(block=False)
+                    break
+                
+                # Directly append to llm_output, reducing queue operations
+                llm_output += words
+                if "<|IS|>" in llm_output: break
 
-        for words in output:
-            if self.is_user_talking.is_set() or not self.user_input_queue.empty():
-                if not self.llm_output_queue.empty():
-                    empty_queue = self.llm_output_queue.get(block=False)
-                break
-            
-            # Directly append to llm_output, reducing queue operations
-            llm_output += words
-            if "<|IS|>" in llm_output: break
+                if words in ["，", ",", "。", ".", "？", "?", "！", "!"]:
+                    self.llm_output_queue.put(llm_output)
+                    # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
+                    llm_output = ""
 
-            if words in ["，", ",", "。", ".", "？", "?", "！", "!"]:
-                self.llm_output_queue.put(llm_output)
-                # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
-                llm_output = ""
-
-        self.database.add_data(output, "bot")
-        pass
+            self.database.add_data(output, "bot")
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())

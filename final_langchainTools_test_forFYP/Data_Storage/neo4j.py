@@ -28,7 +28,7 @@ class Neo4J(Database_Handler):
 
     def create_dataset(
             self, 
-            node_name: str, 
+            node_name: str = None, 
         ):
 
         if node_name is None:
@@ -56,7 +56,7 @@ class Neo4J(Database_Handler):
             self, 
             msg, 
             user_role, 
-            node_name: str, 
+            node_name: str = None, 
         ):
         """
         user_message & llm_message:

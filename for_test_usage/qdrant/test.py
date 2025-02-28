@@ -25,7 +25,7 @@ client.recreate_collection(
 
 # Define some simple data points with vectors and payloads
 points = []
-pointID = 0
+dataID = 0
 msg = [
     "what is the answer of 739+191", 
     "My favorite color is green",
@@ -51,10 +51,10 @@ msg = [
     "AlphaFold3成功预测了98.7%的人类蛋白质结构",
 ]
 for m in msg:
-    pointID += 1
+    dataID += 1
     embeddings = embedder.embed([m])
     print("====================================")
-    print(f"PointID: {pointID}")
+    print(f"dataID: {dataID}")
     print(f"Msg: {m}")
     print(f"Vector size: {embeddings.shape}")
     # print(f"Vector: {embeddings}")
@@ -71,7 +71,7 @@ for m in msg:
     }
     points.append(
         {
-            "id": pointID,
+            "id": dataID,
             "vector": embeddings[0].tolist(),
             "payload": {
                 "msg": m,
