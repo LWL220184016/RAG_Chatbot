@@ -142,12 +142,16 @@ class Qdrant_Handler(Database_Handler):
         filter_condition = Filter(must=filter_conditions) if filter_conditions else None
 
         # Perform a search for the top [max_results] nearest neighbors
-        search_result = self.client.query_points(
-            collection_name=collection_name,
-            query=query_vector[0],
-            limit=max_results,
-            query_filter=filter_condition
-        )
+        try:
+            search_result = self.client.query_points(
+                collection_name=collection_name,
+                query=query_vector[0],
+                limit=max_results,
+                query_filter=filter_condition
+            )
+
+        except Exception as e:
+            return f"搜索失败：{str(e)}"
 
         # Print out the search results
         print("Search results:")

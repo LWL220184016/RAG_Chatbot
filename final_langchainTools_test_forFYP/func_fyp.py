@@ -87,41 +87,41 @@ import traceback
 #                 audio_checked_queue=uncheck_audio_queue,
 #                 startStream=False,
 #                 is_user_talking=is_user_talking, 
-#                 stop_event=stop_event,
-#             )
-#         asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
-#         asr.asr_output_ws(is_asr_ready_event, asr_output_queue_ws)
-#         print("asr_process_func end")
+#                 stop_event=stop_event, 
+#             ) 
+#         asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue) 
+#         asr.asr_output_ws(is_asr_ready_event, asr_output_queue_ws) 
+#         print("asr_process_func end") 
 
-#     except KeyboardInterrupt:
-#         print("asr_process_func KeyboardInterrupt\n")
-#         ap.p.terminate()
-#         torch.cuda.ipc_collect()
+#     except KeyboardInterrupt: 
+#         print("asr_process_func KeyboardInterrupt\n") 
+#         ap.p.terminate() 
+#         torch.cuda.ipc_collect() 
     
-#     except Exception as e:
-#         print("捕获异常：", e)
-#         print("完整的错误信息：")
-#         traceback.print_exc()
+#     except Exception as e: 
+#         print("捕获异常：", e) 
+#         print("完整的错误信息：") 
+#         traceback.print_exc() 
 
-#     finally:
-#         print("asr_process_func finally\n")
-#         torch.cuda.ipc_collect()
-#         ap.p.terminate()
+#     finally: 
+#         print("asr_process_func finally\n") 
+#         torch.cuda.ipc_collect() 
+#         ap.p.terminate() 
 
-def llm_process_func_ws(
+def llm_process_func_ws( 
         is_user_talking: threading.Event, 
         stop_event: threading.Event, 
         speaking_event: threading.Event, 
-        is_llm_ready_event: threading.Event,
+        is_llm_ready_event: threading.Event, 
         asr_output_queue: queue, 
         llm_output_queue: queue, 
         llm_output_queue_ws: queue, 
         prompt_template, 
-        agent: str = "langchain",
-    ):
-    # from LLM.llm_ollama import LLM_Ollama as LLM
-    from LLM.llm_google import LLM_Google as LLM
-    # from LLM.llm_transformers import LLM_Transformers as LLM
+        agent: str = "langchain", 
+    ): 
+    from LLM.llm_ollama import LLM_Ollama as LLM 
+    # from LLM.llm_google import LLM_Google as LLM 
+    # from LLM.llm_transformers import LLM_Transformers as LLM 
     
     from Tools.tool import Tools
     from Data_Storage.qdrant import Qdrant_Handler as Database
