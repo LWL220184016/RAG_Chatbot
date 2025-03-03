@@ -1,12 +1,11 @@
-import multiprocessing
+import queue
 
-from llm import LLM
+from LLM.llm import LLM
+from LLM.llmAgentStreamingCallbackHandler import OllamaAgentStreamingCallbackHandler
 from langchain_ollama import OllamaLLM
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.agents import AgentType, initialize_agent
 from tenacity import retry, stop_after_attempt, wait_fixed
-
-from LLM.llmAgentStreamingCallbackHandler import OllamaAgentStreamingCallbackHandler
 
 class LLM_Ollama(LLM):
     def __init__(
@@ -19,9 +18,9 @@ class LLM_Ollama(LLM):
             is_user_talking = None, 
             stop_event = None, 
             speaking_event = None, 
-            user_input_queue: multiprocessing.Queue = None, 
-            llm_output_queue: multiprocessing.Queue = None, 
-            llm_output_queue_ws: multiprocessing.Queue = None, 
+            user_input_queue: queue = None, 
+            llm_output_queue: queue = None, 
+            llm_output_queue_ws: queue = None, 
             tools = [], 
             database = None,
         ):
@@ -88,21 +87,3 @@ class LLM_Ollama(LLM):
         
         # 在這裡傳遞必要的參數給父類別的方法
         super().llm_output_ws(self.model, is_llm_ready_event, prompt_template)
-
-    def agent_memory_output_ws(
-            self,
-            is_llm_ready_event, 
-            prompt_template = None,
-        ):
-
-        # 在這裡傳遞必要的參數給父類別的方法
-        super().agent_memory_output_ws(self.agent, is_llm_ready_event, prompt_template)
-
-    def llm_memory_output_ws(
-            self, 
-            is_llm_ready_event, 
-            prompt_template = None, 
-        ):
-        
-        # 在這裡傳遞必要的參數給父類別的方法
-        super().llm_memory_output_ws(self.model, is_llm_ready_event, prompt_template)

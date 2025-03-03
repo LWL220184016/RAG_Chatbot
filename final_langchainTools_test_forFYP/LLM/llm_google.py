@@ -1,12 +1,11 @@
-import multiprocessing
+import queue
 
 from LLM.llm import LLM
+from LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.agents import AgentType, initialize_agent
 from tenacity import retry, stop_after_attempt, wait_fixed
-
-from LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
 
 class LLM_Google(LLM):
     def __init__(
@@ -20,9 +19,9 @@ class LLM_Google(LLM):
             is_user_talking = None, 
             stop_event = None, 
             speaking_event = None, 
-            user_input_queue: multiprocessing.Queue = None, 
-            llm_output_queue: multiprocessing.Queue = None, 
-            llm_output_queue_ws: multiprocessing.Queue = None, 
+            user_input_queue: queue = None, 
+            llm_output_queue: queue = None, 
+            llm_output_queue_ws: queue = None, 
             tools = [], 
             database = None, 
         ):
@@ -39,14 +38,14 @@ class LLM_Google(LLM):
             database, 
         )
 
-        self.user_input_queue = user_input_queue
-        self.llm_output_queue = llm_output_queue
-        self.llm_output_queue_ws = llm_output_queue_ws
         self.is_user_talking = is_user_talking 
         self.stop_event = stop_event
         self.speaking_event = speaking_event
         if self.is_user_talking is None or self.stop_event is None or self.speaking_event is None:
-            raise ValueError("is_user_talking, stop_event, and speaking_event must not be None")
+            raise ValueError("is_user_talking, stop_event, and speaking_event must not be None, they should be multiprocessing.Event() objects.")
+        self.user_input_queue = user_input_queue
+        self.llm_output_queue = llm_output_queue
+        self.llm_output_queue_ws = llm_output_queue_ws
         
         custom_callback = GoogleAgentStreamingCallbackHandler(
             is_user_talking=self.is_user_talking, 
@@ -90,20 +89,3 @@ class LLM_Google(LLM):
         ):
         
         raise NotImplementedError("llm_output_ws() in llm_google is not implemented yet.")
-
-    def agent_memory_output_ws(
-            self, 
-            is_llm_ready_event, 
-            prompt_template = None, 
-        ):
-
-        # 在這裡傳遞必要的參數給父類別的方法
-        super().agent_memory_output_ws(self.agent, is_llm_ready_event, prompt_template)
-
-    def llm_memory_output_ws(
-            self, 
-            is_llm_ready_event, 
-            prompt_template = None, 
-        ):
-        
-        raise NotImplementedError("llm_memory_output_ws() in llm_google is not implemented yet.")

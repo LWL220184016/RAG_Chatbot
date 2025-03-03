@@ -1,9 +1,8 @@
-from ASR.audio_process import Audio_Processer
 import queue
-import multiprocessing
 import nemo.collections.asr as nemo_asr
 import traceback
 
+from ASR.audio_process import Audio_Processer
 
 class ASR():
     def __init__(
@@ -12,7 +11,7 @@ class ASR():
             device: str = "cuda", 
             ap: Audio_Processer = None, 
             stop_event = None, 
-            asr_output_queue: multiprocessing.Queue = None, 
+            asr_output_queue: queue = None, 
         ):
     
         self.model = nemo_asr.models.ASRModel.from_pretrained(model)

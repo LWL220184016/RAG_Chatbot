@@ -1,4 +1,4 @@
-import multiprocessing.queues
+import queue
 import os 
 import sys
 import asyncio
@@ -19,8 +19,8 @@ client_tasks = {}
 
 async def received_data(
         websocket, 
-        audio_input_queue: multiprocessing.Queue = None, 
-        text_input_queue: multiprocessing.Queue = None, 
+        audio_input_queue: queue = None, 
+        text_input_queue: queue = None, 
     ):
 
     try:
@@ -49,9 +49,9 @@ async def received_data(
 
 async def send_data(
         websocket, 
-        asr_queue: multiprocessing.Queue = None, 
-        llm_queue: multiprocessing.Queue = None, 
-        tts_queue: multiprocessing.Queue = None, 
+        asr_queue: queue = None, 
+        llm_queue: queue = None, 
+        tts_queue: queue = None, 
     ):
 
     try:
@@ -109,11 +109,11 @@ async def connection_watcher(websocket):
 
 async def handler(
         websocket, 
-        audio_input_queue: multiprocessing.Queue = None, 
-        text_input_queue: multiprocessing.Queue = None, 
-        asr_output_queue: multiprocessing.Queue = None, 
-        llm_output_queue: multiprocessing.Queue = None, 
-        tts_queue: multiprocessing.Queue = None, 
+        audio_input_queue: queue = None, 
+        text_input_queue: queue = None, 
+        asr_output_queue: queue = None, 
+        llm_output_queue: queue = None, 
+        tts_queue: queue = None, 
     ):
 
     client_id = websocket.remote_address
@@ -189,11 +189,11 @@ async def handler(
 async def ws_main(
         host: str = "localhost",
         port: int = 6789,
-        audio_input_queue: multiprocessing.Queue = None, 
-        text_input_queue: multiprocessing.Queue = None, 
-        asr_output_queue: multiprocessing.Queue = None, 
-        llm_output_queue: multiprocessing.Queue = None, 
-        tts_queue: multiprocessing.Queue = None, 
+        audio_input_queue: queue = None, 
+        text_input_queue: queue = None, 
+        asr_output_queue: queue = None, 
+        llm_output_queue: queue = None, 
+        tts_queue: queue = None, 
     ):
 
     # 配置服务器参数
@@ -218,11 +218,11 @@ def run_ws_server(
         is_asr_ready_event = None, 
         is_llm_ready_event = None, 
         is_tts_ready_event = None, 
-        audio_input_queue: multiprocessing.Queue = None, 
-        text_input_queue: multiprocessing.Queue = None, 
-        asr_output_queue: multiprocessing.Queue = None, 
-        llm_output_queue: multiprocessing.Queue = None, 
-        tts_queue: multiprocessing.Queue = None, 
+        audio_input_queue: queue = None, 
+        text_input_queue: queue = None, 
+        asr_output_queue: queue = None, 
+        llm_output_queue: queue = None, 
+        tts_queue: queue = None, 
     ):
 
     while not all([is_asr_ready_event.is_set(), is_llm_ready_event.is_set(), is_tts_ready_event.is_set()]):

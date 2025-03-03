@@ -2,14 +2,14 @@ from langchain.callbacks.base import BaseCallbackHandler
 from collections import deque
 
 class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
-    def __init__(
+    def __init__( 
             self, 
             is_user_talking, 
             user_input_queue, 
             llm_output_queue, 
             llm_output_queue_ws, 
-            database
-        ):
+            database = None, 
+        ): 
         
         self.is_user_talking = is_user_talking
         self.user_input_queue = user_input_queue
@@ -117,14 +117,23 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
 
                 llm_output = ""
 
-        self.database.add_data(output, "bot")
+        if self.database is not None:
+            self.database.add_data(output, "bot")
         pass
 
     def on_error(self, error, **kwargs):
         print(f"\n🔥 Error: {str(error)}")
 
 class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
-    def __init__(self, is_user_talking, user_input_queue, llm_output_queue, llm_output_queue_ws, database):
+    def __init__( 
+            self, 
+            is_user_talking, 
+            user_input_queue, 
+            llm_output_queue, 
+            llm_output_queue_ws, 
+            database = None, 
+        ): 
+
         self.is_user_talking = is_user_talking
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
@@ -160,7 +169,8 @@ class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
                     # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
                     llm_output = ""
 
-            self.database.add_data(output, "bot")
+            if self.database is not None:
+                self.database.add_data(output, "bot")
         except Exception as e:
             import traceback
             print(traceback.format_exc())

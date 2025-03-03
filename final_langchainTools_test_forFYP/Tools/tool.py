@@ -61,33 +61,41 @@ class Tools:
             return f"搜索失败：{str(e)}"
 
 
-    @tool
-    def querying_qdrant(
-        self, 
-        query: str,
-        user_filter: dict = None, 
-        collection_name: str = None
-    ) -> str:
-        """
-        在向量資料庫 Qdrant 中搜尋數據，适用于需要歷史對話信息的查询。
-        
-        参数：
-        - query: 搜索关键词（目前每次搜尋僅允許一個關鍵詞)
-        - user_filter: 搜索过滤器，支援兩個屬性:
-            1. "timestamp" 範例值: "2022-01-01T00:00:00"
-            2. "speaker" 範例值: "user"
-        - collection_name: 搜索的集合名称（chat_YYYY_MM）
+    @property
+    def querying_qdrant(self):
+        # Create a wrapper function that doesn't require self as parameter
+        @tool
+        def _querying_qdrant(
+            query: str,
+            user_filter: dict = None, 
+            collection_name: str = None, 
+            max_results: int = 5, 
+        ) -> str:
+            """
+            在向量資料庫 Qdrant 中搜尋數據，适用于需要歷史對話信息的查询。
+            
+            参数：
+            - query: 搜索关键词（目前每次搜尋僅允許一個關鍵詞)
+            - user_filter: 搜索过滤器，支援兩個屬性:
+                1. "timestamp" 範例值: "2022-01-01T00:00:00"
+                        也可以只輸入部分內容來增加搜尋範圍：
+                            如 2025-03 用於搜尋 2025 年 3 月的所有數據，
+                            或者 2025-03-03T06 用於搜尋 2025 年 3 月 6 點的所有數據。
 
-        返回：
-        包含搜索结果的JSON字符串，包含以下數據:
-            1. "message": "消息内容",
-            2. "timestamp": "时间戳",
-            3. "speaker": "发言者",
-            4. "similarity_score": 相似度分数
-        """
+                2. "speaker" 範例值: "user"
+            - collection_name: 搜索的集合名称, 如果要搜索最新對話記錄，則不需要輸入參數（chat_YYYY_MM）
 
-        return self.database_qdrant.search_data(
-                query, 
-                user_filter, 
-                collection_name, 
-            ) 
+            返回：
+            包含搜索结果的JSON字符串，包含以下數據:
+                1. "message": "消息内容",
+                2. "timestamp": "时间戳",
+                3. "speaker": "发言者",
+                4. "similarity_score": 相似度分数
+            """
+            return self.database_qdrant.search_data(
+                    [query], 
+                    user_filter, 
+                    collection_name, 
+                    max_results, 
+                )
+        return _querying_qdrant

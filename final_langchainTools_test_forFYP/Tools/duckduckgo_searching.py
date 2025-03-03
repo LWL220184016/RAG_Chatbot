@@ -33,53 +33,12 @@ class DuckDuckGoSearchWrapper:
         except Exception as e:
             raise RuntimeError(f"DuckDuckGo搜索失败: {str(e)}")
 
-@tool
-def duckduckgo_search(
-    query: str,
-    max_results: Optional[int] = 3
-) -> str:
-    """
-    使用DuckDuckGo执行网络搜索，适用于需要实时信息的查询。
-    
-    参数：
-    - query: 搜索关键词（必须用英文逗号分隔的关键词组合）
-    - max_results: 返回的最大结果数量（默认3，最大5）
-    
-    返回格式：
-    [结果1标题](链接1)
-    摘要: 结果1摘要...
-    
-    [结果2标题](链接2)
-    摘要: 结果2摘要...
-    """
-    try:
-        # 参数验证
-        if not isinstance(query, str) or len(query.strip()) == 0:
-            return "错误：搜索关键词不能为空"
-        
-        max_results = min(int(max_results), 5) if max_results else 3
-        
-        # 执行搜索
-        search = DuckDuckGoSearchWrapper(max_results=max_results)
-        results = search.search_with_retry(query)
-        
-        # 格式化结果
-        formatted = []
-        for idx, result in enumerate(results, 1):
-            formatted.append(
-                f"[{result['title']}]({result['url']})\n"
-                f"摘要: {result['description'][:150]}..."
-            )
-            
-        return "\n\n".join(formatted) if formatted else "未找到相关结果"
-        
-    except Exception as e:
-        return f"搜索失败：{str(e)}"
-
 # 示例使用
 if __name__ == "__main__":
+    from tool import Tools
+    tool = Tools()
     # 测试搜索
-    print(duckduckgo_search.run("最新AI发展 news", 2))
+    print(tool.duckduckgo_search.run("最新AI发展 news", 2))
     
     # 整合到LangChain Agent
     from langchain.agents import initialize_agent
@@ -95,7 +54,7 @@ if __name__ == "__main__":
     )   
     
     agent = initialize_agent(
-        tools=[duckduckgo_search],
+        tools=[tool.duckduckgo_search],
         llm=llm,
         agent="structured-chat-zero-shot-react-description",
         verbose=True

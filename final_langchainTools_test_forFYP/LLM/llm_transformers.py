@@ -1,10 +1,8 @@
 import torch
 import threading
-import multiprocessing
 import queue
-import time
 
-from llm import LLM
+from LLM.llm import LLM
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
 from langchain.agents import AgentType, initialize_agent
 
@@ -21,9 +19,9 @@ class LLM_Transformers(LLM):
         is_user_talking = None, 
         stop_event = None,
         speaking_event = None, 
-        user_input_queue: multiprocessing.Queue = None,
-        llm_output_queue: multiprocessing.Queue = None,
-        llm_output_queue_ws: multiprocessing.Queue = None,
+        user_input_queue: queue = None,
+        llm_output_queue: queue = None,
+        llm_output_queue_ws: queue = None,
         tools = [],
         database = None,
     ):
@@ -168,20 +166,3 @@ class LLM_Transformers(LLM):
 #             # llm_message.update_content(content=llm_output_total)
 #             llm_output_total = ""
 
-
-    def agent_memory_output_ws(
-            self,
-            is_llm_ready_event, 
-            prompt_template = None,
-        ):
-        
-        raise NotImplementedError("agent_memory_output_ws() in llm_transformers is not implemented yet.")
-
-    def llm_memory_output_ws(
-            self,
-            is_llm_ready_event: threading.Event,
-            prompt_template = None,
-        ):
-        
-        # 在這裡傳遞必要的參數給父類別的方法
-        super().llm_memory_output_ws(self.model, is_llm_ready_event, prompt_template)

@@ -1,4 +1,4 @@
-import multiprocessing.queues
+import queue
 # import pyaudio
 import threading
 import torch
@@ -14,7 +14,7 @@ import traceback
 #         stop_event: threading.Event, 
 #         is_user_talking: threading.Event,
 #         is_asr_ready_event: threading.Event,
-#         asr_output_queue: multiprocessing.Queue, 
+#         asr_output_queue: queue, 
 #         ap: Audio_Processer = None, 
 #     ):
 
@@ -66,9 +66,9 @@ import traceback
 #         stop_event: threading.Event, 
 #         is_user_talking: threading.Event,
 #         is_asr_ready_event: threading.Event,
-#         uncheck_audio_queue: multiprocessing.Queue, 
-#         asr_output_queue: multiprocessing.Queue, 
-#         asr_output_queue_ws: multiprocessing.Queue, 
+#         uncheck_audio_queue: queue, 
+#         asr_output_queue: queue, 
+#         asr_output_queue_ws: queue, 
 #         ap: Audio_Processer = None, 
 #     ):
     
@@ -108,100 +108,54 @@ import traceback
 #         torch.cuda.ipc_collect()
 #         ap.p.terminate()
 
-def llm_agent_process_func_ws(
-        stop_event: threading.Event, 
+def llm_process_func_ws(
         is_user_talking: threading.Event, 
+        stop_event: threading.Event, 
         speaking_event: threading.Event, 
         is_llm_ready_event: threading.Event,
-        asr_output_queue: multiprocessing.Queue, 
-        llm_output_queue: multiprocessing.Queue, 
-        llm_output_queue_ws: multiprocessing.Queue, 
+        asr_output_queue: queue, 
+        llm_output_queue: queue, 
+        llm_output_queue_ws: queue, 
         prompt_template, 
-        llm = None, 
+        agent: str = "langchain",
     ):
+    # from LLM.llm_ollama import LLM_Ollama as LLM
+    from LLM.llm_google import LLM_Google as LLM
+    # from LLM.llm_transformers import LLM_Transformers as LLM
     
-    try:
-        llm.agent_output_ws(
-            is_llm_ready_event=is_llm_ready_event, 
-            prompt_template=prompt_template
-        )
-    except KeyboardInterrupt:
-        print("llm_process_func KeyboardInterrupt\n")
-        stop_event.set()
-    finally:
-        print("llm_process_func finally\n")
-        stop_event.set()
-        torch.cuda.ipc_collect()
+    from Tools.tool import Tools
+    from Data_Storage.qdrant import Qdrant_Handler as Database
+    from Data_Storage.embedding_model.embedder import Embedder
 
-def llm_model_process_func_ws(
-        stop_event: threading.Event, 
-        is_user_talking: threading.Event, 
-        speaking_event: threading.Event, 
-        is_llm_ready_event: threading.Event,
-        asr_output_queue: multiprocessing.Queue, 
-        llm_output_queue: multiprocessing.Queue, 
-        llm_output_queue_ws: multiprocessing.Queue, 
-        prompt_template, 
-        llm = None, 
-    ):
+    embedder = Embedder()
+    database = Database(embedder=embedder)
+    tools = Tools(database_qdrant=database)
+    tools=[tools.duckduckgo_search, tools.querying_qdrant]
+    llm = LLM( 
+        # model_name="deepseek-r1_14b_FYP4", 
+        # torch_dtype=torch.float32, 
+        # device="cuda:0", 
+        is_user_talking=is_user_talking, 
+        stop_event=stop_event, 
+        speaking_event=speaking_event, 
+        user_input_queue=asr_output_queue, 
+        llm_output_queue=llm_output_queue, 
+        llm_output_queue_ws=llm_output_queue_ws, 
+        tools=tools, 
+        database=database, 
+    ) 
     
     try:
-        llm.llm_output_ws(
-            is_llm_ready_event=is_llm_ready_event, 
-            prompt_template=prompt_template
-        )
-    except KeyboardInterrupt:
-        print("llm_process_func KeyboardInterrupt\n")
-        stop_event.set()
-    finally:
-        print("llm_process_func finally\n")
-        stop_event.set()
-        torch.cuda.ipc_collect()
-
-# 從資料庫取得聊天記錄
-def llm_memory_agent_process_func_ws(
-        stop_event: threading.Event, 
-        is_user_talking: threading.Event, 
-        speaking_event: threading.Event, 
-        is_llm_ready_event: threading.Event,
-        asr_output_queue: multiprocessing.Queue, 
-        llm_output_queue: multiprocessing.Queue, 
-        llm_output_queue_ws: multiprocessing.Queue, 
-        prompt_template, 
-        llm = None, 
-    ):
-    
-    try:
-        llm.agent_memory_output_ws(
-            is_llm_ready_event=is_llm_ready_event, 
-            prompt_template=prompt_template
-        )
-    except KeyboardInterrupt:
-        print("llm_process_func KeyboardInterrupt\n")
-        stop_event.set()
-    finally:
-        print("llm_process_func finally\n")
-        stop_event.set()
-        torch.cuda.ipc_collect()
-
-# 從資料庫取得聊天記錄
-def llm_memory_model_process_func_ws(
-        stop_event: threading.Event, 
-        is_user_talking: threading.Event, 
-        speaking_event: threading.Event, 
-        is_llm_ready_event: threading.Event,
-        asr_output_queue: multiprocessing.Queue, 
-        llm_output_queue: multiprocessing.Queue, 
-        llm_output_queue_ws: multiprocessing.Queue, 
-        prompt_template, 
-        llm = None, 
-    ):
-    
-    try:
-        llm.llm_memory_output_ws(
-            is_llm_ready_event=is_llm_ready_event, 
-            prompt_template=prompt_template
-        )
+        if agent == "langchain":
+            llm.agent_output_ws(
+                is_llm_ready_event=is_llm_ready_event, 
+                prompt_template=prompt_template
+            )
+        else:
+            llm.llm_output_ws(
+                is_llm_ready_event=is_llm_ready_event, 
+                prompt_template=prompt_template
+            )
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
         stop_event.set()
@@ -214,8 +168,8 @@ def llm_memory_model_process_func_ws(
 #         stop_event: threading.Event, 
 #         speaking_event: threading.Event, 
 #         is_tts_ready_event: threading.Event,
-#         llm_output_queue: multiprocessing.Queue, 
-#         audio_queue: multiprocessing.Queue, 
+#         llm_output_queue: queue, 
+#         audio_queue: queue, 
 #         tts: TTS = None, 
 #     ):
     

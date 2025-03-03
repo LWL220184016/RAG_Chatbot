@@ -1,5 +1,5 @@
 import pyaudio
-import multiprocessing.queues
+import queue
 import numpy as np
 import time
 import noisereduce as nr
@@ -31,8 +31,8 @@ class Audio_Processer():
             format = pyaudio.paInt16, 
             channels: int = 1, 
             rate: int = 16000, 
-            audio_unchecked_queue: multiprocessing.Queue = None, 
-            audio_checked_queue: multiprocessing.Queue = None, 
+            audio_unchecked_queue: queue = None, 
+            audio_checked_queue: queue = None, 
             startStream: bool = True,
             is_user_talking = None,
             stop_event = None,

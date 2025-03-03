@@ -1,4 +1,3 @@
-import multiprocessing
 import queue
 import time
 import torch
@@ -16,7 +15,7 @@ class TTS():
             embeddings_split: str = "validation",
             speaker_embeddings: str = None,
             stop_event = None,
-            audio_queue: multiprocessing.Queue = None,
+            audio_queue: queue = None,
         ):
 
         self.processor = SpeechT5Processor.from_pretrained(processor) 

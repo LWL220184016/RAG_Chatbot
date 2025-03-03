@@ -1,7 +1,7 @@
+import queue
+
 from faster_whisper import WhisperModel
 from ASR.audio_process import Audio_Processer
-import queue
-import multiprocessing
 
 class ASR():
     def __init__(
@@ -11,7 +11,7 @@ class ASR():
             compute_type: str = "float16", 
             ap: Audio_Processer=None,
             stop_event = None, 
-            asr_output_queue: multiprocessing.Queue = None, 
+            asr_output_queue: queue = None, 
         ):
     
         self.model = WhisperModel(model, device=device, compute_type=compute_type)
