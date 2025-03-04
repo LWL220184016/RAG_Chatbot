@@ -119,8 +119,8 @@ def llm_process_func_ws(
         prompt_template, 
         agent: str = "langchain", 
     ): 
-    from LLM.llm_ollama import LLM_Ollama as LLM 
-    # from LLM.llm_google import LLM_Google as LLM 
+    # from LLM.llm_ollama import LLM_Ollama as LLM 
+    from LLM.llm_google import LLM_Google as LLM 
     # from LLM.llm_transformers import LLM_Transformers as LLM 
     
     from Tools.tool import Tools
@@ -130,7 +130,11 @@ def llm_process_func_ws(
     embedder = Embedder()
     database = Database(embedder=embedder)
     tools = Tools(database_qdrant=database)
-    tools=[tools.duckduckgo_search, tools.querying_qdrant]
+    tools=[
+        tools.duckduckgo_search, 
+        tools.querying_qdrant, 
+        tools.get_current_dateTime, 
+    ]
     llm = LLM( 
         # model_name="deepseek-r1_14b_FYP4", 
         # torch_dtype=torch.float32, 

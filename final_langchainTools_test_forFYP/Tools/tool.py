@@ -2,10 +2,11 @@ import sys
 sys.path.append('final_langchainTools_test_forFYP/Data_Storage')
 
 from Data_Storage.qdrant import Qdrant_Handler
-from Tools.duckduckgo_searching import DuckDuckGoSearchWrapper
+from Tools.duckduckgo import DuckDuckGoSearchWrapper
 from typing import Optional, List, Dict
 from langchain.tools import tool, Tool
 from tenacity import retry, stop_after_attempt, wait_random_exponential
+import datetime
 
 
 # class tools(Tool):
@@ -67,8 +68,8 @@ class Tools:
         @tool
         def _querying_qdrant(
             query: str,
-            user_filter: dict = None, 
-            collection_name: str = None, 
+            user_filter: Optional[dict] = None, 
+            collection_name: Optional[str] = None, 
             max_results: int = 5, 
         ) -> str:
             """
@@ -83,7 +84,7 @@ class Tools:
                             或者 2025-03-03T06 用於搜尋 2025 年 3 月 6 點的所有數據。
 
                 2. "speaker" 範例值: "user"
-            - collection_name: 搜索的集合名称, 如果要搜索最新對話記錄，則不需要輸入參數（chat_YYYY_MM）
+            - collection_name: 搜索的集合名称, 如果要搜索最新對話記錄，則不需要輸入參數（chat_YYYY-MM）
 
             返回：
             包含搜索结果的JSON字符串，包含以下數據:
@@ -99,3 +100,10 @@ class Tools:
                     max_results, 
                 )
         return _querying_qdrant
+    
+    @tool
+    def get_current_dateTime() -> str:
+        """
+        取得當前日期和時間, 可以用於在 querying_qdrant 工具中的過濾器來獲取最新的數據
+        """
+        return datetime.datetime.now().isoformat()

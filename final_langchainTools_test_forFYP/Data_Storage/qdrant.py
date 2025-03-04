@@ -4,9 +4,10 @@ import json
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance
-from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+from qdrant_client.http.models import Filter, FieldCondition, MatchText
 from Data_Storage.embedding_model.embedder import Embedder
 from Data_Storage.database import Database_Handler
+from typing import Optional, Dict
 
 class Qdrant_Handler(Database_Handler):
     def __init__(
@@ -93,9 +94,9 @@ class Qdrant_Handler(Database_Handler):
     def search_data(
             self, 
             query: str, 
-            user_filter: dict = None, 
-            collection_name: str = None, 
-            max_results: int = 2, 
+            user_filter: Optional[dict] = None, 
+            collection_name: Optional[str] = None, 
+            max_results: int = 5, 
         ): 
         """
         在向量資料庫 Qdrant 中搜尋數據，适用于需要歷史對話信息的查询。
@@ -131,12 +132,12 @@ class Qdrant_Handler(Database_Handler):
         query_vector = self.embedder.embed(query)
         filter_conditions = []
 
-        if user_filter:
+        if user_filter is not None:
             for key, value in user_filter.items():
                 filter_conditions.append(
                     FieldCondition(
                         key=key,
-                        match=MatchValue(value=value)
+                        match=MatchText(text=value)
                     )
                 )
         filter_condition = Filter(must=filter_conditions) if filter_conditions else None

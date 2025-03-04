@@ -11,7 +11,7 @@ from TTS.tts_transformers import TTS
 from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 from WebSocket.websocket import run_ws_server
 from func_fyp import asr_process_func_ws, llm_agent_process_func_ws, tts_process_func
-from Tools.duckduckgo_searching import duckduckgo_search
+from final_langchainTools_test_forFYP.Tools.duckduckgo import duckduckgo_search
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"

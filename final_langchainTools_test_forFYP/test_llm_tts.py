@@ -8,7 +8,7 @@ from LLM.llm_google import LLM_Google as LLM
 from LLM.prompt_template import get_langchain_PromptTemplate
 from func_fyp import llm_agent_process_func_ws, tts_process_func
 from langchain_community.agent_toolkits.load_tools import load_tools
-from Tools.duckduckgo_searching import duckduckgo_search
+from final_langchainTools_test_forFYP.Tools.duckduckgo import duckduckgo_search
 
 def main():
     tools=[duckduckgo_search]

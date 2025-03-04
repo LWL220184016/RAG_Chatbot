@@ -10,7 +10,7 @@ class Database_Handler:
     def get_newest_chat_name() -> str:
         """
         傳回最新的對話歷史資料和集的名稱 (chat_YYYY_MM)
-            - 例如: "chat_2022_01"
+            - 例如: "chat_2022-01"
         """
 
         this_month = datetime.datetime.now().strftime("%Y-%m")

@@ -8,9 +8,11 @@ from qdrant_client.http.models import Filter, FieldCondition, MatchValue, MatchT
 client = QdrantClient(host="localhost", port=6333)
 embedder = Embedder()
 # Define a collection name and vector dimension
-collection_name = "my_collection"
+# collection_name = "my_collection"
+collection_name = "chat_2025-03"
 vector_size = 768  # For demonstration, we use a low-dimensional vector
 
+{
 # # (Re)create the collection with desired configuration
 # # The collection will use cosine similarity (you can also choose "Euclid" or "Dot" for other metrics)
 # client.recreate_collection(
@@ -82,6 +84,7 @@ vector_size = 768  # For demonstration, we use a low-dimensional vector
 # # Insert (upsert) the points into the collection
 # client.upsert(collection_name=collection_name, points=points)
 # print("Data inserted successfully.")
+}
 
 while True:
     query = input("Enter a query: ")
@@ -130,9 +133,10 @@ while True:
                 point = point[1]
                 for p in point:
                     memory.append({
-                        "message": p.payload['msg'],
-                        "timestamp": p.payload['timestamp'],
-                        "similarity_score": p.score,
+                        "message": p.payload['msg'], 
+                        "timestamp": p.payload['timestamp'], 
+                        "speaker": p.payload['speaker'], 
+                        "similarity_score": p.score, 
                     })
 
     # Print out the search results
