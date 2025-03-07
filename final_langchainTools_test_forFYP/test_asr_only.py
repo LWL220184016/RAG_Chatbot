@@ -24,27 +24,21 @@ def main():
             args=(
                 is_user_talking, 
                 stop_event, 
-                speaking_event, 
                 is_asr_ready_event, 
                 asr_output_queue, 
             )
         )
         
         asr_process.start()
-        asr_output_queue.put("Hello")
-
         while not is_asr_ready_event.is_set():
             time.sleep(0.1)
-
+        
         while not stop_event.is_set():
-            user_input = input()
-            if user_input == "show":
-                while not asr_output_queue.empty():
-                    output = asr_output_queue.get_nowait()
-                    print(f"\n\033[38;5;208m🔍 ASR: {output}\033[0m")  # 橙色高亮 (256-color)
-            else:
-                asr_output_queue.put(user_input)
-            
+            while not asr_output_queue.empty():
+                output = asr_output_queue.get_nowait()
+                print(f"\n\033[38;5;208m🔍 ASR: {output}\033[0m")  # 橙色高亮 (256-color)
+            time.sleep(0.1)
+
     except KeyboardInterrupt:
         print("main KeyboardInterrupt\n")
         stop_event.set()

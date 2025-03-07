@@ -1,5 +1,4 @@
 import queue
-# import pyaudio
 import threading
 import torch
 import traceback
@@ -18,6 +17,7 @@ def asr_process_func(
     ap: Audio_Processer
     """
 
+    import pyaudio
     from ASR.audio_process import Audio_Processer
     # from ASR.model_classes.faster_whisper import ASR
     from ASR.model_classes.NeMo import ASR
@@ -39,6 +39,7 @@ def asr_process_func(
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event
             )
+        print(f"type(ap): {type(ap)}") 
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
         check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         get_audio_thread.start()
@@ -46,8 +47,6 @@ def asr_process_func(
         asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
         print("asr_process_func asring")
         asr.asr_output(is_asr_ready_event)
-        print("asr_process_func end")
-
     except KeyboardInterrupt:
         print("asr_process_func KeyboardInterrupt\n")
         get_audio_thread.join()
@@ -56,6 +55,10 @@ def asr_process_func(
         ap.stream.close()
         ap.p.terminate()
         torch.cuda.ipc_collect()
+
+    except Exception:
+        import traceback
+        traceback.print_exc()
 
     finally:
         print("asr_process_func finally\n")
@@ -79,6 +82,7 @@ def asr_process_func_ws(
     ap: Audio_Processer
     """
 
+    import pyaudio
     from ASR.audio_process import Audio_Processer
     # from ASR.model_classes.faster_whisper import ASR
     from ASR.model_classes.NeMo import ASR

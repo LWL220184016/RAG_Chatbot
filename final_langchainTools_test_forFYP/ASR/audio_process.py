@@ -31,8 +31,8 @@ class Audio_Processer():
             format = pyaudio.paInt16, 
             channels: int = 1, 
             rate: int = 16000, 
-            audio_unchecked_queue: queue = None, 
-            audio_checked_queue: queue = None, 
+            audio_unchecked_queue: queue = queue.Queue(), 
+            audio_checked_queue: queue = queue.Queue(), 
             startStream: bool = True,
             is_user_talking = None,
             stop_event = None,
@@ -89,23 +89,25 @@ class Audio_Processer():
                 # 計算聲音強度
                 volume_norm = np.linalg.norm(audio_data) / self.chunk
                 
-                if volume_norm > sound_level_threshold:
-                    print("\nRecording...")
-                    self.is_user_talking.set()
-                    # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
-                    frames.extend(frame)
-                    record_start_time = time.time()
+                if volume_norm > sound_level_threshold:**
 
-                else:
-                    if len(frames) > 0:
-                        if time.time() - record_start_time < timeout_sec:
-                            frames.extend(frame)
-                            continue
-                        self.audio_checked_queue.put(bytes(frames))
-                        frames = bytearray()
-                        record_start_time = 0
-                        self.is_user_talking.clear()
-                        # print(f'聲音強度: {volume_norm:.2f}')
+                #     print("\nRecording...")
+                #     self.is_user_talking.set()
+                #     # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
+                #     frames.extend(frame)
+                #     record_start_time = time.time()
+                    self.audio_checked_queue.put(bytes(frames))
+
+                # else:
+                #     if len(frames) > 0:
+                #         if time.time() - record_start_time < timeout_sec:
+                #             frames.extend(frame)
+                #             continue
+                #         self.audio_checked_queue.put(bytes(frames))
+                #         frames = bytearray()
+                #         record_start_time = 0
+                #         self.is_user_talking.clear()
+                #         # print(f'聲音強度: {volume_norm:.2f}')
             except OSError as e:
                 print(f"OSError: {e}")
 
@@ -170,6 +172,9 @@ class Audio_Processer():
             self, 
             audio_data: bytes,
         ) -> np.ndarray:
+        """
+        this function have a problem, may return None type data
+        """
 
         try:
             # Convert to AudioSegment object
@@ -183,7 +188,7 @@ class Audio_Processer():
             
             # Convert to numpy array
             samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-            samples /= np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
+            samples = np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
             
             return samples
         except Exception as e:

@@ -34,7 +34,9 @@ class ASR():
                 audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
             except queue.Empty:
                 continue
-            processed_data = self.ap.process_audio_ws1(audio_data=audio_data)
+            print(f"type(audio_data) {type(audio_data)}")
+            processed_data = self.ap.process_audio2(audio_data=audio_data)
+            print(f"type(processed_data) {type(processed_data)}")
             try:
                 transcriptions = self.model.transcribe(
                     # encoded_features[0],
@@ -43,11 +45,12 @@ class ASR():
                     return_hypotheses = True,
                     verbose = False,
                 )
-                print("transcriptions: " + str(transcriptions))
+                # print("transcriptions: " + str(transcriptions))
                 hypothesis = transcriptions[0]
                 h = hypothesis[0]
                 print("score: " + str(h.score))
                 print("You: " + h.text)
+                
                 if h.score < 50:
                     continue
                 # prompt = input("You: ")
@@ -77,7 +80,7 @@ class ASR():
                     return_hypotheses = True,
                     verbose = False,
                 )
-                print("transcriptions: " + str(transcriptions))
+                # print("transcriptions: " + str(transcriptions))
                 hypothesis = transcriptions[0]
                 h = hypothesis[0]
                 print("score: " + str(h.score))
