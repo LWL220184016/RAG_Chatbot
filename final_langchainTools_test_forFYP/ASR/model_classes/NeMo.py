@@ -71,7 +71,8 @@ class ASR():
             # except queue.Empty:
             #     continue
             audio_data = self.ap.audio_checked_queue.get()
-            processed_data = self.ap.process_audio_ws1(audio_data=audio_data)
+            print(f"type(audio_data) {type(audio_data)}")
+            processed_data = self.ap.process_audio2(audio_data=audio_data)
             try:
                 transcriptions = self.model.transcribe(
                     # encoded_features[0],

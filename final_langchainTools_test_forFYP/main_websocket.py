@@ -10,11 +10,13 @@ from LLM.llm_google import LLM_Google as LLM
 from TTS.tts_transformers import TTS
 from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 from WebSocket.websocket import run_ws_server
-from func_fyp import asr_process_func_ws, llm_agent_process_func_ws, tts_process_func
-from final_langchainTools_test_forFYP.Tools.duckduckgo import duckduckgo_search
+from func_fyp import asr_process_func_ws, llm_process_func_ws, tts_process_func
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
+# export QDRANT_HOST=localhost
+# export QDRANT_PORT=6333
+
 ws_host = "localhost"
 ws_port = 6789
 
@@ -26,7 +28,6 @@ RATE = 16000
 TIMEOUT_SEC = 0.3
 
 def main():
-    tools=[duckduckgo_search]
 
     is_asr_ready_event = multiprocessing.Event()
     is_llm_ready_event = multiprocessing.Event()
@@ -43,17 +44,6 @@ def main():
     llm_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the llm said
     audio_queue = multiprocessing.Queue()
 
-    llm = LLM(
-        model_name="deepseek-r1_14b_FYP4", 
-        is_user_talking=is_user_talking, 
-        stop_event=stop_event, 
-        speaking_event=speaking_event, 
-        user_input_queue=asr_output_queue, 
-        llm_output_queue=llm_output_queue, 
-        llm_output_queue_ws=llm_output_queue_ws, 
-        tools=tools, 
-    )
-
     prompt_template = get_langchain_PromptTemplate_Chinese2()
 
     try:
@@ -68,7 +58,7 @@ def main():
                 is_tts_ready_event, 
                 client_audio_queue, 
                 asr_output_queue, 
-                asr_output_queue_ws, 
+                asr_output_queue_ws, # for send back the text to user to show what the user said
                 llm_output_queue_ws, 
                 audio_queue, 
             )
@@ -85,7 +75,7 @@ def main():
             )
         )
         llm_process = multiprocessing.Process(
-            target=llm_agent_process_func_ws, 
+            target=llm_process_func_ws, 
             args=(
                 stop_event, 
                 is_user_talking, 
@@ -95,7 +85,8 @@ def main():
                 llm_output_queue, 
                 llm_output_queue_ws, 
                 prompt_template, 
-                llm, 
+                None, 
+                True, 
             )
         )
         tts_process = multiprocessing.Process(

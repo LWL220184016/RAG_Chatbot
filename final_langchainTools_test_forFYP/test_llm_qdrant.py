@@ -27,15 +27,17 @@ def main():
         llm_process = multiprocessing.Process(
             # target=llm_model_process_func_ws, 
             target=llm_process_func_ws, 
-            args=(
+            args=( 
                 is_user_talking, 
                 stop_event, 
                 speaking_event, 
                 is_llm_ready_event, 
                 asr_output_queue, 
                 llm_output_queue, 
-                llm_output_queue_ws,
-                prompt_template,
+                llm_output_queue_ws, 
+                prompt_template, 
+                None, 
+                True, 
             )
         )
         

@@ -13,7 +13,8 @@ from whisper_online import (
     add_shared_args, set_logging, asr_factory, logger
 )
 
-# run_server.py --model medium --vac
+# run_server.py --backend faster-whisper --model medium --vac
+# run_server.py --backend nemo_parakeet --model medium --vac
 # run_client.py
 
 # Configure logging
@@ -180,6 +181,8 @@ def main():
         logger.error(f"Failed to initialize ASR model or server: {e}")
         logger.error("Please ensure you have the correct CUDA and cuDNN versions installed for GPU processing")
         logger.error("Or try running with --force-cpu flag to disable GPU usage")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 if __name__ == "__main__":

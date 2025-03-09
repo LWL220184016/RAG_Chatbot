@@ -8,8 +8,6 @@ from langchain.tools import tool, Tool
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 import datetime
 
-
-# class tools(Tool):
 class Tools:
     def __init__(
             self, 

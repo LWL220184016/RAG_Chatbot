@@ -39,7 +39,6 @@ def asr_process_func(
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event
             )
-        print(f"type(ap): {type(ap)}") 
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
         check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         get_audio_thread.start()
@@ -142,12 +141,13 @@ def llm_process_func_ws(
     from Data_Storage.qdrant import Qdrant_Handler as Database
     from Tools.tool import Tools
 
-    tools = [
-        Tools.duckduckgo_search, 
-        Tools.querying_qdrant, 
-        Tools.get_current_dateTime
-    ]
     database = Database()
+    Tool = Tools(database_qdrant=database)
+    tools = [
+        Tool.duckduckgo_search, 
+        Tool.querying_qdrant, 
+        Tool.get_current_dateTime
+    ]
 
     llm = LLM( 
         # model_name="deepseek-r1_14b_FYP4", 
@@ -181,23 +181,23 @@ def llm_process_func_ws(
         stop_event.set()
         torch.cuda.ipc_collect()
 
-# def tts_process_func(
-#         stop_event: threading.Event, 
-#         speaking_event: threading.Event, 
-#         is_tts_ready_event: threading.Event,
-#         llm_output_queue: queue, 
-#         audio_queue: queue, 
-#         tts: TTS = None, 
-#     ):
+def tts_process_func(
+        stop_event: threading.Event, 
+        speaking_event: threading.Event, 
+        is_tts_ready_event: threading.Event,
+        llm_output_queue: queue, 
+        audio_queue: queue, 
+        tts: TTS = None, 
+    ):
     
-#     try:
-#         if tts is None:
-#             tts = TTS(stop_event=stop_event, audio_queue=audio_queue)
-#         tts.tts_output(speaking_event, is_tts_ready_event, llm_output_queue)
-#     except KeyboardInterrupt:
-#         print("tts_process_func KeyboardInterrupt\n")
-#         stop_event.set()
-#     finally:
-#         print("tts_process_func finally\n")
-#         stop_event.set()
-#         torch.cuda.ipc_collect()
+    try:
+        if tts is None:
+            tts = TTS(stop_event=stop_event, audio_queue=audio_queue)
+        tts.tts_output(speaking_event, is_tts_ready_event, llm_output_queue)
+    except KeyboardInterrupt:
+        print("tts_process_func KeyboardInterrupt\n")
+        stop_event.set()
+    finally:
+        print("tts_process_func finally\n")
+        stop_event.set()
+        torch.cuda.ipc_collect()
