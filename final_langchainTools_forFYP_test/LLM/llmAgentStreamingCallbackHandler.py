@@ -1,0 +1,176 @@
+from langchain.callbacks.base import BaseCallbackHandler
+from collections import deque
+
+class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
+    def __init__( 
+            self, 
+            is_user_talking, 
+            user_input_queue, 
+            llm_output_queue, 
+            llm_output_queue_ws, 
+            database = None, 
+        ): 
+        
+        self.is_user_talking = is_user_talking
+        self.user_input_queue = user_input_queue
+        self.llm_output_queue = llm_output_queue
+        self.llm_output_queue_ws = llm_output_queue_ws
+        self.database = database
+
+        self.llm_output = ""  # 用于缓存分段响应然後輸入 tts
+        self.full_response = ""  # 用于缓存完整响应
+        # self.is_final_answer = False
+        self.is_put_to_llm_output_queue = False
+        self.token_window = deque(maxlen=9)  # 滑动窗口
+    
+    def on_llm_new_token(
+            self, 
+            token: str, 
+            **kwargs
+        ) -> None:
+
+        # # 流式输出每个 Token（Ollama 的 token 可能包含格式字符）
+        # self.full_response += token
+        # print(f"\033[95m|\033[0m", end="", flush=True)  # 紫色高亮输出
+
+        # # 更新滑动窗口
+        # self.token_window.append(token)
+        # self.llm_output_queue_ws.put(token)
+        # # 检查滑动窗口中的 token 是否匹配 ' "Final Answer",\n'
+        # if not self.is_final_answer and "".join(self.token_window) == 'Final Answer",\n  "action_input": "':
+        #     self.is_final_answer = True
+        #     self.is_put_to_llm_output_queue = True
+        #     print("\n\033[91m🤖 Action: Final Answer\033[0m") #
+
+        # elif self.is_final_answer:
+        #     if self.is_user_talking.is_set() or not self.user_input_queue.empty():
+        #         if not self.llm_output_queue.empty():
+        #             empty_queue = self.llm_output_queue.get(block=False)
+        #         return
+            
+        #     # Directly append to llm_output, reducing queue operations
+        #     self.llm_output += token
+
+        #     if '"' in token:
+        #         self.is_final_answer = False
+        #         return
+
+        #     if any(punct in token for punct in ["，", ",", "。", ".", "？", "?", "！", "!"]):
+        #         self.llm_output_queue.put(self.llm_output)
+        #         self.llm_output = ""
+            # self.database.add_data(user_message, "user")
+            # self.database.add_data(total_llm_message, "bot")
+        pass
+
+    def on_agent_action(
+            self, 
+            action, 
+            **kwargs
+        ):
+
+        # Agent 调用工具时触发
+        # print(f"\n\033[94m🤖 Action: {action.log}\033[0m")  # 蓝色高亮
+        # print(f"\n\033[91m🤖 Action: {action.log}\033[0m")  # 红色高亮
+        # self.queue.put(f"\nAction: {action.log}")
+        pass
+
+    def on_tool_end(
+            self, 
+            output: str, 
+            **kwargs
+        ):
+
+        # 工具执行完成
+        # print(f"\n\033[93m🔍 Observation: {output}\033[0m")  # 黄色高亮
+        # print("on_tool_end called")
+        # print(f"\n\033[38;5;208m🔍 Observation: {output}\033[0m")  # 橙色高亮 (256-color)
+        # self.queue.put(f"\nObservation: {output}")
+        pass
+
+    def on_agent_finish(
+            self, 
+            finish, 
+            **kwargs
+        ):
+
+        # Agent 完成所有操作
+        output = finish.return_values['output']
+        print(f"\n\033[38;5;208m🔍 return_values['output']: {output}\033[0m")  # 橙色高亮 (256-color)
+        llm_output = ""
+
+        for words in output:
+            if self.is_user_talking.is_set() or not self.user_input_queue.empty():
+                if not self.llm_output_queue.empty():
+                    empty_queue = self.llm_output_queue.get(block=False)
+                break
+            
+            # Directly append to llm_output, reducing queue operations
+            llm_output += words
+
+            if words in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in words:
+                
+                if self.is_put_to_llm_output_queue:
+                    self.llm_output_queue.put(llm_output)
+                self.llm_output_queue_ws.put(llm_output)
+                if "</think>" in llm_output: self.is_put_to_llm_output_queue = True
+                if "<|IS|>" in llm_output: self.is_put_to_llm_output_queue = False
+
+                llm_output = ""
+
+        if self.database is not None:
+            self.database.add_data(output, "bot")
+        pass
+
+    def on_error(self, error, **kwargs):
+        print(f"\n🔥 Error: {str(error)}")
+
+class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
+    def __init__( 
+            self, 
+            is_user_talking, 
+            user_input_queue, 
+            llm_output_queue, 
+            llm_output_queue_ws, 
+            database = None, 
+        ): 
+
+        self.is_user_talking = is_user_talking
+        self.user_input_queue = user_input_queue
+        self.llm_output_queue = llm_output_queue
+        self.llm_output_queue_ws = llm_output_queue_ws
+        self.database = database
+
+    def on_agent_action(self, action, **kwargs):
+        # Agent 调用工具时触发
+        # print(f"\n\033[94m🤖 Action: {action.log}\033[0m")  # 蓝色高亮
+        # print(f"\n\033[91m🤖 Action: {action.log}\033[0m")  # 红色高亮
+        # self.llm_output_queue.put(f"\nAction: {action.log}")
+        pass
+
+    def on_agent_finish(self, finish, **kwargs):
+        # Agent 完成所有操作
+        output = finish.return_values['output']
+        print(f"\n\033[38;5;208m🔍 return_values['output']: {output}\033[0m")  # 橙色高亮 (256-color)
+        self.llm_output_queue_ws.put(output)
+        llm_output = ""
+        try:
+            for words in output:
+                if self.is_user_talking.is_set() or not self.user_input_queue.empty():
+                    if not self.llm_output_queue.empty():
+                        empty_queue = self.llm_output_queue.get(block=False)
+                    break
+                
+                # Directly append to llm_output, reducing queue operations
+                llm_output += words
+                if "<|IS|>" in llm_output: break
+
+                if words in ["，", ",", "。", ".", "？", "?", "！", "!"]:
+                    self.llm_output_queue.put(llm_output)
+                    # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
+                    llm_output = ""
+
+            if self.database is not None:
+                self.database.add_data(output, "bot")
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc())

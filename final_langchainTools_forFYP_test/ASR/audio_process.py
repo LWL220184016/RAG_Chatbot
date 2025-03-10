@@ -93,7 +93,7 @@ class Audio_Processer():
                 volume_norm = np.linalg.norm(audio_data) / self.chunk
                 
                 if volume_norm > sound_level_threshold:
-                    print("\nRecording...")
+                    # print("\nRecording...")
                     self.is_user_talking.set()
                     # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
                     frames.extend(frame)
@@ -109,7 +109,6 @@ class Audio_Processer():
                         record_start_time = 0
                         self.is_user_talking.clear()
                         # print(f'聲音強度: {volume_norm:.2f}')
-
 
             except Exception as e:
                 import traceback
@@ -181,7 +180,6 @@ class Audio_Processer():
         )
         audio_data = audio_data.to(device, dtype=torch_dtype)
 
-        
     def process_audio2(
             self, 
             audio_data: bytes,

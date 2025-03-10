@@ -1,0 +1,26 @@
+Codes from github:
+    1. whisper_streaming
+        https://github.com/ufal/whisper_streaming
+
+    2. silero-vad(disable for now, because I have implement voice detect by myself, may )
+
+
+ASR:
+Faster whisper
+Nvidia Nemo parakeet
+
+LLM:
+vLLM
+Ollama
+transformers
+Google gemini API
+
+TTS:
+transformers
+
+Data Storage:
+qdrant
+neo4j
+
+Agent:
+Langchain

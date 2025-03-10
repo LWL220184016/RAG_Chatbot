@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 import multiprocessing
 from mem0 import Memory
-from final_langchainTools_test_forFYP.LLM.llm_google import LLM_Google as LLM
+from final_langchainTools_forFYP.LLM.llm_google import LLM_Google as LLM
 
 
 # Change the embedding model to one with a known dimension

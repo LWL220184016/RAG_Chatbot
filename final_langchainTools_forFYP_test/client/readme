@@ -1,0 +1,9 @@
+當在 wsl 中運行本項目，可能因爲某些原因無法正常錄製音頻和屏幕，請吧 
+audio_process.py 從 ASR 文件夾複製到這個文件夾中，然後再把這個文件
+夾複製到 Windows 中運行這個文件夾中的 python 腳本
+
+When you run this project in wsl, you may not be able to record 
+audio and screen normally due to some reasons, so you should 
+copy the audio_process.py from ASR folder to this folder, and 
+then copy this folder to Windows to run the python script in
+this folder

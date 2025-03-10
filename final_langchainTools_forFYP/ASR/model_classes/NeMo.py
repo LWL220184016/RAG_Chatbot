@@ -1,6 +1,7 @@
 import queue
 import nemo.collections.asr as nemo_asr
 import traceback
+import logging
 
 from ASR.audio_process import Audio_Processer
 
@@ -20,6 +21,10 @@ class ASR():
         self.ap = ap
         self.asr_output_queue = asr_output_queue
         self.stop_event = stop_event
+
+        # only for streaming
+        self.transcribe_kargs = {}
+        self.logger = logging.getLogger(__name__)
 
     def asr_output(self, is_asr_ready_event):
         print("asr waiting audio")
@@ -96,3 +101,38 @@ class ASR():
                 traceback.print_exc()
                 continue
         print("asr_output end")
+
+# only for streaming
+    def transcribe(self, audio, init_prompt=""):
+
+        # tested: beam_size=5 is faster and better than 1 (on one 200 second document from En ESIC, min chunk 0.01)
+        # segments = self.model.transcribe(audio, language=self.original_language, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
+        # not finish, segments may not suitable and may not output info
+        segments = self.model.transcribe(
+            audio,
+            batch_size = 4,
+            return_hypotheses = True,
+            verbose = False,
+        )
+
+        return list(segments)
+
+    def ts_words(self, segments):
+        o = []
+        hypothesis = segments[0]
+        h = hypothesis[0]
+        print("h: ", h)
+        t = (1, 2, h.text)
+        o.append(t)
+
+        return o
+
+    def segments_end_ts(self, res):
+
+        return [s.end for s in res]
+
+    def use_vad(self):
+        self.transcribe_kargs["vad_filter"] = True
+
+    def set_translate_task(self):
+        self.transcribe_kargs["task"] = "translate"
