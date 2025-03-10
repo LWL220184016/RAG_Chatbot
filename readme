@@ -7,7 +7,7 @@ Codes from github:
 
 ASR:
 Faster whisper
-Nvidia Nemo parakeet
+Nvidia Nemo parakeet (streaming support from whisper_streaming)
 
 LLM:
 vLLM

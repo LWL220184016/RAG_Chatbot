@@ -113,32 +113,7 @@ class Audio_Processer():
             except Exception as e:
                 import traceback
                 traceback.print_exc()
-
-    def detect_sound_not_extend(
-            self, 
-            sound_level_threshold: int = 100, 
-            timeout_sec: float = 0.5
-        ):
-
-        frames = bytearray()
-        record_start_time = 0
-        while not self.stop_event.is_set(): # 加入一個參數輸入chunk 數量或者毫秒，當聲音強度低過閾值時，等待一段時間，再檢查聲音強度
-            try:
-                try:
-                    frame = self.audio_unchecked_queue.get(timeout=0.1)
-                except queue.Empty:
-                    continue
-                audio_data = np.frombuffer(frame, dtype=np.int16)
-                # 計算聲音強度
-                volume_norm = np.linalg.norm(audio_data) / self.chunk
-                
-                if volume_norm > sound_level_threshold:
-                    self.audio_checked_queue.put(bytes(audio_data))
-
-            except Exception as e:
-                import traceback
-                traceback.print_exc()
-
+    
     def detect_sound_not_extend(
             self, 
             sound_level_threshold: int = 100, 
@@ -170,7 +145,8 @@ class Audio_Processer():
                         record_start_time = 0
                         # print(f'聲音強度: {volume_norm:.2f}')
             except OSError as e:
-                print(f"OSError: {e}")
+                import traceback
+                traceback.print_exc()
 
     def process_audio1(self, audio_data, asr_processor, device, torch_dtype) -> None:
         audio_data = np.frombuffer(audio_data, dtype = np.int16).astype(np.float32) / 32768.0 # audio bytes to float

@@ -82,6 +82,7 @@ def asr_process_func_ws(
         asr_output_queue: queue, 
         asr_output_queue_ws: queue, 
         ap = None, 
+        streaming=False, 
     ): 
     """
     ap: Audio_Processer
@@ -109,7 +110,12 @@ def asr_process_func_ws(
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event,
             )
-        asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
+        asr = ASR(
+            stop_event=stop_event, 
+            ap=ap, 
+            asr_output_queue=asr_output_queue, 
+            streaming=streaming, 
+        )
         asr.asr_output_ws(is_asr_ready_event, asr_output_queue_ws)
         print("asr_process_func end")
 

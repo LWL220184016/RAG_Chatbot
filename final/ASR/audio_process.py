@@ -140,7 +140,8 @@ class Audio_Processer():
                         record_start_time = 0
                         # print(f'聲音強度: {volume_norm:.2f}')
             except OSError as e:
-                print(f"OSError: {e}")
+                import traceback
+                traceback.print_exc()
 
     def process_audio1(self, audio_data, asr_processor, device, torch_dtype) -> None:
         audio_data = np.frombuffer(audio_data, dtype = np.int16).astype(np.float32) / 32768.0 # audio bytes to float
