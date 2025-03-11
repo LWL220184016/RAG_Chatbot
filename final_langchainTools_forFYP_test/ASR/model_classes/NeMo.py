@@ -106,6 +106,7 @@ class ASR():
         print("asr_output_ws end")
 
     def asr_output_stream(self, is_asr_ready_event):
+        import time
         print("asr waiting audio")
         is_asr_ready_event.set()
 
@@ -118,8 +119,9 @@ class ASR():
             try:
                 self.processer.insert_audio_chunk(audio_data)
                 result = self.processer.process_iter()
-                print("\nASR Output: ", result)
-                # self.asr_output_queue.put(h.text)
+                # print("\nASR Output: ", result)
+                # print("last ASR text output: ", time.time())
+                self.asr_output_queue.put(result[0][2])
 
             except Exception as e:
                 print("asr_output_stream Exception: " + str(e))
@@ -156,7 +158,6 @@ class ASR():
         # tested: beam_size=5 is faster and better than 1 (on one 200 second document from En ESIC, min chunk 0.01)
         # segments = self.model.transcribe(audio, language=self.original_language, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
         # not finish, segments may not suitable and may not output info
-        print("audio type in nemo.transcribe: ", type(audio))
         audio = self.ap.process_audio2(audio)
         segments = self.model.transcribe(
             audio,
@@ -173,8 +174,6 @@ class ASR():
         h = hypothesis[0]
         t = (1, 2, h.text)
         o.append(t)
-
-        print(t)
 
         return o
 

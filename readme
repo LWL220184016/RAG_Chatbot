@@ -2,7 +2,7 @@ Codes from github:
     1. whisper_streaming
         https://github.com/ufal/whisper_streaming
 
-    2. silero-vad(disable for now, because I have implement voice detect by myself, may )
+    2. silero-vad( for human speech detect in whisper_streaming but disable for now, because I have implement voice detect by myself )
 
 
 ASR:

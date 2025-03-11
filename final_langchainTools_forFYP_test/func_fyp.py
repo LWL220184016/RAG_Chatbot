@@ -24,7 +24,7 @@ def asr_process_func(
     from ASR.model_classes.NeMo import ASR
 
     SOUND_LEVEL = 10
-    CHUNK = 512
+    CHUNK = 4096
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
@@ -41,7 +41,10 @@ def asr_process_func(
                 stop_event=stop_event, 
             ) 
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
-        check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
+        if streaming:
+            check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(SOUND_LEVEL, TIMEOUT_SEC))
+        else:
+            check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         get_audio_thread.start()
         check_audio_thread.start()
         asr = ASR( 
