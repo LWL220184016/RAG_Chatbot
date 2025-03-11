@@ -96,7 +96,7 @@ def asr_process_func_ws(
     # from ASR.model_classes.faster_whisper import ASR
     from ASR.model_classes.NeMo import ASR
     
-    CHUNK = 512
+    CHUNK = 4096
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000

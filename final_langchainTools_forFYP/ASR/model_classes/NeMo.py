@@ -143,8 +143,8 @@ class ASR():
                 self.processer.insert_audio_chunk(audio_data)
                 result = self.processer.process_iter()
                 print("\nASR Output: ", result)
-                # self.asr_output_queue.put(h.text)
-                asr_output_queue_ws.put(result)
+                self.asr_output_queue.put(result[0][2])
+                asr_output_queue_ws.put(result[0][2])
 
             except Exception as e:
                 print("asr_output_stream_ws Exception: " + str(e))

@@ -20,6 +20,7 @@ This class wraps OnlineASRProcessor with a Voice Activity Controller (VAC). It u
 testing tool: 
 google translate speeking
 
+The following testing are enable streaming mode
 test result: 
   testing device: Office laptop
     Before optimize by Claude-3.7-Sonnet
@@ -32,8 +33,7 @@ test result:
     last ASR text output:  1741666787.4302456
     Time difference: 13.533346891403198(sec)
 
-    
-  testing device: 4080s GPU
+  testing device: 
     Before optimize by Claude-3.7-Sonnet
     last sound detect:  
     last ASR text output:  

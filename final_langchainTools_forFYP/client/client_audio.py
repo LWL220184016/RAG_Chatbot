@@ -29,6 +29,7 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
         
         ap = Audio_Processer( 
             chunk = 512, 
+            # chunk = 4096, 
             audio_checked_queue = audio_checked_queue, 
             is_user_talking = is_user_talking, 
             stop_event = stop_event, 
@@ -40,7 +41,8 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
         
         try:
             get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
-            check_audio_thread = threading.Thread(target=ap.detect_sound, args=(10, 0.3))
+            check_audio_thread = threading.Thread(target=ap.detect_sound, args=(10, 0.1))
+            # check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(10, -1))
             
             # Use the non-async version of send_audio for threading
             send_audio_thread = threading.Thread(
@@ -95,6 +97,7 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
             
             # Give threads a moment to clean up
             time.sleep(0.5)
+            print("send_audio_stream finished")
 
 async def receive_messages(websocket, tts_audio_queue):
     """Receive and process messages from the server"""
@@ -106,6 +109,7 @@ async def receive_messages(websocket, tts_audio_queue):
 
             elif message.startswith("You: "):
                 print(f"\n\033[38;5;{user_color_code}m{message}\033[0m")
+                print("receive asr text time.time(): ", time.time())
 
             elif message.startswith("LLM: "):
                 print(f"\n\033[38;5;{llm_color_code}m{message}\033[0m")
@@ -178,7 +182,7 @@ def main():
                         help="WebSocket server URI")
     parser.add_argument("--list-devices", action="store_true",
                         help="List available audio input devices and exit")
-    parser.add_argument("--device", type=int, default=1,
+    parser.add_argument("--audio-device", type=int, default=1,
                         help="Input device ID (see --list-devices)")
     
     args = parser.parse_args()
@@ -192,7 +196,7 @@ def main():
         return
     
     try:
-        asyncio.run(send_audio_stream(args.server, args.device))
+        asyncio.run(send_audio_stream(args.server, args.audio_device))
     except KeyboardInterrupt:
         print("Program terminated by user")
 

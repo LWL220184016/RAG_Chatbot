@@ -55,7 +55,7 @@ def main():
                 asr_output_queue, 
                 asr_output_queue_ws, 
                 None, 
-                True, 
+                False, 
             ) 
         )
         

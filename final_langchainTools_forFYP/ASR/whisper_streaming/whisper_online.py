@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,7 @@ class OnlineASRProcessor:
         self.buffer_time_offset = 0 if offset is None else offset
         self.transcript_buffer.last_commited_time = self.buffer_time_offset
         self.commited = []
+        self.last_speeking_time = time.time()
 
     def insert_audio_chunk(self, audio):
         self.audio_buffer = np.append(self.audio_buffer, audio)
@@ -117,6 +119,10 @@ class OnlineASRProcessor:
 
     def process_iter(self):
         """Process current audio buffer and return confirmed transcript"""
+        if time.time() - self.last_speeking_time > 5:
+            self.audio_buffer = np.array([], dtype=np.float32)
+        self.last_speeking_time = time.time()
+
         prompt, non_prompt = self.prompt()
         logger.debug(f"PROMPT: {prompt}")
         logger.debug(f"CONTEXT: {non_prompt}")
