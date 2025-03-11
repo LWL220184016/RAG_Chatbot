@@ -7,13 +7,13 @@ import torch
 # Their licence is MIT, same as ours: https://github.com/snakers4/silero-vad/blob/f6b1294cb27590fb2452899df98fb234dfef1134/LICENSE
 
 class VADIterator:
-    def __init__(self,
-                 model,
-                 threshold: float = 0.5,
-                 sampling_rate: int = 16000,
+    def __init__(self, 
+                 model, 
+                 threshold: float = 0.5, 
+                 sampling_rate: int = 16000, 
                  min_silence_duration_ms: int = 500,  # makes sense on one recording that I checked
-                 speech_pad_ms: int = 100             # same 
-                 ):
+                 speech_pad_ms: int = 100,            # same 
+                 ): 
 
         """
         Class for stream imitation
@@ -104,10 +104,21 @@ class FixedVADIterator(VADIterator):
     If audio to be processed at once is long and multiple voiced segments detected, 
     then __call__ returns the start of the first segment, and end (or middle, which means no end) of the last segment. 
     '''
+    def __init__( 
+            self, 
+            model, 
+            threshold = 0.5, 
+            sampling_rate = 16000, 
+            min_silence_duration_ms = 500, 
+            speech_pad_ms = 100, 
+            dtype = np.float32, 
+        ): 
+        super().__init__(model, threshold, sampling_rate, min_silence_duration_ms, speech_pad_ms)
+        self.dtype = dtype
 
     def reset_states(self):
         super().reset_states()
-        self.buffer = np.array([],dtype=np.float32)
+        self.buffer = np.array([],dtype=self.dtype)
 
     def __call__(self, x, return_seconds=False):
         self.buffer = np.append(self.buffer, x) 

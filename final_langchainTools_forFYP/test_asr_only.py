@@ -14,20 +14,21 @@ def main():
 
     is_user_talking = multiprocessing.Event()
     stop_event = multiprocessing.Event()
-    speaking_event = multiprocessing.Event()
 
     asr_output_queue = multiprocessing.Queue()
 
     try:
-        asr_process = multiprocessing.Process(
+        asr_process = multiprocessing.Process( 
             target=asr_process_func, 
-            args=(
+            args=( 
                 is_user_talking, 
                 stop_event, 
                 is_asr_ready_event, 
                 asr_output_queue, 
-            )
-        )
+                None, 
+                True, 
+            ) 
+        ) 
         
         asr_process.start()
         while not is_asr_ready_event.is_set():

@@ -12,6 +12,7 @@ def asr_process_func(
         is_asr_ready_event: threading.Event,
         asr_output_queue: queue, 
         ap = None, 
+        streaming=False, 
     ):
     """
     ap: Audio_Processer
@@ -23,7 +24,7 @@ def asr_process_func(
     from ASR.model_classes.NeMo import ASR
 
     SOUND_LEVEL = 10
-    CHUNK = 512
+    CHUNK = 4096
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
@@ -31,19 +32,27 @@ def asr_process_func(
 
     try:
         if ap is None:
-            ap = Audio_Processer(
+            ap = Audio_Processer( 
                 chunk=CHUNK, 
                 format=FORMAT, 
                 channels=CHANNELS, 
                 rate=RATE, 
                 is_user_talking=is_user_talking, 
-                stop_event=stop_event
-            )
+                stop_event=stop_event, 
+            ) 
         get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
-        check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
+        if streaming:
+            check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(SOUND_LEVEL, TIMEOUT_SEC))
+        else:
+            check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         get_audio_thread.start()
         check_audio_thread.start()
-        asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
+        asr = ASR( 
+            stop_event=stop_event, 
+            ap=ap, 
+            asr_output_queue=asr_output_queue, 
+            streaming=streaming, 
+        ) 
         print("asr_process_func asring")
         asr.asr_output(is_asr_ready_event)
     except KeyboardInterrupt:
@@ -69,14 +78,15 @@ def asr_process_func(
         ap.p.terminate()
 
 def asr_process_func_ws(
-        is_user_talking: threading.Event,
+        is_user_talking: threading.Event, 
         stop_event: threading.Event, 
-        is_asr_ready_event: threading.Event,
+        is_asr_ready_event: threading.Event, 
         uncheck_audio_queue: queue, 
         asr_output_queue: queue, 
         asr_output_queue_ws: queue, 
         ap = None, 
-    ):
+        streaming=False, 
+    ): 
     """
     ap: Audio_Processer
     """
@@ -103,7 +113,12 @@ def asr_process_func_ws(
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event,
             )
-        asr = ASR(stop_event=stop_event, ap=ap, asr_output_queue=asr_output_queue)
+        asr = ASR(
+            stop_event=stop_event, 
+            ap=ap, 
+            asr_output_queue=asr_output_queue, 
+            streaming=streaming, 
+        )
         asr.asr_output_ws(is_asr_ready_event, asr_output_queue_ws)
         print("asr_process_func end")
 

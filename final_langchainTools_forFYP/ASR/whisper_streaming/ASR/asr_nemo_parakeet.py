@@ -7,6 +7,7 @@ class NeMoParakeetASR(ASRBase):
     def __init__(self, modelsize=None, cache_dir=None, model_dir=None, model_name="nvidia/parakeet-rnnt-1.1b", original_language="en"):
         super().__init__()
         self.model = self.load_model(model_name)
+        self.original_language = original_language
         self.transcribe_kargs = {}
         self.logger = logging.getLogger(__name__)
 
