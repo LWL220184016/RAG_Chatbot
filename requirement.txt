@@ -2,6 +2,7 @@ sounddevice
 numexpr  --For langchain tools
 duckduckgo_search  --For langchain tools
 
+**before install pyaudio**
 sudo apt-get update
 sudo apt-get install portaudio19-dev
 pip install pyaudio noisereduce pydub

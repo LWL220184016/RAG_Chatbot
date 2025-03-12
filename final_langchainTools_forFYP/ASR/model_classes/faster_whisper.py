@@ -2,6 +2,7 @@ import queue
 
 from faster_whisper import WhisperModel
 from ASR.audio_process import Audio_Processer
+from ASR.whisper_streaming.whisper_online import OnlineASRProcessor
 
 class ASR():
     def __init__(

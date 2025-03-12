@@ -3,8 +3,6 @@ import threading
 import torch
 import traceback
 
-
-
 def asr_process_func(
         is_user_talking: threading.Event,
         stop_event: threading.Event, 
@@ -113,8 +111,9 @@ def asr_process_func_ws(
                 stop_event=stop_event,
             )
         asr = ASR(
-            stop_event=stop_event, 
+            device="cuda:0",
             ap=ap, 
+            stop_event=stop_event, 
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
         )
