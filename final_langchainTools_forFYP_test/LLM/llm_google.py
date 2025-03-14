@@ -4,7 +4,8 @@ from LLM.llm import LLM
 from LLM.llmAgentStreamingCallbackHandler import GoogleAgentStreamingCallbackHandler
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.agents import AgentType, initialize_agent
+from langchain.agents import AgentType, initialize_agent, AgentExecutor
+
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 class LLM_Google(LLM):
@@ -52,7 +53,6 @@ class LLM_Google(LLM):
             user_input_queue=self.user_input_queue, 
             llm_output_queue=self.llm_output_queue, 
             llm_output_queue_ws=self.llm_output_queue_ws, 
-            database=database, 
         )
         self.model = ChatGoogleGenerativeAI(
             # model="gemini-1.5-pro", 

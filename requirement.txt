@@ -1,6 +1,7 @@
 sounddevice
 numexpr  --For langchain tools
 duckduckgo_search  --For langchain tools
+redis>=4.5.4
 
 **before install pyaudio**
 sudo apt-get update

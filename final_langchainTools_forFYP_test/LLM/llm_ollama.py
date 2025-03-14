@@ -51,7 +51,6 @@ class LLM_Ollama(LLM):
             user_input_queue=self.user_input_queue, 
             llm_output_queue=self.llm_output_queue,
             llm_output_queue_ws=self.llm_output_queue_ws,
-            database=database,
         )
         self.model = OllamaLLM(
             model=model_name,
