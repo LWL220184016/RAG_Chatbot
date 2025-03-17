@@ -8,6 +8,7 @@ lightrag.log
 __pycache__/
 
 local_neo4j_storageDir/
+final_langchainTools_forFYP_test/Data_Storage/chat_history/
 book.txt
 
 fyp1*
