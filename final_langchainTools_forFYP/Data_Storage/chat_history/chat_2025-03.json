@@ -1,0 +1,9 @@
+{
+    "chat_records": [
+        {
+            "user_message": "Hello ",
+            "llm_message": "This is not a food-related question. I cannot answer.",
+            "timestamp": "2025-03-28 08:44:05.330133"
+        }
+    ]
+}

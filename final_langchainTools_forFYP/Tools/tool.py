@@ -1,6 +1,7 @@
 import sys
 sys.path.append('final_langchainTools_test_forFYP/Data_Storage')
 
+from Data_Storage.database import Database_Handler
 from Data_Storage.qdrant import Qdrant_Handler
 from Tools.duckduckgo import DuckDuckGoSearchWrapper
 from typing import Optional, List, Dict
@@ -11,9 +12,9 @@ import datetime
 class Tools:
     def __init__(
             self, 
-            database_qdrant: Qdrant_Handler = None, 
+            database_qdrant: Database_Handler = None, 
         ):
-        
+
         self.database_qdrant = database_qdrant
 
     @tool
@@ -63,45 +64,66 @@ class Tools:
     @property
     def querying_qdrant(self):
         # Create a wrapper function that doesn't require self as parameter
-        @tool
-        def _querying_qdrant(
-            query: str,
-            user_filter: Optional[dict] = None, 
-            collection_name: Optional[str] = None, 
-            max_results: int = 5, 
-        ) -> str:
-            """
-            在向量資料庫 Qdrant 中搜尋數據，适用于需要歷史對話信息的查询。
-            
-            参数：
-            - query: 搜索关键词（目前每次搜尋僅允許一個關鍵詞)
-            - user_filter: 搜索过滤器，支援兩個屬性:
-                1. "timestamp" 範例值: "2022-01-01T00:00:00"
-                        也可以只輸入部分內容來增加搜尋範圍：
-                            如 2025-03 用於搜尋 2025 年 3 月的所有數據，
-                            或者 2025-03-03T06 用於搜尋 2025 年 3 月 6 點的所有數據。
+        if self.database_qdrant == None:
+            @tool
+            def _querying_qdrant(
+                query: str,
+                user_filter: Optional[dict] = None, 
+                collection_name: Optional[str] = None, 
+                max_results: int = 5, 
+            ) -> str:
+                """
+                此工具目前無法使用，因為 Qdrant 數據庫處理程序不可用，你需要告訴用戶這個消息。
+                """
+                return self.tools_not_available(tool_name = "querying_qdrant", reason = "Qdrant database handler is not available")
+        else:
+            @tool
+            def _querying_qdrant(
+                query: str,
+                user_filter: Optional[dict] = None, 
+                collection_name: Optional[str] = None, 
+                max_results: int = 5, 
+            ) -> str:
+                """
+                在向量資料庫 Qdrant 中搜尋數據，适用于需要歷史對話信息的查询。
+                
+                参数：
+                - query: 搜索关键词（目前每次搜尋僅允許一個關鍵詞)
+                - user_filter: 搜索过滤器，支援兩個屬性:
+                    1. "timestamp" 範例值: "2022-01-01T00:00:00"
+                            也可以只輸入部分內容來增加搜尋範圍：
+                                如 2025-03 用於搜尋 2025 年 3 月的所有數據，
+                                或者 2025-03-03T06 用於搜尋 2025 年 3 月 6 點的所有數據。
 
-                2. "speaker" 範例值: "user"
-            - collection_name: 搜索的集合名称, 如果要搜索最新對話記錄，則不需要輸入參數（chat_YYYY-MM）
+                    2. "speaker" 範例值: "user"
+                - collection_name: 搜索的集合名称, 如果要搜索最新對話記錄，則不需要輸入參數（chat_YYYY-MM）
 
-            返回：
-            包含搜索结果的JSON字符串，包含以下數據:
-                1. "message": "消息内容",
-                2. "timestamp": "时间戳",
-                3. "speaker": "发言者",
-                4. "similarity_score": 相似度分数
-            """
-            return self.database_qdrant.search_data(
-                    [query], 
-                    user_filter, 
-                    collection_name, 
-                    max_results, 
-                )
+                返回：
+                包含搜索结果的JSON字符串，包含以下數據:
+                    1. "message": "消息内容",
+                    2. "timestamp": "时间戳",
+                    3. "speaker": "发言者",
+                    4. "similarity_score": 相似度分数
+                """
+                return self.database_qdrant.search_data(
+                        [query], 
+                        user_filter, 
+                        collection_name, 
+                        max_results, 
+                    )
         return _querying_qdrant
-    
+
     @tool
     def get_current_dateTime() -> str:
         """
         取得當前日期和時間, 可以用於在 querying_qdrant 工具中的過濾器來獲取最新的數據
         """
         return datetime.datetime.now().isoformat()
+
+    
+    def tools_not_available(self, tool_name: str, reason: str) -> str:
+        """
+        Returns a message indicating that a tool is not available
+        """
+        # Create a proper tool that can be used in the agent
+        return f"Tool {tool_name} is not available because {reason}"

@@ -49,11 +49,11 @@ class ASR():
             try:
                 transcriptions = self.model.transcribe(
                     # encoded_features[0],
-                    processed_data,
-                    batch_size = 4,
-                    return_hypotheses = True,
-                    verbose = False,
-                )
+                    processed_data, 
+                    batch_size = 4, 
+                    return_hypotheses = True, 
+                    verbose = False, 
+                ) 
                 # print("transcriptions: " + str(transcriptions))
                 hypothesis = transcriptions[0]
                 h = hypothesis[0]
@@ -83,11 +83,11 @@ class ASR():
             try:
                 transcriptions = self.model.transcribe(
                     # encoded_features[0],
-                    processed_data,
-                    batch_size = 4,
-                    return_hypotheses = True,
-                    verbose = False,
-                )
+                    processed_data, 
+                    batch_size = 4, 
+                    return_hypotheses = True, 
+                    verbose = False, 
+                ) 
                 # print("transcriptions: " + str(transcriptions))
                 hypothesis = transcriptions[0]
                 h = hypothesis[0]
@@ -105,6 +105,7 @@ class ASR():
                 continue
         print("asr_output_ws end")
 
+# only for streaming
     def asr_output_stream(self, is_asr_ready_event):
         import time
         print("asr waiting audio")
@@ -152,7 +153,6 @@ class ASR():
                 continue
         print("asr_output_stream_ws end")
 
-# only for streaming
     def transcribe(self, audio, init_prompt=""):
 
         # tested: beam_size=5 is faster and better than 1 (on one 200 second document from En ESIC, min chunk 0.01)

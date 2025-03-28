@@ -76,13 +76,13 @@ class LLM_Transformers(LLM):
             current_output_text = self.tokenizer.decode(output, skip_special_tokens=True) # 解码当前输出的 tokens (Decode current output tokens)
             yield current_output_text
 
-    def agent_output_ws(
+    def langchain_agent_output_ws(
             self,
             is_llm_ready_event, 
             prompt_template = None,
         ):
         
-        raise NotImplementedError("agent_output_ws() in llm_transformers is not implemented yet.")
+        raise NotImplementedError("langchain_agent_output_ws() in llm_transformers is not implemented yet.")
 
     def llm_output_ws(
             self,

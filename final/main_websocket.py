@@ -4,16 +4,19 @@ import multiprocessing
 import torch
 import time
 
-# from ASR.asr import ASR
-from final.LLM.llm_ollama import LLM_Ollama as LLM
+# from LLM.llm_ollama import LLM_Ollama as LLM
+from LLM.llm_google import LLM_Google as LLM
+# from LLM.llm_transformers import LLM_Transformers as LLM
 from TTS.tts_transformers import TTS
 from LLM.prompt_template import Message
 from WebSocket.websocket import run_ws_server
-from func import asr_process_func_ws, llm_model_process_func_ws, tts_process_func
-from Tools.duckduckgo_searching import duckduckgo_search
+from func_fyp import asr_process_func_ws, llm_process_func_ws, tts_process_func
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
+# export QDRANT_HOST=localhost
+# export QDRANT_PORT=6333
+
 ws_host = "localhost"
 ws_port = 6789
 
@@ -25,7 +28,6 @@ RATE = 16000
 TIMEOUT_SEC = 0.3
 
 def main():
-    tools=[duckduckgo_search]
 
     is_asr_ready_event = multiprocessing.Event()
     is_llm_ready_event = multiprocessing.Event()
@@ -35,25 +37,15 @@ def main():
     is_user_talking = multiprocessing.Event()
     speaking_event = multiprocessing.Event()
 
-    audio_data_from_client_queue = multiprocessing.Queue()
+    client_audio_queue = multiprocessing.Queue()
     asr_output_queue = multiprocessing.Queue()
     asr_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the user said
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the llm said
     audio_queue = multiprocessing.Queue()
 
-    llm = LLM(
-        is_user_talking=is_user_talking, 
-        stop_event=stop_event, 
-        speaking_event=speaking_event, 
-        user_input_queue=asr_output_queue,
-        llm_output_queue=llm_output_queue,
-        llm_output_queue_ws=llm_output_queue_ws,
-        # tools=tools
-    )
-
-    user_message = Message("best friend1")
-    llm_message = Message("best friend2")
+    prompt_template = Message()
+    prompt_template = Message()
 
     try:
         # asr_output_queue for user text input
@@ -65,9 +57,9 @@ def main():
                 is_asr_ready_event, 
                 is_llm_ready_event, 
                 is_tts_ready_event, 
-                audio_data_from_client_queue, 
+                client_audio_queue, 
                 asr_output_queue, 
-                asr_output_queue_ws, 
+                asr_output_queue_ws, # for send back the text to user to show what the user said
                 llm_output_queue_ws, 
                 audio_queue, 
             )
@@ -78,13 +70,13 @@ def main():
                 stop_event, 
                 is_user_talking, 
                 is_asr_ready_event, 
-                audio_data_from_client_queue, 
+                client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
             )
         )
         llm_process = multiprocessing.Process(
-            target=llm_model_process_func_ws, 
+            target=llm_process_func_ws, 
             args=(
                 stop_event, 
                 is_user_talking, 
@@ -93,8 +85,9 @@ def main():
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws, 
-                user_message, llm_message, 
-                llm, 
+                prompt_template, 
+                None, 
+                True, 
             )
         )
         tts_process = multiprocessing.Process(
@@ -104,7 +97,7 @@ def main():
                 speaking_event, 
                 is_tts_ready_event, 
                 llm_output_queue, 
-                audio_queue,
+                audio_queue, 
             )
         )
 
@@ -124,11 +117,11 @@ def main():
             #             if not audio_queue.empty():
             #                 audio_chunk = audio_queue.get()
             #             break
-            #         time.sleep(0.01)
+                    # time.sleep(0.01)
 
 
             time.sleep(1)
-
+            
     except KeyboardInterrupt:
         print("main KeyboardInterrupt\n")
         stop_event.set()

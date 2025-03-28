@@ -95,6 +95,7 @@ class Qdrant_Handler(Database_Handler):
             Action: Qdrant_Handler.add_data 
             dataID: {self.dataID}
             Msg: {msg}
+            Speaker: {user_role}
             Vector size: {embeddings.shape}
             Status: Data inserted successfully.
             ====================================================================

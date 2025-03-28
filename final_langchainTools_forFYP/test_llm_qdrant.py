@@ -36,8 +36,9 @@ def main():
                 llm_output_queue, 
                 llm_output_queue_ws, 
                 prompt_template, 
-                None, 
-                True, 
+                "google", # llm_class
+                True, # use_agent
+                "qdrant", # use_database
             )
         )
         

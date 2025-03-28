@@ -51,7 +51,6 @@ class LLM_Ollama(LLM):
             user_input_queue=self.user_input_queue, 
             llm_output_queue=self.llm_output_queue,
             llm_output_queue_ws=self.llm_output_queue_ws,
-            database=database,
         )
         self.model = OllamaLLM(
             model=model_name,
@@ -70,14 +69,14 @@ class LLM_Ollama(LLM):
             callbacks=[custom_callback],  # 绑定自定义回调
         )
 
-    def agent_output_ws(
+    def langchain_agent_output_ws(
             self,
             is_llm_ready_event, 
             prompt_template = None,
         ):
 
         # 在這裡傳遞必要的參數給父類別的方法
-        super().agent_output_ws(self.agent, is_llm_ready_event, prompt_template)
+        super().langchain_agent_output_ws(self.agent, is_llm_ready_event, prompt_template)
 
     def llm_output_ws(
             self, 

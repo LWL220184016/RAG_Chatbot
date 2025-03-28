@@ -1,7 +1,9 @@
 import queue
 import time
+import json
 
 from Data_Storage.database import Database_Handler
+from Data_Storage.json_memory import JSON_Memory
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 class LLM:
@@ -15,7 +17,8 @@ class LLM:
             llm_output_queue: queue = None, 
             llm_output_queue_ws: queue = None, 
             tools = [], 
-            database: Database_Handler = None
+            database: Database_Handler = None,
+            use_temp_memory: bool = True, 
         ):
 
         self.is_user_talking = is_user_talking 
@@ -27,13 +30,18 @@ class LLM:
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
         self.database = database
-
+        self.chat_history_recorder = JSON_Memory("chat_history_record")
+        
+        # Initialize Redis memory handler if config is provided
+        if use_temp_memory:
+            self.temp_memory_handler = JSON_Memory("temp_memory")
     
-    def agent_output_ws( 
+    def langchain_agent_output_ws( 
             self, 
             agent = None, 
             is_llm_ready_event = None, 
-            prompt_template = None, 
+            prompt_template = None,
+            session_id = "default"
         ): 
 
         print("llm waiting text")
@@ -49,6 +57,7 @@ class LLM:
                     try:
                         user_input += self.user_input_queue.get(timeout=0.1) + " "
                     except queue.Empty:
+                        time.sleep(0.1)  # Avoid busy waiting
                         continue
                     if not self.user_input_queue.empty():
                         user_input += self.user_input_queue.get() + " "
@@ -58,12 +67,28 @@ class LLM:
 
                 print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
                 
-                self.speaking_event.set()
-                # agent.invoke(prompt_template.format(user_input=user_input))
-                agent.invoke(user_input)
-                self.database.add_data(user_input, "user")
+                # Store user input in temporary memory if Redis is configured
+                if self.temp_memory_handler:
+                    recent_history = self.temp_memory_handler.get()
+                    # Use conversation history if available
+                    print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
+                    llm_output = agent.invoke(prompt_template.format(user_input=user_input, memory=recent_history))
+                    # stream_input = f"User: {user_input} \nChat_history: {recent_history} \n"
+                    # llm_output = agent.invoke(stream_input)
+
+                    self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
+                
+                else:
+                    llm_output = agent.invoke(prompt_template.format(user_input=user_input, memory=""))
+                    # llm_output = agent.invoke(user_input)
+                
+                # Store LLM output in temporary memory if Redis is configured
+                self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
+                if self.database is not None:
+                    self.database.add_data(user_input, "user")
+                    self.database.add_data(llm_output.get("output"), "llm")
         except KeyboardInterrupt:
-            print("agent_output_ws KeyboardInterrupt\n")
+            print("langchain_agent_output_ws KeyboardInterrupt\n")
             self.stop_event.set()
             
             # torch.cuda.ipc_collect()
@@ -73,7 +98,8 @@ class LLM:
             self, 
             model = None, 
             is_llm_ready_event = None, 
-            prompt_template = None, 
+            prompt_template = None,
+            session_id = "default" 
         ): 
 
         print("llm waiting text")
@@ -102,8 +128,14 @@ class LLM:
                 llm_output_total = ""
                 is_llm_thinking = False
 
-                # for output in model.stream(prompt_template.format(user_input=user_input)):
-                for output in model.stream(user_input):
+                # Prepare streaming input with context if Redis is configured
+                stream_input = user_input
+                if self.temp_memory_handler:
+                    recent_history = self.temp_memory_handler.get()
+                    stream_input = f"User: {user_input} \nContext: {recent_history} \n"
+
+                for output in model.stream(prompt_template.format(user_input=stream_input)):
+                # for output in model.stream(stream_input):
                     if self.is_user_talking.is_set() or not self.user_input_queue.empty():
                         if not self.llm_output_queue.empty():
                             empty_queue = self.llm_output_queue.get(block=False)
@@ -126,7 +158,22 @@ class LLM:
                         self.llm_output_queue_ws.put(llm_output)
                         llm_output = ""
 
+                # Store LLM output in temporary memory if Redis is configured
+                self.chat_history_recorder.add_no_limit(role = "user", message = user_input)
+                self.chat_history_recorder.add_no_limit(role = "assistant", message = llm_output_total)
+                if self.temp_memory_handler and llm_output_total:
+                    self.temp_memory_handler.add(role = "user", message = user_input)
+                    self.temp_memory_handler.add(role = "assistant", message = llm_output.get("output"))
+
                 # llm_message.update_content(content=llm_output_total)
-                self.database.add_data(user_input, "user")
-                self.database.add_data(llm_output_total, "bot")
+                if self.database is not None:
+                    self.database.add_data(user_input, "user")
+                    self.database.add_data(llm_output_total, "bot")
                 llm_output_total = ""
+
+    def clear_temp_memory(self, session_id="default"):
+        """Clear temporary memory for a specific session"""
+        if self.temp_memory_handler:
+            self.temp_memory_handler.clear_conversation(session_id)
+            return True
+        return False

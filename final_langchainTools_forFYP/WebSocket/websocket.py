@@ -226,6 +226,12 @@ def run_ws_server(
     ):
 
     while not all([is_asr_ready_event.is_set(), is_llm_ready_event.is_set(), is_tts_ready_event.is_set()]):
+        if not is_asr_ready_event.is_set():
+            print("asr not ready")
+        if not is_llm_ready_event.is_set():
+            print("llm not ready")
+        if not is_tts_ready_event.is_set():
+            print("tts not ready")
         time.sleep(0.1)
 
     # 配置事件循环

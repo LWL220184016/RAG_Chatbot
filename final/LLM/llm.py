@@ -1,10 +1,11 @@
 import queue
-import multiprocessing
 import time
+import json
 
-# from Data_Storage.neo4j import Neo4J
+from Data_Storage.database import Database_Handler
+from Data_Storage.json_memory import JSON_Memory
 from tenacity import retry, stop_after_attempt, wait_fixed
-from prompt_template import Message
+from LLM.prompt_template import Message
 
 class LLM:
     def __init__(
@@ -13,11 +14,12 @@ class LLM:
             is_user_talking = None, 
             stop_event = None, 
             speaking_event = None, 
-            user_input_queue: multiprocessing.Queue = None, 
-            llm_output_queue: multiprocessing.Queue = None, 
-            llm_output_queue_ws: multiprocessing.Queue = None, 
+            user_input_queue: queue = None, 
+            llm_output_queue: queue = None, 
+            llm_output_queue_ws: queue = None, 
             tools = [], 
-            # neo4j: Neo4J = Neo4J()
+            database: Database_Handler = None,
+            use_temp_memory: bool = True, 
         ):
 
         self.is_user_talking = is_user_talking 
@@ -28,24 +30,26 @@ class LLM:
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
-        # self.neo4j = neo4j
-
-        self.model_name = model_name
-        self.tools = tools
+        self.database = database
+        self.chat_history_recorder = JSON_Memory("chat_history_record")
+        
+        # Initialize Redis memory handler if config is provided
+        if use_temp_memory:
+            self.temp_memory_handler = JSON_Memory("temp_memory")
     
-    def agent_output_ws(
-            self,
-            agent,
-            is_llm_ready_event, 
-            user_message: Message = None,
-            llm_message: Message = None,
-            rag=None
-        ):
+    def langchain_agent_output_ws( 
+            self, 
+            agent = None, 
+            is_llm_ready_event = None, 
+            session_id = "default"
+        ): 
 
         print("llm waiting text")
         is_llm_ready_event.set()
         user_input = ""
         user_last_talk_time = time.time()
+
+        user_msg = Message(user_role="user")
 
         try:
             while not self.stop_event.is_set():
@@ -55,25 +59,39 @@ class LLM:
                     try:
                         user_input += self.user_input_queue.get(timeout=0.1) + " "
                     except queue.Empty:
-                        continue
+                        这里有问题, 第一次会等四十秒, 但是应该 user_last_talk_time 没有更新, 导致后面没有等待连发 [User did not speak]
+                        if time.time() - user_last_talk_time > 40: 
+                            user_input = "[User did not speak]"
+                        else:
+                            time.sleep(0.1)  # Avoid busy waiting
+                            continue
+
                     if not self.user_input_queue.empty():
                         user_input += self.user_input_queue.get() + " "
                 else: # user is talking
                     user_last_talk_time = time.time()
                     continue  # Skip if the user is talking
 
-                print("user_input: " + user_input + "  -----------------------------------------------------user_input")
+                print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
                 
-                # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
-                prompt = "return the previous chat content relate to the queue"
-                # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
-            
-# have a problem with the rag
-                self.speaking_event.set()
-                # agent.invoke(prompt_template.format(user_input=user_input))
-                agent.invoke(user_input.format(user_input=user_input))
+                # Store user input in temporary memory if Redis is configured
+                if self.temp_memory_handler:
+                    recent_history = self.temp_memory_handler.get()
+                    # Use conversation history if available
+                    print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
+                    llm_output = agent.invoke(user_msg.update_content(content=user_input, memory=recent_history))
+                    self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
+                
+                else:
+                    llm_output = agent.invoke(user_input)
+                
+                # Store LLM output in temporary memory if Redis is configured
+                self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
+                if self.database is not None:
+                    self.database.add_data(user_input, "user")
+                    self.database.add_data(llm_output.get("output"), "llm")
         except KeyboardInterrupt:
-            print("agent_output_ws KeyboardInterrupt\n")
+            print("langchain_agent_output_ws KeyboardInterrupt\n")
             self.stop_event.set()
             
             # torch.cuda.ipc_collect()
@@ -81,12 +99,11 @@ class LLM:
 
     def llm_output_ws(
             self, 
-            model,
-            is_llm_ready_event, 
-            user_message: Message = None,
-            llm_message: Message = None,
-            rag=None, 
-        ):
+            model = None, 
+            is_llm_ready_event = None, 
+            prompt_template = None,
+            session_id = "default" 
+        ): 
 
         print("llm waiting text")
         is_llm_ready_event.set()
@@ -107,30 +124,29 @@ class LLM:
                     user_last_talk_time = time.time()
                     continue  # Skip if the user is talking
 
-                print("user_input: " + user_input + "  -----------------------------------------------------user_input")
-                
-                # Assuming 'rag' has a 'search' method that takes 'llm' and 'query' as parameters
-                prompt = "return the previous chat content relate to the queue"
-                # memory = rag.search_rag(query=user_input, prompt=prompt, mode="hybrid")
-                
-                # Assuming 'update_content' method exists for Message class
-                # msg = user_message.update_content(content=user_input, memory=memory)
-                # msg = user_message.update_content(content=user_input, memory=None)
-# have a problem with the rag
+                print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
+
                 self.speaking_event.set()
                 llm_output = ""
                 llm_output_total = ""
                 is_llm_thinking = False
-                
-                # self.agent.invoke(prompt_template.format(user_input=user_input))
-                for output in model.stream(user_input):
+
+                # Prepare streaming input with context if Redis is configured
+                stream_input = user_input
+                if self.temp_memory_handler:
+                    recent_history = self.temp_memory_handler.get()
+                    stream_input = f"User: {user_input} \nContext: {recent_history}"
+
+                # for output in model.stream(prompt_template.format(user_input=user_input)):
+                for output in model.stream(stream_input):
                     if self.is_user_talking.is_set() or not self.user_input_queue.empty():
                         if not self.llm_output_queue.empty():
+                            # Empty the queue
                             empty_queue = self.llm_output_queue.get(block=False)
                         break
                     
                     # Directly append to llm_output, reducing queue operations
-                    llm_output += output
+                    llm_output += str(output)
                     if output == "<think>" and not is_llm_thinking:
                         is_llm_thinking = True
                         print("is_llm_thinking = True")
@@ -146,7 +162,20 @@ class LLM:
                         self.llm_output_queue_ws.put(llm_output)
                         llm_output = ""
 
-                # Assuming 'update_content' method exists for Message class
+                # Store LLM output in temporary memory if Redis is configured
+                self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
+                if self.temp_memory_handler and llm_output_total:
+                    self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
+
                 # llm_message.update_content(content=llm_output_total)
-                # self.neo4j.add_chat_record(user_message, llm_message)
+                if self.database is not None:
+                    self.database.add_data(user_input, "user")
+                    self.database.add_data(llm_output_total, "bot")
                 llm_output_total = ""
+
+    def clear_temp_memory(self, session_id="default"):
+        """Clear temporary memory for a specific session"""
+        if self.temp_memory_handler:
+            self.temp_memory_handler.clear_conversation(session_id)
+            return True
+        return False

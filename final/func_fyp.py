@@ -186,7 +186,7 @@ def llm_process_func_ws(
     ) 
     try:
         if use_agent:
-            llm.agent_output_ws(
+            llm.langchain_agent_output_ws(
                 is_llm_ready_event=is_llm_ready_event, 
                 prompt_template=prompt_template
             )

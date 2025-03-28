@@ -3,8 +3,6 @@ import threading
 import torch
 import traceback
 
-
-
 def asr_process_func(
         is_user_talking: threading.Event,
         stop_event: threading.Event, 
@@ -113,8 +111,9 @@ def asr_process_func_ws(
                 stop_event=stop_event,
             )
         asr = ASR(
-            stop_event=stop_event, 
+            device="cuda:0",
             ap=ap, 
+            stop_event=stop_event, 
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
         )
@@ -137,25 +136,34 @@ def asr_process_func_ws(
         ap.p.terminate()
 
 def llm_process_func_ws( 
-        stop_event: threading.Event, 
         is_user_talking: threading.Event, 
+        stop_event: threading.Event, 
         speaking_event: threading.Event, 
         is_llm_ready_event: threading.Event, 
         asr_output_queue: queue, 
         llm_output_queue: queue, 
         llm_output_queue_ws: queue, 
         prompt_template, 
-        llm = None, 
+        llm_class = "google", 
         use_agent = False, 
+        use_database = None,
     ):
 
     # from LLM.llm_transformers import LLM_Transformers as LLM
-    from LLM.llm_google import LLM_Google as LLM
+    # from LLM.llm_google import LLM_Google as LLM
     # from LLM.llm_ollama import LLM_Ollama as LLM
-    from Data_Storage.qdrant import Qdrant_Handler as Database
     from Tools.tool import Tools
 
-    database = Database()
+    LLM = get_llm_class(llm_class)
+
+    if use_database not in [None, "qdrant"]:
+        raise ValueError("use_database must be 'none' or 'qdrant'")
+    elif use_database == "qdrant":
+        from Data_Storage.qdrant import Qdrant_Handler as Database
+        database = Database()
+    else:
+        database = None
+    
     Tool = Tools(database_qdrant=database)
     tools = [
         Tool.duckduckgo_search, 
@@ -178,7 +186,7 @@ def llm_process_func_ws(
     ) 
     try:
         if use_agent:
-            llm.agent_output_ws(
+            llm.langchain_agent_output_ws(
                 is_llm_ready_event=is_llm_ready_event, 
                 prompt_template=prompt_template
             )
@@ -216,3 +224,15 @@ def tts_process_func(
         print("tts_process_func finally\n")
         stop_event.set()
         torch.cuda.ipc_collect()
+
+def get_llm_class(llm_name: str):
+    if llm_name == "transformers":
+        from LLM.llm_transformers import LLM_Transformers as LLM
+    elif llm_name == "google":
+        from LLM.llm_google import LLM_Google as LLM
+    elif llm_name == "ollama":
+        from LLM.llm_ollama import LLM_Ollama as LLM
+    else:
+        raise ValueError("llm_name must be 'transformers', 'google', or 'ollama'")
+    
+    return LLM

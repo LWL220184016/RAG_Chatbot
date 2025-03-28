@@ -38,7 +38,7 @@ def main():
                 prompt_template, 
                 "google", # llm_class
                 True, # use_agent
-                None, # use_database
+                "qdrant", # use_database
             )
         )
         

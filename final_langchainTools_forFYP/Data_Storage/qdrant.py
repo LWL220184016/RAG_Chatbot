@@ -90,15 +90,16 @@ class Qdrant_Handler(Database_Handler):
         # Insert (upsert) the points into the collection
         self.client.upsert(collection_name=collection_name, points=[points])
         
-        print(f"""
-            ====================================================================
-            Action: Qdrant_Handler.add_data 
-            dataID: {self.dataID}
-            Msg: {msg}
-            Vector size: {embeddings.shape}
-            Status: Data inserted successfully.
-            ====================================================================
-        """)
+        # print(f"""
+        #     ====================================================================
+        #     Action: Qdrant_Handler.add_data 
+        #     dataID: {self.dataID}
+        #     Msg: {msg}
+        #     Speaker: {user_role}
+        #     Vector size: {embeddings.shape}
+        #     Status: Data inserted successfully.
+        #     ====================================================================
+        # """)
 
     def search_data(
             self, 

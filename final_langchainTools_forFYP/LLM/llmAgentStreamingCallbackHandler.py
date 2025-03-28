@@ -8,14 +8,12 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
             user_input_queue, 
             llm_output_queue, 
             llm_output_queue_ws, 
-            database = None, 
         ): 
         
         self.is_user_talking = is_user_talking
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
-        self.database = database
 
         self.llm_output = ""  # 用于缓存分段响应然後輸入 tts
         self.full_response = ""  # 用于缓存完整响应
@@ -58,8 +56,6 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
         #     if any(punct in token for punct in ["，", ",", "。", ".", "？", "?", "！", "!"]):
         #         self.llm_output_queue.put(self.llm_output)
         #         self.llm_output = ""
-            # self.database.add_data(user_message, "user")
-            # self.database.add_data(total_llm_message, "bot")
         pass
 
     def on_agent_action(
@@ -117,10 +113,6 @@ class OllamaAgentStreamingCallbackHandler(BaseCallbackHandler):
 
                 llm_output = ""
 
-        if self.database is not None:
-            self.database.add_data(output, "bot")
-        pass
-
     def on_error(self, error, **kwargs):
         print(f"\n🔥 Error: {str(error)}")
 
@@ -131,14 +123,12 @@ class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
             user_input_queue, 
             llm_output_queue, 
             llm_output_queue_ws, 
-            database = None, 
         ): 
 
         self.is_user_talking = is_user_talking
         self.user_input_queue = user_input_queue
         self.llm_output_queue = llm_output_queue
         self.llm_output_queue_ws = llm_output_queue_ws
-        self.database = database
 
     def on_agent_action(self, action, **kwargs):
         # Agent 调用工具时触发
@@ -169,8 +159,6 @@ class GoogleAgentStreamingCallbackHandler(BaseCallbackHandler):
                     # print("llm words: " + llm_output, "  self.llm_output_queue: " + str(self.llm_output_queue.qsize()))
                     llm_output = ""
 
-            if self.database is not None:
-                self.database.add_data(output, "bot")
         except Exception as e:
             import traceback
             print(traceback.format_exc())

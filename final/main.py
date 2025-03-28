@@ -1,5 +1,4 @@
 import pyaudio
-import threading
 import sounddevice as sd
 import multiprocessing
 import torch
@@ -9,10 +8,11 @@ import queue
 from ASR.audio_process import Audio_Processer
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import ASR
-from final.LLM.llm_ollama import LLM_Ollama as LLM
-from LLM.prompt_template import Message
-from final.TTS.tts_transformers import TTS
-from final.func import asr_process_func, llm_model_process_func_ws, tts_process_func
+# from LLM.llm_ollama import LLM_Ollama as LLM
+from LLM.llm_google import LLM_Google as LLM
+from LLM.prompt_template import get_langchain_PromptTemplate
+from TTS.tts_transformers import TTS
+from func_fyp import asr_process_func, llm_agent_process_func_ws, tts_process_func
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -31,8 +31,7 @@ def main():
     llm_output_queue_ws = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
 
-    user_message = Message("best friend1")
-    llm_message = Message("best friend2")
+    prompt_template = get_langchain_PromptTemplate()
 
     try:
         asr_process = multiprocessing.Process(
@@ -44,28 +43,27 @@ def main():
             )
         )
         llm_process = multiprocessing.Process(
-            target=llm_model_process_func_ws, 
+            target=llm_agent_process_func_ws, 
             args=(
                 stop_event, 
                 is_user_talking, 
                 speaking_event, 
                 asr_output_queue, 
                 llm_output_queue, 
-                llm_output_queue_ws, 
-                user_message, 
-                llm_message, 
+                llm_output_queue_ws,
+                prompt_template,
             )
         )
         tts_process = multiprocessing.Process(
             target=tts_process_func, 
             args=(
                 stop_event, 
-                llm_output_queue, 
                 speaking_event, 
-                audio_queue
+                llm_output_queue, 
+                audio_queue,
             )
         )
-
+        
         asr_process.start()
         llm_process.start()
         tts_process.start()

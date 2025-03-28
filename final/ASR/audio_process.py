@@ -1,5 +1,5 @@
 import pyaudio
-import multiprocessing.queues
+import queue
 import numpy as np
 import time
 import noisereduce as nr
@@ -31,8 +31,8 @@ class Audio_Processer():
             format = pyaudio.paInt16, 
             channels: int = 1, 
             rate: int = 16000, 
-            audio_unchecked_queue: multiprocessing.Queue = None, 
-            audio_checked_queue: multiprocessing.Queue = None, 
+            audio_unchecked_queue: queue = queue.Queue(), 
+            audio_checked_queue: queue = queue.Queue(), 
             startStream: bool = True,
             is_user_talking = None,
             stop_event = None,
@@ -84,13 +84,16 @@ class Audio_Processer():
         record_start_time = 0
         while not self.stop_event.is_set(): # 加入一個參數輸入chunk 數量或者毫秒，當聲音強度低過閾值時，等待一段時間，再檢查聲音強度
             try:
-                frame = self.audio_unchecked_queue.get()
+                try:
+                    frame = self.audio_unchecked_queue.get(timeout=0.1)
+                except queue.Empty:
+                    continue
                 audio_data = np.frombuffer(frame, dtype=np.int16)
                 # 計算聲音強度
                 volume_norm = np.linalg.norm(audio_data) / self.chunk
                 
                 if volume_norm > sound_level_threshold:
-                    print("\nRecording...")
+                    # print("\nRecording...")
                     self.is_user_talking.set()
                     # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
                     frames.extend(frame)
@@ -106,9 +109,11 @@ class Audio_Processer():
                         record_start_time = 0
                         self.is_user_talking.clear()
                         # print(f'聲音強度: {volume_norm:.2f}')
-            except OSError as e:
-                print(f"OSError: {e}")
 
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+    
     def detect_sound_not_extend(
             self, 
             sound_level_threshold: int = 100, 
@@ -125,7 +130,8 @@ class Audio_Processer():
                 volume_norm = np.linalg.norm(audio_data) / self.chunk
                 
                 if volume_norm > sound_level_threshold:
-                    print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
+                    # print("Sound detected, ", f'聲音強度: {volume_norm:.2f}')
+                    # print("last sound detect: ", time.time())
                     # self.audio_checked_queue.put(bytes(frames))
                     self.audio_checked_queue.put(frame)
                     record_start_time = time.time()
@@ -151,7 +157,6 @@ class Audio_Processer():
         )
         audio_data = audio_data.to(device, dtype=torch_dtype)
 
-        
     def process_audio2(
             self, 
             audio_data: bytes,
@@ -171,6 +176,9 @@ class Audio_Processer():
             self, 
             audio_data: bytes,
         ) -> np.ndarray:
+        """
+        this function have a problem, may return None type data
+        """
 
         try:
             # Convert to AudioSegment object
@@ -184,7 +192,7 @@ class Audio_Processer():
             
             # Convert to numpy array
             samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-            samples /= np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
+            samples = np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
             
             return samples
         except Exception as e:
