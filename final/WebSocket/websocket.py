@@ -225,13 +225,16 @@ def run_ws_server(
         tts_queue: queue = None, 
     ):
 
+    last_not_ready_msg_time = time.time()
     while not all([is_asr_ready_event.is_set(), is_llm_ready_event.is_set(), is_tts_ready_event.is_set()]):
-        if not is_asr_ready_event.is_set():
-            print("asr not ready")
-        if not is_llm_ready_event.is_set():
-            print("llm not ready")
-        if not is_tts_ready_event.is_set():
-            print("tts not ready")
+        if time.time() - last_not_ready_msg_time > 5:
+            last_not_ready_msg_time = time.time()
+            if not is_asr_ready_event.is_set():
+                print("asr not ready")
+            if not is_llm_ready_event.is_set():
+                print("llm not ready")
+            if not is_tts_ready_event.is_set():
+                print("tts not ready")
         time.sleep(0.1)
 
     # 配置事件循环

@@ -4,13 +4,9 @@ import multiprocessing
 import torch
 import time
 
-# from LLM.llm_ollama import LLM_Ollama as LLM
-from LLM.llm_google import LLM_Google as LLM
-# from LLM.llm_transformers import LLM_Transformers as LLM
 from TTS.tts_transformers import TTS
-from LLM.prompt_template import Message
 from WebSocket.websocket import run_ws_server
-from func_fyp import asr_process_func_ws, llm_process_func_ws, tts_process_func
+from func import asr_process_func_ws, llm_process_func_ws, tts_process_func
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
@@ -44,9 +40,6 @@ def main():
     llm_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the llm said
     audio_queue = multiprocessing.Queue()
 
-    prompt_template = Message()
-    prompt_template = Message()
-
     try:
         # asr_output_queue for user text input
         ws_process = multiprocessing.Process(
@@ -67,27 +60,30 @@ def main():
         asr_process = multiprocessing.Process(
             target=asr_process_func_ws, 
             args=(
-                stop_event, 
                 is_user_talking, 
+                stop_event, 
                 is_asr_ready_event, 
                 client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
+                None, # ap
+                True, # streaming: False
             )
         )
         llm_process = multiprocessing.Process(
+            # target=llm_model_process_func_ws, 
             target=llm_process_func_ws, 
-            args=(
-                stop_event, 
+            args=( 
                 is_user_talking, 
+                stop_event, 
                 speaking_event, 
                 is_llm_ready_event, 
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws, 
-                prompt_template, 
-                None, 
-                True, 
+                "google", # llm_class: "google", "transformers"
+                True, # use_agent: True, False
+                None, # use_database: None, "qdrant"
             )
         )
         tts_process = multiprocessing.Process(

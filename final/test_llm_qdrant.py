@@ -3,8 +3,7 @@ import time
 import multiprocessing
 multiprocessing.set_start_method('spawn', force=True)
 
-from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
-from func_fyp import llm_process_func_ws
+from final.func import llm_process_func_ws
 from langchain_community.agent_toolkits.load_tools import load_tools
 
 # export QDRANT_HOST=localhost
@@ -22,7 +21,6 @@ def main():
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue()
 
-    prompt_template = get_langchain_PromptTemplate_Chinese2()
     try:
         llm_process = multiprocessing.Process(
             # target=llm_model_process_func_ws, 
@@ -35,7 +33,6 @@ def main():
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws, 
-                prompt_template, 
                 "google", # llm_class
                 True, # use_agent
                 "qdrant", # use_database

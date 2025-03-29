@@ -10,9 +10,8 @@ from ASR.audio_process import Audio_Processer
 from ASR.model_classes.NeMo import ASR
 # from LLM.llm_ollama import LLM_Ollama as LLM
 from LLM.llm_google import LLM_Google as LLM
-from LLM.prompt_template import get_langchain_PromptTemplate
 from TTS.tts_transformers import TTS
-from func_fyp import asr_process_func, llm_agent_process_func_ws, tts_process_func
+from final.func import asr_process_func, llm_agent_process_func_ws, tts_process_func
 
 SOUND_LEVEL = 10
 CHUNK = 512
@@ -30,8 +29,6 @@ def main():
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
-
-    prompt_template = get_langchain_PromptTemplate()
 
     try:
         asr_process = multiprocessing.Process(
@@ -51,7 +48,6 @@ def main():
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws,
-                prompt_template,
             )
         )
         tts_process = multiprocessing.Process(

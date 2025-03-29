@@ -5,8 +5,7 @@ import sounddevice as sd
 import time
 # from LLM.llm_ollama import LLM_Ollama as LLM
 from LLM.llm_google import LLM_Google as LLM
-from LLM.prompt_template import get_langchain_PromptTemplate
-from func_fyp import llm_agent_process_func_ws, tts_process_func
+from final.func import llm_agent_process_func_ws, tts_process_func
 from langchain_community.agent_toolkits.load_tools import load_tools
 from final_langchainTools_forFYP.Tools.duckduckgo import duckduckgo_search
 
@@ -31,8 +30,6 @@ def main():
     # )
     llm = None
 
-    prompt_template = get_langchain_PromptTemplate()
-
     try:
         llm_process = multiprocessing.Process(
             target=llm_agent_process_func_ws, 
@@ -44,7 +41,6 @@ def main():
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws,
-                prompt_template,
             )
         )
         tts_process = multiprocessing.Process(

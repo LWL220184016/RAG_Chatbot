@@ -3,7 +3,7 @@ import time
 import multiprocessing
 multiprocessing.set_start_method('spawn', force=True)
 
-from func_fyp import asr_process_func_ws
+from final.func import asr_process_func_ws
 from WebSocket.websocket import run_ws_server
 
 # export QDRANT_HOST=localhost

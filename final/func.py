@@ -143,7 +143,6 @@ def llm_process_func_ws(
         asr_output_queue: queue, 
         llm_output_queue: queue, 
         llm_output_queue_ws: queue, 
-        prompt_template, 
         llm_class = "google", 
         use_agent = False, 
         use_database = None,
@@ -188,12 +187,10 @@ def llm_process_func_ws(
         if use_agent:
             llm.langchain_agent_output_ws(
                 is_llm_ready_event=is_llm_ready_event, 
-                prompt_template=prompt_template
             )
         else:
             llm.llm_output_ws(
                 is_llm_ready_event=is_llm_ready_event, 
-                prompt_template=prompt_template
             )
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
