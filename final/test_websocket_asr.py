@@ -3,7 +3,7 @@ import time
 import multiprocessing
 multiprocessing.set_start_method('spawn', force=True)
 
-from final.func import asr_process_func_ws
+from func import asr_process_func_ws
 from WebSocket.websocket import run_ws_server
 
 # export QDRANT_HOST=localhost
@@ -55,7 +55,8 @@ def main():
                 asr_output_queue, 
                 asr_output_queue_ws, 
                 None, 
-                False, 
+                True, # streaming: True, False
+                4096, # chunk size
             ) 
         )
         

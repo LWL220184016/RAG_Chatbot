@@ -276,7 +276,7 @@ class VACOnlineASRProcessor(OnlineASRProcessor):
             repo_or_dir='snakers4/silero-vad',
             model='silero_vad'
         )
-        from silero_vad_iterator import FixedVADIterator
+        from ASR.whisper_streaming.silero_vad_iterator import FixedVADIterator
         self.vac = FixedVADIterator(model)
         
         self.logfile = self.online.logfile

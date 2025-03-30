@@ -106,10 +106,14 @@ class ASR():
         print("asr_output_ws end")
 
 # only for streaming
-    def asr_output_stream(self, is_asr_ready_event):
+    def asr_output_stream(self, is_asr_ready_event, user_talk_timeout=0.2):
+        """
+        user_talk_timeout: float = 0.2, # 如果用戶在 0.2 秒內沒有說話，則認爲用戶已經停止說話
+        """
         import time
         print("asr waiting audio")
         is_asr_ready_event.set()
+        user_last_talk_time = time.time()
 
         while not self.stop_event.is_set():
             try:
@@ -122,7 +126,10 @@ class ASR():
                 result = self.processer.process_iter()
                 # print("\nASR Output: ", result)
                 # print("last ASR text output: ", time.time())
-                self.asr_output_queue.put(result[0][2])
+
+                time.sleep(0.1)  # 等待 0.1 秒，讓用戶有時間說話
+                if self.ap.audio_checked_queue.empty():
+                    self.asr_output_queue.put(result[0][2])
 
             except Exception as e:
                 print("asr_output_stream Exception: " + str(e))
@@ -132,6 +139,7 @@ class ASR():
 
     def asr_output_stream_ws(self, is_asr_ready_event, asr_output_queue_ws):
         print("asr waiting audio")
+        import time
         is_asr_ready_event.set()
 
         while not self.stop_event.is_set():
@@ -144,8 +152,15 @@ class ASR():
                 self.processer.insert_audio_chunk(audio_data)
                 result = self.processer.process_iter()
                 print("\nASR Output: ", result)
-                self.asr_output_queue.put(result[0][2])
-                asr_output_queue_ws.put(result[0][2])
+# 只在 self.ap.audio_checked_queue 爲空的時候才需要等 0.2 秒，
+# 然後檢查 self.ap.audio_checked_queue.empty() 確認用戶已經停止說話
+                if self.ap.audio_checked_queue.empty():
+                    time.sleep(0.2)  # 等待一下，讓用戶有時間說話
+
+                if self.ap.audio_checked_queue.empty():
+                    print("aaa user stop talking")
+                    self.asr_output_queue.put(result[0][2])
+                    asr_output_queue_ws.put(result[0][2])
 
             except Exception as e:
                 print("asr_output_stream_ws Exception: " + str(e))

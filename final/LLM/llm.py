@@ -129,8 +129,8 @@ class LLM:
             self.temp_memory_handler.clear_conversation(session_id)
             return True
         return False
-asr 模型啓用串流的時候最後識別正確率不低，但是在最後識別完之前會輸出很多階段性的結果，這些結果會同樣被丟進 user_input_queue, 還有就是使用 websocket 的時候，
-is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會接收到用戶説了一半的話，這樣會導致 llm 的輸出不正確，浪費 token, 算力等以及產生錯誤記憶
+# asr 模型啓用串流的時候最後識別正確率不低，但是在最後識別完之前會輸出很多階段性的結果，這些結果會同樣被丟進 user_input_queue, 還有就是使用 websocket 的時候，
+# is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會接收到用戶説了一半的話，這樣會導致 llm 的輸出不正確，浪費 token, 算力等以及產生錯誤記憶
     def get_user_input(self, user_msg: Message, user_last_talk_time: float):
         """Get user input from the queue"""
         user_input = ""
@@ -168,84 +168,40 @@ is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會�
         else:
             return user_msg.update_content(content=user_input)
     
+    def get_user_input_stream(self, user_msg: Message, user_last_talk_time: float):
+        """Get user input from the queue"""
+        user_input = ""
+        while user_input == "":
+            if not self.is_user_talking.is_set():
+                if time.time() - user_last_talk_time > 5:
+                    user_input = ""
+                try:
+                    user_input += self.user_input_queue.get(timeout=0.1) + " "
+                    time.sleep(0.1)  # Avoid busy waiting
+                except queue.Empty:
+                    # 这里有问题, 第一次会等四十秒, 但是应该 user_last_talk_time 没有更新, 导致后面没有等待连发 [User did not speak]
+                    # if time.time() - user_last_talk_time > 40: 
+                    #     user_input = "[User did not speak]"
+                    #     user_last_talk_time = time.time()
+                    # else:
+                        time.sleep(0.1)  # Avoid busy waiting
+                        continue
+                if not self.user_input_queue.empty():
+                    user_input += self.user_input_queue.get() + " "
+                    continue
+            else: # user is talking
+                user_last_talk_time = time.time()
+                continue  # Skip if the user is talking
 
+        print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
+
+
+        # Prepare streaming input with context if Redis is configured
+        if self.temp_memory_handler:
+            recent_history = self.temp_memory_handler.get()
+            print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
+            return user_msg.update_content(content=user_input, memory=recent_history)
+        
+        else:
+            return user_msg.update_content(content=user_input)
     
-    # def llm_output_ws(
-    #         self, 
-    #         model = None, 
-    #         is_llm_ready_event = None, 
-    #         session_id = "default" 
-    #     ): 
-
-    #     print("llm waiting text")
-    #     is_llm_ready_event.set()
-    #     user_input = ""
-    #     user_last_talk_time = time.time()
-    #     user_msg = Message(user_role="user")
-
-    #     while not self.stop_event.is_set():
-    #             if not self.is_user_talking.is_set():
-    #                 if time.time() - user_last_talk_time > 5:
-    #                     user_input = ""
-    #                 try:
-    #                     user_input += self.user_input_queue.get(timeout=0.1) + " "
-    #                 except queue.Empty:
-    #                     # 这里有问题, 第一次会等四十秒, 但是应该 user_last_talk_time 没有更新, 导致后面没有等待连发 [User did not speak]
-    #                     if time.time() - user_last_talk_time > 40: 
-    #                         user_input = "[User did not speak]"
-    #                         user_last_talk_time = time.time()
-    #                     else:
-    #                         time.sleep(0.1)  # Avoid busy waiting
-    #                         continue
-    #                 if not self.user_input_queue.empty():
-    #                     user_input += self.user_input_queue.get() + " "
-    #             else: # user is talking
-    #                 user_last_talk_time = time.time()
-    #                 continue  # Skip if the user is talking
-
-    #             print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
-
-    #             self.speaking_event.set()
-    #             llm_output = ""
-    #             llm_output_total = ""
-    #             is_llm_thinking = False
-
-    #             # Prepare streaming input with context if Redis is configured
-    #             stream_input = user_input
-    #             if self.temp_memory_handler:
-    #                 recent_history = self.temp_memory_handler.get()
-
-    #             for output in model.stream(user_msg.update_content(content=user_input, memory=recent_history)):
-    #                 if self.is_user_talking.is_set() or not self.user_input_queue.empty():
-    #                     if not self.llm_output_queue.empty():
-    #                         # Empty the queue
-    #                         empty_queue = self.llm_output_queue.get(block=False)
-    #                     break
-                    
-    #                 # Directly append to llm_output, reducing queue operations
-    #                 llm_output += str(output)
-    #                 if output == "<think>" and not is_llm_thinking:
-    #                     is_llm_thinking = True
-    #                     print("is_llm_thinking = True")
-    #                 elif output == "</think>" and is_llm_thinking:
-    #                     is_llm_thinking = False
-    #                     print("is_llm_thinking = False")
-    #                 if output in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in output:
-    #                     llm_output_total += llm_output
-    #                     print("llm output: " + llm_output)
-    #                     if not is_llm_thinking or "</think>" in output:
-    #                         self.llm_output_queue.put(llm_output)
-    #                         print("after put llm_output_queue: ", self.llm_output_queue.qsize())
-    #                     self.llm_output_queue_ws.put(llm_output)
-    #                     llm_output = ""
-
-    #             # Store LLM output in temporary memory if Redis is configured
-    #             self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
-    #             if self.temp_memory_handler and llm_output_total:
-    #                 self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
-
-    #             # llm_message.update_content(content=llm_output_total)
-    #             if self.database is not None:
-    #                 self.database.add_data(user_input, "user")
-    #                 self.database.add_data(llm_output_total, "bot")
-    #             llm_output_total = ""

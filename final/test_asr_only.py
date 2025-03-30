@@ -3,7 +3,7 @@ import time
 import multiprocessing
 multiprocessing.set_start_method('spawn', force=True)
 
-from final.func import asr_process_func, asr_process_func_ws
+from final.func import asr_process_func
 
 # export QDRANT_HOST=localhost
 # export QDRANT_PORT=6333
@@ -20,7 +20,7 @@ def main():
     try:
         asr_process = multiprocessing.Process( 
             # target=asr_process_func, 
-            target=asr_process_func_ws, 
+            target=asr_process_func, 
             args=( 
                 is_user_talking, 
                 stop_event, 

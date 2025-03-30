@@ -83,6 +83,7 @@ def asr_process_func_ws(
         asr_output_queue_ws: queue, 
         ap = None, 
         streaming=False, 
+        chunk=4096,
     ): 
     """
     ap: Audio_Processer
@@ -93,7 +94,6 @@ def asr_process_func_ws(
     # from ASR.model_classes.faster_whisper import ASR
     from ASR.model_classes.NeMo import ASR
     
-    CHUNK = 4096
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
@@ -101,7 +101,7 @@ def asr_process_func_ws(
     try:
         if ap is None:
             ap = Audio_Processer(
-                chunk=CHUNK, 
+                chunk=chunk, 
                 format=FORMAT, 
                 channels=CHANNELS, 
                 rate=RATE, 
