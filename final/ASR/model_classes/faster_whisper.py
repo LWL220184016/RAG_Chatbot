@@ -14,6 +14,7 @@ class ASR():
             compute_type: str = "float16", 
             ap: Audio_Processer = None, 
             stop_event = None, 
+            is_user_talking = None, 
             asr_output_queue: queue = None, 
             streaming: bool = False, 
         ):
@@ -23,6 +24,7 @@ class ASR():
         self.ap = ap
         self.asr_output_queue = asr_output_queue
         self.stop_event = stop_event
+        self.is_user_talking = is_user_talking
 
         # only for streaming
         self.transcribe_kargs = {}
@@ -109,7 +111,14 @@ class ASR():
 the following code just save with NeMo may not match to faster whisper, 
 need to modify the following code to match faster_whisper
 # only for streaming
-    def asr_output_stream(self, is_asr_ready_event):
+    def asr_output_stream(self, 
+                          is_asr_ready_event, 
+                          user_talk_timeout=0.2, 
+                          clean_buffer_timeout=5
+                        ):
+        """
+        user_talk_timeout: float = 0.2, # 如果用戶在 0.2 秒內沒有說話，則認爲用戶已經停止說話
+        """
         import time
         print("asr waiting audio")
         is_asr_ready_event.set()
@@ -121,11 +130,12 @@ need to modify the following code to match faster_whisper
                 continue
 
             try:
-                self.processer.insert_audio_chunk(audio_data)
+                self.processer.insert_audio_chunk(audio_data, clean_buffer_timeout)
                 result = self.processer.process_iter()
                 # print("\nASR Output: ", result)
                 # print("last ASR text output: ", time.time())
-                self.asr_output_queue.put(result[0][2])
+                if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
+                    self.asr_output_queue.put(result[0][2])
 
             except Exception as e:
                 print("asr_output_stream Exception: " + str(e))
@@ -133,7 +143,12 @@ need to modify the following code to match faster_whisper
                 continue
         print("asr_output_stream end")
 
-    def asr_output_stream_ws(self, is_asr_ready_event, asr_output_queue_ws):
+    def asr_output_stream_ws(self, 
+                             is_asr_ready_event, 
+                             asr_output_queue_ws, 
+                             user_talk_timeout=0.2, 
+                             clean_buffer_timeout=5
+                            ):
         print("asr waiting audio")
         is_asr_ready_event.set()
 
@@ -144,11 +159,12 @@ need to modify the following code to match faster_whisper
                 continue
 
             try:
-                self.processer.insert_audio_chunk(audio_data)
+                self.processer.insert_audio_chunk(audio_data, clean_buffer_timeout)
                 result = self.processer.process_iter()
                 print("\nASR Output: ", result)
-                self.asr_output_queue.put(result[0][2])
-                asr_output_queue_ws.put(result[0][2])
+                if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
+                    self.asr_output_queue.put(result[0][2])
+                    asr_output_queue_ws.put(result[0][2])
 
             except Exception as e:
                 print("asr_output_stream_ws Exception: " + str(e))

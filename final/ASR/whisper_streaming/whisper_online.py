@@ -90,8 +90,8 @@ class OnlineASRProcessor:
         self.commited = []
         self.last_speeking_time = time.time()
 
-    def insert_audio_chunk(self, audio):
-        if time.time() - self.last_speeking_time > 1:
+    def insert_audio_chunk(self, audio, clean_buffer_timeout=5):
+        if time.time() - self.last_speeking_time > clean_buffer_timeout:
             self.audio_buffer = np.array([], dtype=np.float32)
         self.last_speeking_time = time.time()
 

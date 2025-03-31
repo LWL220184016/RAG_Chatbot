@@ -20,7 +20,7 @@ def asr_process_func(
     # from ASR.model_classes.faster_whisper import ASR
     from ASR.model_classes.NeMo import ASR
 
-    SOUND_LEVEL = 10
+    SOUND_LEVEL = 5
     CHUNK = 4096
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
@@ -46,6 +46,7 @@ def asr_process_func(
         check_audio_thread.start()
         asr = ASR( 
             stop_event=stop_event, 
+            is_user_talking=is_user_talking, 
             ap=ap, 
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
@@ -114,6 +115,7 @@ def asr_process_func_ws(
             device="cuda:0",
             ap=ap, 
             stop_event=stop_event, 
+            is_user_talking=is_user_talking, 
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
         )

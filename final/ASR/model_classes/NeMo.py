@@ -13,6 +13,7 @@ class ASR():
             device: str = "cuda", 
             ap: Audio_Processer = None, 
             stop_event = None, 
+            is_user_talking = None, 
             asr_output_queue: queue = None, 
             streaming: bool = False, 
         ):
@@ -23,6 +24,7 @@ class ASR():
         self.ap = ap
         self.asr_output_queue = asr_output_queue
         self.stop_event = stop_event
+        self.is_user_talking = is_user_talking
 
         # only for streaming
         self.transcribe_kargs = {}
@@ -106,7 +108,11 @@ class ASR():
         print("asr_output_ws end")
 
 # only for streaming
-    def asr_output_stream(self, is_asr_ready_event, user_talk_timeout=0.2):
+    def asr_output_stream(self, 
+                          is_asr_ready_event, 
+                          user_talk_timeout=0.2, 
+                          clean_buffer_timeout=5
+                        ):
         """
         user_talk_timeout: float = 0.2, # 如果用戶在 0.2 秒內沒有說話，則認爲用戶已經停止說話
         """
@@ -122,13 +128,11 @@ class ASR():
                 continue
 
             try:
-                self.processer.insert_audio_chunk(audio_data)
+                self.processer.insert_audio_chunk(audio_data, clean_buffer_timeout)
                 result = self.processer.process_iter()
                 # print("\nASR Output: ", result)
                 # print("last ASR text output: ", time.time())
-
-                time.sleep(0.1)  # 等待 0.1 秒，讓用戶有時間說話
-                if self.ap.audio_checked_queue.empty():
+                if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
                     self.asr_output_queue.put(result[0][2])
 
             except Exception as e:
@@ -137,7 +141,12 @@ class ASR():
                 continue
         print("asr_output_stream end")
 
-    def asr_output_stream_ws(self, is_asr_ready_event, asr_output_queue_ws):
+    def asr_output_stream_ws(self, 
+                             is_asr_ready_event, 
+                             asr_output_queue_ws, 
+                             user_talk_timeout=0.2, 
+                             clean_buffer_timeout=5
+                            ):
         print("asr waiting audio")
         import time
         is_asr_ready_event.set()
@@ -149,16 +158,12 @@ class ASR():
                 continue
 
             try:
-                self.processer.insert_audio_chunk(audio_data)
+                self.processer.insert_audio_chunk(audio_data, clean_buffer_timeout)
                 result = self.processer.process_iter()
                 print("\nASR Output: ", result)
 # 只在 self.ap.audio_checked_queue 爲空的時候才需要等 0.2 秒，
 # 然後檢查 self.ap.audio_checked_queue.empty() 確認用戶已經停止說話
-                if self.ap.audio_checked_queue.empty():
-                    time.sleep(0.2)  # 等待一下，讓用戶有時間說話
-
-                if self.ap.audio_checked_queue.empty():
-                    print("aaa user stop talking")
+                if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
                     self.asr_output_queue.put(result[0][2])
                     asr_output_queue_ws.put(result[0][2])
 
@@ -193,7 +198,6 @@ class ASR():
         return o
 
     def segments_end_ts(self, res):
-
         return [s.end for s in res]
 
     def use_vad(self):

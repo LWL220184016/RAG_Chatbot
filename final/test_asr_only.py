@@ -3,7 +3,7 @@ import time
 import multiprocessing
 multiprocessing.set_start_method('spawn', force=True)
 
-from final.func import asr_process_func
+from func import asr_process_func
 
 # export QDRANT_HOST=localhost
 # export QDRANT_PORT=6333
