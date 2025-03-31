@@ -50,6 +50,7 @@ def main():
                 is_asr_ready_event, 
                 is_llm_ready_event, 
                 is_tts_ready_event, 
+                is_user_talking, 
                 client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, # for send back the text to user to show what the user said

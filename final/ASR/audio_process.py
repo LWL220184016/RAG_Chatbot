@@ -8,7 +8,7 @@ import torch
 
 from pydub import AudioSegment
 import io
-
+Audio_Processer should add sounddevice support reference sd_example.py
 class Audio_Processer():
     """
     startStream: bool
@@ -135,6 +135,7 @@ class Audio_Processer():
                     # self.audio_checked_queue.put(bytes(frames))
                     self.audio_checked_queue.put(frame)
                     record_start_time = time.time()
+                    self.is_user_talking.set()
 
                 else:
                     # if len(frames) > 0:
@@ -144,6 +145,7 @@ class Audio_Processer():
                             continue
                         # frames = bytearray()
                         record_start_time = 0
+                        self.is_user_talking.clear()
                         # print(f'聲音強度: {volume_norm:.2f}')
             except OSError as e:
                 import traceback
