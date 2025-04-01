@@ -9,7 +9,7 @@ import queue
 import time
 import base64
 
-from audio_process import Audio_Processer
+from audio_process import Audio_Processor
 
 user_color_code = 155 # 顔色
 llm_color_code = 202  # 顔色
@@ -26,8 +26,9 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
 
         is_user_talking = threading.Event()
         stop_event = threading.Event()
+        is_asr_ready_event = threading.Event()
         
-        ap = Audio_Processer( 
+        ap = Audio_Processor( 
             chunk = 512, 
             # chunk = 4096, 
             audio_checked_queue = audio_checked_queue, 
@@ -40,7 +41,7 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
         thread_stop_event = threading.Event()
         
         try:
-            get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
+            get_audio_thread = threading.Thread(target=ap.get_chunk, args=(is_asr_ready_event,))
             # check_audio_thread = threading.Thread(target=ap.detect_sound, args=(10, 0.1))
             check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(5, -1))
             

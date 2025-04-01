@@ -12,12 +12,12 @@ import base64
 import logging
 from typing import Optional, Any # For type hints
 
-# Assuming Audio_Processer is in a local file named audio_process.py
-# If not, you MUST place the Audio_Processer class definition here or import it
+# Assuming Audio_Processor is in a local file named audio_process.py
+# If not, you MUST place the Audio_Processor class definition here or import it
 try:
-    from audio_process import Audio_Processer
+    from audio_process import Audio_Processor
 except ImportError:
-    print("Error: Could not import Audio_Processer from audio_process.py")
+    print("Error: Could not import Audio_Processor from audio_process.py")
     print("Please ensure the file exists and the class is defined correctly.")
     # exit(1) # Optional: force exit if class is missing
 
@@ -236,19 +236,19 @@ def play_tts_audio_thread(
     logging.info("TTS playback thread finished.")
 
 def start_audio_processing_threads(
-    ap: Audio_Processer,
+    ap: Audio_Processor,
     stop_event: threading.Event,
     audio_chunk_queue: queue.Queue, # The queue AP writes to
     sound_level: int = 100 # Sound level threshold for detection
 ) -> list[threading.Thread]:
-    """Starts the threads managed by the Audio_Processer."""
+    """Starts the threads managed by the Audio_Processor."""
     threads = []
     try:
         # Ensure the queue used by AP is the one we read from
         ap.audio_checked_queue = audio_chunk_queue
         ap.stop_event = stop_event # Make sure AP uses the main stop event
 
-        # Adapt args based on your Audio_Processer's method signatures
+        # Adapt args based on your Audio_Processor's method signatures
         # Original code had ap.get_chunk(True,) - assuming True means start immediately
         get_audio_thread = threading.Thread(
             target=ap.get_chunk,
@@ -271,7 +271,7 @@ def start_audio_processing_threads(
         logging.info("Audio processing threads started.")
 
     except AttributeError as e:
-         logging.error(f"Audio_Processer is missing expected attribute/method: {e}. Cannot start threads.", exc_info=True)
+         logging.error(f"Audio_Processor is missing expected attribute/method: {e}. Cannot start threads.", exc_info=True)
          # Stop any threads that might have started if error occurs mid-way (unlikely here)
          stop_event.set()
          threads = [] # Clear threads list as they failed to start properly
@@ -294,7 +294,7 @@ async def run_client(
     logging.info(f"Using input device ID: {input_device}, Sample Rate: {sample_rate}")
 
     # Queues
-    # 1. Queue for Audio_Processer threads to put processed audio chunks into
+    # 1. Queue for Audio_Processor threads to put processed audio chunks into
     audio_from_processor_queue = queue.Queue(maxsize=50) # Thread-safe queue
     # 2. Queue for the async sender task to read from (bridged from #1)
     audio_to_send_queue = asyncio.Queue(maxsize=50) # Async queue
@@ -305,16 +305,16 @@ async def run_client(
     # Use asyncio.Event for coordinating async tasks and signaling threads via checks
     master_shutdown_event = asyncio.Event()
     # Use threading.Event specifically for threads that might need blocking waits
-    thread_stop_event = threading.Event() # For Audio_Processer and TTS thread
+    thread_stop_event = threading.Event() # For Audio_Processor and TTS thread
 
     # Create Audio Processor instance
-    ap: Optional[Audio_Processer] = None
+    ap: Optional[Audio_Processor] = None
     audio_processor_threads: list[threading.Thread] = []
     tts_playback_thread: Optional[threading.Thread] = None
     tasks: list[asyncio.Task] = []
 
     try:
-        ap = Audio_Processer(
+        ap = Audio_Processor(
             # chunk=512, # Example chunk size
             chunk = 4096,
             audio_checked_queue=audio_from_processor_queue, # Pass the correct queue
@@ -322,12 +322,12 @@ async def run_client(
             stop_event=thread_stop_event, # Pass the thread stop event
             input_device_index=input_device,
         )
-        logging.info("Audio_Processer initialized.")
+        logging.info("Audio_Processor initialized.")
     except NameError:
-         logging.error("Audio_Processer class is not defined. Please fix the import or definition.")
+         logging.error("Audio_Processor class is not defined. Please fix the import or definition.")
          return # Cannot continue without the processor class
     except Exception as e:
-        logging.error(f"Failed to initialize Audio_Processer: {e}", exc_info=True)
+        logging.error(f"Failed to initialize Audio_Processor: {e}", exc_info=True)
         return # Cannot continue
 
     websocket_connection: Optional[websockets.WebSocketClientProtocol] = None

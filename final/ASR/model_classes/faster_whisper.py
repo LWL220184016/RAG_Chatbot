@@ -3,7 +3,7 @@ import traceback
 import logging
 
 from faster_whisper import WhisperModel
-from ASR.audio_process import Audio_Processer
+from ASR.audio_process import Audio_Processor
 from ASR.whisper_streaming.whisper_online import OnlineASRProcessor
 
 class ASR():
@@ -12,7 +12,7 @@ class ASR():
             model: str = "large-v3", 
             device: str = "cuda", 
             compute_type: str = "float16", 
-            ap: Audio_Processer = None, 
+            ap: Audio_Processor = None, 
             stop_event = None, 
             is_user_talking = None, 
             asr_output_queue: queue = None, 
@@ -31,10 +31,10 @@ class ASR():
         self.logger = logging.getLogger(__name__)
         if streaming:
             print("ASR streaming enabled")
-            self.processer = OnlineASRProcessor()
-            self.processer.transcribe = self.transcribe
-            self.processer.ts_words = self.ts_words
-            self.processer.segments_end_ts = self.segments_end_ts
+            self.processor = OnlineASRProcessor()
+            self.processor.transcribe = self.transcribe
+            self.processor.ts_words = self.ts_words
+            self.processor.segments_end_ts = self.segments_end_ts
             self.asr_output = self.asr_output_stream
             self.asr_output_ws = self.asr_output_stream_ws
 
@@ -130,8 +130,8 @@ need to modify the following code to match faster_whisper
                 continue
 
             try:
-                self.processer.insert_audio_chunk(audio_data, clean_buffer_timeout)
-                result = self.processer.process_iter()
+                self.processor.insert_audio_chunk(audio_data, clean_buffer_timeout)
+                result = self.processor.process_iter()
                 # print("\nASR Output: ", result)
                 # print("last ASR text output: ", time.time())
                 if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
@@ -159,8 +159,8 @@ need to modify the following code to match faster_whisper
                 continue
 
             try:
-                self.processer.insert_audio_chunk(audio_data, clean_buffer_timeout)
-                result = self.processer.process_iter()
+                self.processor.insert_audio_chunk(audio_data, clean_buffer_timeout)
+                result = self.processor.process_iter()
                 print("\nASR Output: ", result)
                 if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
                     self.asr_output_queue.put(result[0][2])

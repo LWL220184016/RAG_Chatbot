@@ -17,6 +17,8 @@ def main():
 
     asr_output_queue = multiprocessing.Queue()
 
+    user_start_speek_time = None # for 計算識別所需時間
+
     try:
         asr_process = multiprocessing.Process( 
             # target=asr_process_func, 
@@ -36,9 +38,14 @@ def main():
             time.sleep(0.1)
         
         while not stop_event.is_set():
+            if is_user_talking.is_set() and user_start_speek_time == None:
+                user_start_speek_time = time.time()
+
             while not asr_output_queue.empty():
                 output = asr_output_queue.get_nowait()
                 print(f"\n\033[38;5;208m🔍 ASR: {output}\033[0m")  # 橙色高亮 (256-color)
+                print("Time use: ", (time.time() - user_start_speek_time))
+                user_start_speek_time = None
             time.sleep(0.1)
 
     except KeyboardInterrupt:

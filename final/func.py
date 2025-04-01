@@ -12,34 +12,32 @@ def asr_process_func(
         streaming=False, 
     ):
     """
-    ap: Audio_Processer
+    ap: Audio_Processor
     """
 
     import pyaudio
-    from ASR.audio_process import Audio_Processer
+    from ASR.audio_process import Audio_Processor
     # from ASR.model_classes.faster_whisper import ASR
     from ASR.model_classes.NeMo import ASR
 
-    SOUND_LEVEL = 5
+    SOUND_LEVEL = 1
     CHUNK = 4096
-    FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
     TIMEOUT_SEC = 0.3
 
     try:
         if ap is None:
-            ap = Audio_Processer( 
+            ap = Audio_Processor( 
                 chunk=CHUNK, 
-                format=FORMAT, 
                 channels=CHANNELS, 
                 rate=RATE, 
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event, 
             ) 
-        get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
+        get_audio_thread = threading.Thread(target=ap.get_chunk, args=(is_asr_ready_event, ))
         if streaming:
-            check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(SOUND_LEVEL, TIMEOUT_SEC))
+            check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(SOUND_LEVEL, TIMEOUT_SEC, ))
         else:
             check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         get_audio_thread.start()
@@ -87,11 +85,11 @@ def asr_process_func_ws(
         chunk=4096,
     ): 
     """
-    ap: Audio_Processer
+    ap: Audio_Processor
     """
 
     import pyaudio
-    from ASR.audio_process import Audio_Processer
+    from ASR.audio_process import Audio_Processor
     # from ASR.model_classes.faster_whisper import ASR
     from ASR.model_classes.NeMo import ASR
     
@@ -101,7 +99,7 @@ def asr_process_func_ws(
 
     try:
         if ap is None:
-            ap = Audio_Processer(
+            ap = Audio_Processor(
                 chunk=chunk, 
                 format=FORMAT, 
                 channels=CHANNELS, 
@@ -119,7 +117,7 @@ def asr_process_func_ws(
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
         )
-        asr.asr_output_ws(is_asr_ready_event, asr_output_queue_ws)
+        asr.asr_output(is_asr_ready_event, asr_output_queue_ws)
         print("asr_process_func end")
 
     except KeyboardInterrupt:

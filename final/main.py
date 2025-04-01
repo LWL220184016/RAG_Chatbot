@@ -5,7 +5,7 @@ import torch
 import time
 import queue
 
-from ASR.audio_process import Audio_Processer
+from ASR.audio_process import Audio_Processor
 # from ASR.asr import ASR
 from ASR.model_classes.NeMo import ASR
 # from LLM.llm_ollama import LLM_Ollama as LLM

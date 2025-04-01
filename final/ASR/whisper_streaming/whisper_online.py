@@ -140,17 +140,39 @@ class OnlineASRProcessor:
         the_rest = self.to_flush(self.transcript_buffer.complete())
         logger.debug(f"INCOMPLETE: {the_rest}")
 
-        # Handle buffer trimming based on strategy
-        buffer_length = len(self.audio_buffer) / self.SAMPLING_RATE
-        
-        if newly_committed and self.buffer_trimming_way == "sentence" and buffer_length > self.buffer_trimming_sec:
-            self.chunk_completed_sentence()
-        
-        trim_threshold = self.buffer_trimming_sec if self.buffer_trimming_way == "segment" else 30
-        if buffer_length > trim_threshold:
-            self.chunk_completed_segment(res)
+    
+        """
+        这段代码控制着基于语音片段的缓冲区修剪操作。
+        但是我在 insert_audio_chunk 函数中添加了这行代码, 当一段时间没有运行, 就会清空缓冲区,因此下方被注解的代码不是必要的
+        if time.time() - self.last_speeking_time > clean_buffer_timeout:
+            self.audio_buffer = np.array([], dtype=np.float32)
 
-        logger.debug(f"len of buffer now: {buffer_length:2.2f}")
+        解釋: 
+            trim_threshold 的计算： 这行代码根据 self.buffer_trimming_way 的值来确定缓冲区修剪的阈值 trim_threshold。
+                    如果 self.buffer_trimming_way 的值为 "segment"，则 trim_threshold 等于 
+                    self.buffer_trimming_sec。 这意味着使用基于语音片段的修剪策略，修剪阈值由 
+                    self.buffer_trimming_sec 指定（单位可能是秒）。
+
+                    否则（如果 self.buffer_trimming_way 的值不是 "segment"），则 trim_threshold 
+                    等于 30。 这意味着使用其他修剪策略（例如基于句子），修剪阈值为 30 秒。
+            
+            缓冲区长度的判断： 这行代码判断当前的缓冲区长度 buffer_length 是否大于修剪阈值 trim_threshold。 buffer_length 的单位应该是秒。
+            
+            chunk_completed_segment 的调用： 如果 buffer_length 大于 trim_threshold，
+                则调用 self.chunk_completed_segment(res) 函数。 这意味着当缓冲区长度超过阈值时，
+                会执行基于语音片段的修剪操作。 res 是语音识别的结果，传递给 chunk_completed_segment 函数用于确定修剪点。
+        """
+        # # Handle buffer trimming based on strategy
+        # buffer_length = len(self.audio_buffer) / self.SAMPLING_RATE
+        
+        # if newly_committed and self.buffer_trimming_way == "sentence" and buffer_length > self.buffer_trimming_sec:
+        #     self.chunk_completed_sentence()
+        
+        # trim_threshold = self.buffer_trimming_sec if self.buffer_trimming_way == "segment" else 30
+        # if buffer_length > trim_threshold:
+        #     self.chunk_completed_segment(res)
+
+        # logger.debug(f"len of buffer now: {buffer_length:2.2f}")
         return tsw
 
     def chunk_completed_sentence(self):
