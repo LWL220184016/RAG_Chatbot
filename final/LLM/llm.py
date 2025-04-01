@@ -129,9 +129,10 @@ class LLM:
             self.temp_memory_handler.clear_conversation(session_id)
             return True
         return False
-# todo
-# asr 模型啓用串流的時候最後識別正確率不低，但是在最後識別完之前會輸出很多階段性的結果，這些結果會同樣被丟進 user_input_queue, 還有就是使用 websocket 的時候，
-# is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會接收到用戶説了一半的話，這樣會導致 llm 的輸出不正確，浪費 token, 算力等以及產生錯誤記憶
+
+todo
+asr 模型啓用串流的時候最後識別正確率不低，但是在最後識別完之前會輸出很多階段性的結果，這些結果會同樣被丟進 user_input_queue, 還有就是使用 websocket 的時候，
+is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會接收到用戶説了一半的話，這樣會導致 llm 的輸出不正確，浪費 token, 算力等以及產生錯誤記憶
     def get_user_input(self, user_msg: Message, user_last_talk_time: float):
         """Get user input from the queue"""
         user_input = ""

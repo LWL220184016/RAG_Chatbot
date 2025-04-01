@@ -10,6 +10,7 @@ def asr_process_func(
         asr_output_queue: queue, 
         ap = None, 
         streaming=False, 
+        chunk=4096,
     ):
     """
     ap: Audio_Processor
@@ -21,7 +22,6 @@ def asr_process_func(
     from ASR.model_classes.NeMo import ASR
 
     SOUND_LEVEL = 1
-    CHUNK = 4096
     CHANNELS = 1
     RATE = 16000
     TIMEOUT_SEC = 0.3
@@ -29,7 +29,7 @@ def asr_process_func(
     try:
         if ap is None:
             ap = Audio_Processor( 
-                chunk=CHUNK, 
+                chunk=chunk, 
                 channels=CHANNELS, 
                 rate=RATE, 
                 is_user_talking=is_user_talking, 

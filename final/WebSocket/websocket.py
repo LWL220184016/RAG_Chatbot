@@ -38,29 +38,30 @@ async def received_data(
 
     try:
         async for message in websocket:
-            text = message.get("text_data", "")
-            audio = message.get("audio_data", "")
-            
-            if text:
-                print(f"Received text: {text}")
-                await asyncio.get_event_loop().run_in_executor(
-                    None, 
-                    text_input_queue.put,
-                    text, 
-                )
+            if isinstance(message, str):
+                if message.startswith("([user stop speaking])"):
+                    print("User stopped speaking")
+                    is_user_talking.clear()
+                
+                else:
+                    print(f"Received text: {message}")
+                    await asyncio.get_event_loop().run_in_executor(
+                        None, 
+                        text_input_queue.put,
+                        message, 
+                    )
 
-            elif audio:
-                print(f"Received audio: len {len(audio)}")
+            elif isinstance(message, bytes):
+                print(f"Received audio: len {len(message)}")
                 # Update user talking status if it has changed
-                user_talking_status = message.get("is_user_talking", False)
-                if is_user_talking.is_set() != user_talking_status:
-                    is_user_talking.value = user_talking_status  # Update the value
-                    print(f"User talking status: {is_user_talking.is_set()}")
+                if not is_user_talking.is_set():
+                    is_user_talking.set()  # Update the value
+                    print("User speaking")
                 
                 await asyncio.get_event_loop().run_in_executor(
                     None, 
                     audio_input_queue.put,
-                    audio, 
+                    message, 
                 )
             else:
                 print("Empty message received")
@@ -69,6 +70,9 @@ async def received_data(
         print("Connection closed by client")
     except Exception as e:
         print(f"Error in receiving loop: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
 async def send_data(
         websocket, 
         asr_queue: queue = None, 
