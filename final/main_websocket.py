@@ -67,6 +67,7 @@ def main():
                 client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
+                "NeMo", 
                 None, # ap
                 True, # streaming: False
             )

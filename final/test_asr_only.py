@@ -21,15 +21,15 @@ def main():
 
     try:
         asr_process = multiprocessing.Process( 
-            # target=asr_process_func, 
             target=asr_process_func, 
             args=( 
                 is_user_talking, 
                 stop_event, 
                 is_asr_ready_event, 
                 asr_output_queue, 
-                None, 
-                True, 
+                "NeMo", # asr_class = "faster_whisper", "NeMo"
+                None, # ap = Audio_Processor
+                True, # stream = True, False
             ) 
         ) 
         

@@ -8,6 +8,7 @@ def asr_process_func(
         stop_event: threading.Event, 
         is_asr_ready_event: threading.Event,
         asr_output_queue: queue, 
+        asr_class = "NeMo", 
         ap = None, 
         streaming=False, 
         chunk=4096,
@@ -19,7 +20,8 @@ def asr_process_func(
     import pyaudio
     from ASR.audio_process import Audio_Processor
     # from ASR.model_classes.faster_whisper import ASR
-    from ASR.model_classes.NeMo import ASR
+    # from ASR.model_classes.NeMo import ASR
+    ASR = get_llm_class(asr_class)
 
     SOUND_LEVEL = 1
     CHANNELS = 1
@@ -80,6 +82,7 @@ def asr_process_func_ws(
         uncheck_audio_queue: queue, 
         asr_output_queue: queue, 
         asr_output_queue_ws: queue, 
+        asr_class = "NeMo", 
         ap = None, 
         streaming=False, 
         chunk=4096,
@@ -91,7 +94,8 @@ def asr_process_func_ws(
     import pyaudio
     from ASR.audio_process import Audio_Processor
     # from ASR.model_classes.faster_whisper import ASR
-    from ASR.model_classes.NeMo import ASR
+    # from ASR.model_classes.NeMo import ASR
+    ASR = get_llm_class(asr_class)
     
     FORMAT = pyaudio.paInt16
     CHANNELS = 1
@@ -148,9 +152,6 @@ def llm_process_func_ws(
         use_database = None,
     ):
 
-    # from LLM.llm_transformers import LLM_Transformers as LLM
-    # from LLM.llm_google import LLM_Google as LLM
-    # from LLM.llm_ollama import LLM_Ollama as LLM
     from Tools.tool import Tools
 
     LLM = get_llm_class(llm_class)
@@ -221,6 +222,16 @@ def tts_process_func(
         print("tts_process_func finally\n")
         stop_event.set()
         torch.cuda.ipc_collect()
+
+def get_asr_class(asr_name: str):
+    if asr_name == "faster_whisper":
+        from ASR.model_classes.faster_whisper import ASR
+    elif asr_name == "NeMo":
+        from ASR.model_classes.NeMo import ASR
+    else:
+        raise ValueError("asr_name must be 'faster_whisper' or 'NeMo'")
+    
+    return ASR
 
 def get_llm_class(llm_name: str):
     if llm_name == "transformers":

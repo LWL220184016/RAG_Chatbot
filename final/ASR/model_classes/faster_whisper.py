@@ -36,9 +36,8 @@ class ASR():
             self.processor.ts_words = self.ts_words
             self.processor.segments_end_ts = self.segments_end_ts
             self.asr_output = self.asr_output_stream
-            self.asr_output_ws = self.asr_output_stream_ws
 
-    def asr_output(self, is_asr_ready_event):
+    def asr_output(self, is_asr_ready_event, asr_output_queue_ws=None):
         print("asr waiting audio")
         is_asr_ready_event.set()
 
@@ -66,89 +65,23 @@ class ASR():
                 print("You: " + prompt)
                 # prompt = input("You: ")
                 self.asr_output_queue.put(prompt)
-                
+                if not asr_output_queue_ws == None:
+                    asr_output_queue_ws.put(prompt)
             except Exception as e:
                 print("asr_output Exception: " + str(e))
                 traceback.print_exc()
                 continue
         print("asr_output end")
 
-    def asr_output_ws(self, is_asr_ready_event, asr_output_queue_ws):
-        print("asr waiting audio")
-        is_asr_ready_event.set()
-
-        while not self.stop_event.is_set():
-            try:
-                audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-            processed_data = self.ap.process_audio2(audio_data=audio_data)
-            try:
-                segments, info = self.model.transcribe(
-                    # encoded_features[0],
-                    processed_data, 
-                    beam_size=5, 
-                ) 
-                print("Detected language '%s' with probability %f" % (info.language, info.language_probability))
-                prompt = ""
-                if info.language_probability > 0.5 and (info.language == 'en' or info.language == 'zh'):
-                    for segment in segments:
-                        print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
-                        prompt = segment.text
-                else: 
-                    continue
-
-                print("You: " + prompt)
-                # prompt = input("You: ")
-                self.asr_output_queue.put(prompt)
-                asr_output_queue_ws.put(prompt)
-            except Exception as e:
-                print("asr_output_ws Exception: " + str(e))
-                traceback.print_exc()
-                continue
-        print("asr_output_ws end")
-
-the following code just save with NeMo may not match to faster whisper, 
-need to modify the following code to match faster_whisper
+# the following code just save with NeMo may not match to faster whisper, 
+# need to modify the following code to match faster_whisper
 # only for streaming
+
     def asr_output_stream(self, 
                           is_asr_ready_event, 
-                          user_talk_timeout=0.2, 
+                          asr_output_queue_ws=None, 
                           clean_buffer_timeout=5
-                        ):
-        """
-        user_talk_timeout: float = 0.2, # 如果用戶在 0.2 秒內沒有說話，則認爲用戶已經停止說話
-        """
-        import time
-        print("asr waiting audio")
-        is_asr_ready_event.set()
-
-        while not self.stop_event.is_set():
-            try:
-                audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-
-            try:
-                self.processor.insert_audio_chunk(audio_data, clean_buffer_timeout)
-                result = self.processor.process_iter()
-                # print("\nASR Output: ", result)
-                # print("last ASR text output: ", time.time())
-                if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
-                    self.asr_output_queue.put(result[0][2])
-
-            except Exception as e:
-                print("asr_output_stream Exception: " + str(e))
-                traceback.print_exc()
-                continue
-        print("asr_output_stream end")
-
-    def asr_output_stream_ws(self, 
-                             is_asr_ready_event, 
-                             asr_output_queue_ws, 
-                             user_talk_timeout=0.2, 
-                             clean_buffer_timeout=5
-                            ):
+                         ):
         print("asr waiting audio")
         is_asr_ready_event.set()
 
@@ -164,13 +97,14 @@ need to modify the following code to match faster_whisper
                 print("\nASR Output: ", result)
                 if not self.is_user_talking.is_set() and self.ap.audio_checked_queue.empty():
                     self.asr_output_queue.put(result[0][2])
-                    asr_output_queue_ws.put(result[0][2])
+                    if not asr_output_queue_ws == None:
+                        asr_output_queue_ws.put(result[0][2])
 
             except Exception as e:
-                print("asr_output_stream_ws Exception: " + str(e))
+                print("asr_output_stream Exception: " + str(e))
                 traceback.print_exc()
                 continue
-        print("asr_output_stream_ws end")
+        print("asr_output_stream end")
 
     def transcribe(self, audio, init_prompt=""):
 

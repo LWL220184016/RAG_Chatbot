@@ -5,12 +5,6 @@ import torch
 import time
 import queue
 
-from ASR.audio_process import Audio_Processor
-# from ASR.asr import ASR
-from ASR.model_classes.NeMo import ASR
-# from LLM.llm_ollama import LLM_Ollama as LLM
-from LLM.llm_google import LLM_Google as LLM
-from TTS.tts_transformers import TTS
 from final.func import asr_process_func, llm_agent_process_func_ws, tts_process_func
 
 SOUND_LEVEL = 10
@@ -21,6 +15,8 @@ RATE = 16000
 TIMEOUT_SEC = 0.3
 
 def main():
+    is_asr_ready_event = multiprocessing.Event()
+
     stop_event = multiprocessing.Event()
     is_user_talking = multiprocessing.Event()
     speaking_event = multiprocessing.Event()
@@ -31,14 +27,18 @@ def main():
     audio_queue = multiprocessing.Queue()
 
     try:
-        asr_process = multiprocessing.Process(
+        asr_process = multiprocessing.Process( 
             target=asr_process_func, 
-            args=(
-                stop_event, 
+            args=( 
                 is_user_talking, 
-                asr_output_queue
-            )
-        )
+                stop_event, 
+                is_asr_ready_event, 
+                asr_output_queue, 
+                "NeMo", # asr_class = "faster_whisper", "NeMo"
+                None, # ap = Audio_Processor
+                True, # stream = True, False
+            ) 
+        ) 
         llm_process = multiprocessing.Process(
             target=llm_agent_process_func_ws, 
             args=(

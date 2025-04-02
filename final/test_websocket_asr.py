@@ -55,10 +55,10 @@ def main():
                 client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
-                None, 
-                True, # streaming: True, False
-                4096, # chunk size
-            ) 
+                "NeMo", 
+                None, # ap
+                True, # streaming: False
+            )
         )
         
         ws_process.start()
