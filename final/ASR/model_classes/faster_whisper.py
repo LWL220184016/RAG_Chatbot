@@ -21,7 +21,7 @@ class ASR():
             streaming: bool = False, 
         ):
     
-        self.model = WhisperModel(model, device=device, compute_type=compute_type)
+        self.model = WhisperModel(model, device="cuda", compute_type=compute_type)
         self.device = device
         self.ap = ap
         self.asr_output_queue = asr_output_queue

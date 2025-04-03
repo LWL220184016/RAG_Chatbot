@@ -6,6 +6,7 @@ from LLM.llm import LLM
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
 from langchain.agents import AgentType, initialize_agent
 
+
 class LLM_Transformers(LLM):
     def __init__(
         self, 
@@ -16,7 +17,8 @@ class LLM_Transformers(LLM):
         load_in_4bit: bool = True, 
 
         # model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", 
-        model_name: str = "google/gemma-3-12b-it", 
+        # model_name: str = "google/gemma-3-12b-it", 
+        model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", 
         is_user_talking = None, 
         stop_event = None,
         speaking_event = None, 
@@ -91,6 +93,10 @@ class LLM_Transformers(LLM):
         
         # 在這裡傳遞必要的參數給父類別的方法
         super().llm_output_ws(self.model, is_llm_ready_event)
+
+        # todo
+        problem in deepseek-ai/DeepSeek-R1-Distill-Qwen-7B llm output and 
+        faster whisper streaming words not extend and too slow
 
 # todo
 #         print("llm waiting text")

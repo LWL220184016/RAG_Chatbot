@@ -111,7 +111,7 @@ def asr_process_func_ws(
                 stop_event=stop_event,
             )
         asr = ASR(
-            device="cuda:0",
+            device="cuda",
             ap=ap, 
             stop_event=stop_event, 
             is_user_talking=is_user_talking, 
@@ -152,6 +152,13 @@ def llm_process_func_ws(
     from Tools.tool import Tools
 
     LLM = get_llm_class(llm_class)
+
+    message = """
+    如果記憶儲存内容出現問題，可以優先檢查 llm.py 中的以下兩行代碼：
+    self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
+    self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output)
+    """
+    print(f"\n\033[38;5;17m{message}\033[0m")
 
     if use_database not in [None, "qdrant"]:
         raise ValueError("use_database must be 'none' or 'qdrant'")

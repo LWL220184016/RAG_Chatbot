@@ -3,37 +3,33 @@ import time
 import multiprocessing
 multiprocessing.set_start_method('spawn', force=True)
 
-from veriables import (
-    is_asr_ready_event, 
-    is_user_talking, 
-    stop_event, 
-    asr_output_queue, 
-    asr_process,
-    cleanup_processes
-)
+from final.chatbot_config import Chatbot_config
+
 
 # export QDRANT_HOST=localhost
 # export QDRANT_PORT=6333
 
 def main():
+    chatbot_config = Chatbot_config()
+
     # Initialize user_start_speek_time variable
     user_start_speek_time = None
     
     try:
-        asr_process.start()
+        chatbot_config.asr_process.start()
         print("Waiting for ASR to be ready...")
-        while not is_asr_ready_event.is_set():
+        while not chatbot_config.is_asr_ready_event.is_set():
             time.sleep(0.1)
         
         print("ASR ready! Listening for speech...")
         
-        while not stop_event.is_set():
-            if is_user_talking.is_set() and user_start_speek_time is None:
+        while not chatbot_config.stop_event.is_set():
+            if chatbot_config.is_user_talking.is_set() and user_start_speek_time is None:
                 user_start_speek_time = time.time()
                 print("User started speaking...")
 
-            while not asr_output_queue.empty():
-                output = asr_output_queue.get_nowait()
+            while not chatbot_config.asr_output_queue.empty():
+                output = chatbot_config.asr_output_queue.get_nowait()
                 if output:  # Only process non-empty outputs
                     print(f"\n\033[38;5;208m🔍 ASR: {output}\033[0m")  # 橙色高亮 (256-color)
                     if user_start_speek_time is not None:
@@ -45,12 +41,12 @@ def main():
         print("\nKeyboard interrupt detected. Shutting down...")
     finally:
         # Clean up resources properly
-        stop_event.set()
-        if asr_process.is_alive():
-            asr_process.join(timeout=3.0)
-            if asr_process.is_alive():
-                asr_process.terminate()
-        asr_process.close()
+        chatbot_config.stop_event.set()
+        if chatbot_config.asr_process.is_alive():
+            chatbot_config.asr_process.join(timeout=3.0)
+            if chatbot_config.asr_process.is_alive():
+                chatbot_config.asr_process.terminate()
+        chatbot_config.asr_process.close()
         
         torch.cuda.ipc_collect()
         print("Program terminated cleanly")
