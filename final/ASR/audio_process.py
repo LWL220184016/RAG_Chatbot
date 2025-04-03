@@ -48,9 +48,9 @@ class Audio_Processor():
         self.mel_spectrogram = None
 
     def _setup_pyaudio_stream(self, 
-                                     channels, 
-                                     input_device_index, 
-                                    ):
+                              channels, 
+                              input_device_index, 
+                             ):
         import pyaudio
 
         self.stream = pyaudio.PyAudio().open(

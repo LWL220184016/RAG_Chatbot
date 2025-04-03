@@ -9,7 +9,6 @@ from func import asr_process_func
 # export QDRANT_PORT=6333
 
 def main():
-    
     is_asr_ready_event = multiprocessing.Event()
 
     is_user_talking = multiprocessing.Event()
@@ -27,9 +26,9 @@ def main():
                 stop_event, 
                 is_asr_ready_event, 
                 asr_output_queue, 
-                "NeMo", # asr_class = "faster_whisper", "NeMo"
-                None, # ap = Audio_Processor
-                True, # stream = True, False
+                "NeMo", # asr_class: "faster_whisper", "NeMo"
+                None, # ap: Audio_Processor
+                True, # streaming: True, False
             ) 
         ) 
         

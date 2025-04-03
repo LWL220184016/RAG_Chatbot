@@ -19,11 +19,10 @@ def asr_process_func(
 
     import pyaudio
     from ASR.audio_process import Audio_Processor
-    # from ASR.model_classes.faster_whisper import ASR
-    # from ASR.model_classes.NeMo import ASR
-    ASR = get_llm_class(asr_class)
 
-    SOUND_LEVEL = 1
+    ASR = get_asr_class(asr_class)
+
+    SOUND_LEVEL = 0.5
     CHANNELS = 1
     RATE = 16000
     TIMEOUT_SEC = 0.3
@@ -93,11 +92,10 @@ def asr_process_func_ws(
 
     import pyaudio
     from ASR.audio_process import Audio_Processor
-    # from ASR.model_classes.faster_whisper import ASR
-    # from ASR.model_classes.NeMo import ASR
-    ASR = get_llm_class(asr_class)
+
+    ASR = get_asr_class(asr_class)
     
-    FORMAT = pyaudio.paInt16
+    # FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
 
@@ -105,7 +103,6 @@ def asr_process_func_ws(
         if ap is None:
             ap = Audio_Processor(
                 chunk=chunk, 
-                format=FORMAT, 
                 channels=CHANNELS, 
                 rate=RATE, 
                 audio_checked_queue=uncheck_audio_queue,

@@ -144,11 +144,6 @@ is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會�
                     user_input += self.user_input_queue.get(timeout=0.1) + " "
                     time.sleep(0.1)  # Avoid busy waiting
                 except queue.Empty:
-                    # 这里有问题, 第一次会等四十秒, 但是应该 user_last_talk_time 没有更新, 导致后面没有等待连发 [User did not speak]
-                    # if time.time() - user_last_talk_time > 40: 
-                    #     user_input = "[User did not speak]"
-                    #     user_last_talk_time = time.time()
-                    # else:
                         time.sleep(0.1)  # Avoid busy waiting
                         continue
                 if not self.user_input_queue.empty():
@@ -181,11 +176,6 @@ is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會�
                     user_input += self.user_input_queue.get(timeout=0.1) + " "
                     time.sleep(0.1)  # Avoid busy waiting
                 except queue.Empty:
-                    # 这里有问题, 第一次会等四十秒, 但是应该 user_last_talk_time 没有更新, 导致后面没有等待连发 [User did not speak]
-                    # if time.time() - user_last_talk_time > 40: 
-                    #     user_input = "[User did not speak]"
-                    #     user_last_talk_time = time.time()
-                    # else:
                         time.sleep(0.1)  # Avoid busy waiting
                         continue
                 if not self.user_input_queue.empty():
@@ -206,4 +196,3 @@ is_user_talking 并不會正常運作，導致用戶在説話的時候 llm 會�
         
         else:
             return user_msg.update_content(content=user_input)
-    

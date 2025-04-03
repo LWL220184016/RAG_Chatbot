@@ -13,7 +13,6 @@ except Exception:
     from embedding_model.embedder import Embedder
     from database import Database_Handler
 
-
 # export QDRANT_HOST=localhost
 # export QDRANT_PORT=6333
 

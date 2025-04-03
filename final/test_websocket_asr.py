@@ -46,20 +46,20 @@ def main():
                 audio_queue, 
             )
         )
-        asr_process = multiprocessing.Process(
+        asr_process = multiprocessing.Process( 
             target=asr_process_func_ws, 
-            args=(
+            args=( 
                 is_user_talking, 
                 stop_event, 
                 is_asr_ready_event, 
                 client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
-                "NeMo", 
-                None, # ap
-                True, # streaming: False
-            )
-        )
+                "NeMo", # asr_class: "faster_whisper", "NeMo"
+                None, # ap: Audio_Processor
+                True, # streaming: True, False
+            ) 
+        ) 
         
         ws_process.start()
         asr_process.start()

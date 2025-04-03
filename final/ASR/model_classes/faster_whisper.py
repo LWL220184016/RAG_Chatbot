@@ -10,8 +10,10 @@ class ASR():
     def __init__(
             self, 
             model: str = "large-v3", 
-            device: str = "cuda", 
-            compute_type: str = "float16", 
+            # device: str = "cuda", 
+            device: str = "auto", 
+            # compute_type: str = "float16", 
+            compute_type: str = "default", 
             ap: Audio_Processor = None, 
             stop_event = None, 
             is_user_talking = None, 
@@ -73,6 +75,7 @@ class ASR():
                 continue
         print("asr_output end")
 
+# todo
 # the following code just save with NeMo may not match to faster whisper, 
 # need to modify the following code to match faster_whisper
 # only for streaming
@@ -92,6 +95,7 @@ class ASR():
                 continue
 
             try:
+                audio_data = self.ap.process_audio2(audio_data=audio_data)
                 self.processor.insert_audio_chunk(audio_data, clean_buffer_timeout)
                 result = self.processor.process_iter()
                 print("\nASR Output: ", result)
@@ -109,7 +113,7 @@ class ASR():
     def transcribe(self, audio, init_prompt=""):
 
         # tested: beam_size=5 is faster and better than 1 (on one 200 second document from En ESIC, min chunk 0.01)
-        segments, info = self.model.transcribe(audio, language=self.original_language, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
+        segments, info = self.model.transcribe(audio, language=None, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
 
         #print(info)  # info contains language detection result
 
