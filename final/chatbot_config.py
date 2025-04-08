@@ -67,7 +67,7 @@ class Chatbot_config:
                 self.stop_event, 
                 self.is_asr_ready_event, 
                 self.asr_output_queue, 
-                "NeMo", # asr_class: "faster_whisper", "NeMo"
+                "transformers", # asr_class: "faster_whisper", "NeMo", "transformers"
                 None, # ap: Audio_Processor
                 True, # streaming: True, False
             ) 

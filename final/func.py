@@ -33,6 +33,7 @@ def asr_process_func(
                 chunk=chunk, 
                 channels=CHANNELS, 
                 rate=RATE, 
+                format="int16", # "float32", "int16"
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event, 
             ) 
@@ -232,6 +233,8 @@ def get_asr_class(asr_name: str):
         from ASR.model_classes.faster_whisper import ASR
     elif asr_name == "NeMo":
         from ASR.model_classes.NeMo import ASR
+    elif asr_name == "transformers":
+        from ASR.model_classes.transformers import ASR
     else:
         raise ValueError("asr_name must be 'faster_whisper' or 'NeMo'")
     

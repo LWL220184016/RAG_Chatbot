@@ -1,6 +1,6 @@
 import queue
-import nemo.collections.asr as nemo_asr
 import traceback
+from transformers import AutoProcessor, AutoModelForSpeechSeq2Seq
 import logging
 
 from ASR.audio_process import Audio_Processor
@@ -9,7 +9,7 @@ from ASR.whisper_streaming.whisper_online import OnlineASRProcessor
 class ASR():
     def __init__(
             self, 
-            model: str = "nvidia/parakeet-rnnt-1.1b", 
+            model: str = "openai/whisper-medium", # "openai/whisper-large-v3", "openai/whisper-medium"
             device: str = "cuda", 
             ap: Audio_Processor = None, 
             stop_event = None, 
@@ -18,8 +18,8 @@ class ASR():
             streaming: bool = False, 
         ):
     
-        self.model = nemo_asr.models.ASRModel.from_pretrained(model)
-        self.model.eval()
+        self.asr_processor = AutoProcessor.from_pretrained("openai/whisper-medium")
+        self.model = AutoModelForSpeechSeq2Seq.from_pretrained(model)
         self.device = device
         self.ap = ap
         self.asr_output_queue = asr_output_queue
@@ -38,7 +38,7 @@ class ASR():
             self.asr_output = self.asr_output_stream
 
     def asr_output(self, is_asr_ready_event, asr_output_queue_ws = None):
-        print("asr waiting audio")
+        print(f"{self.model} asr waiting audio")
         is_asr_ready_event.set()
 
         while not self.stop_event.is_set():
@@ -48,14 +48,14 @@ class ASR():
                 continue
             processed_data = self.ap.process_audio(audio_data=audio_data)
             try:
-                transcriptions = self.model.transcribe(
-                    # encoded_features[0],
-                    processed_data, 
-                    batch_size = 4, 
-                    return_hypotheses = True, 
-                    verbose = False, 
-                ) 
-                # print("transcriptions: " + str(transcriptions))
+                input_features = self.asr_processor(processed_data, sampling_rate=16000, return_tensors="pt").input_features
+                # batch["reference"] = self.asr_processor.tokenizer._normalize(batch['text'])
+
+                # todo
+                # predicted_ids = self.model.generate(input_features.to("cuda"))[0]
+                predicted_ids = self.model.generate(input_features)[0]
+                transcriptions = self.asr_processor.decode(predicted_ids)
+                print("transcriptions: " + str(transcriptions))
                 hypothesis = transcriptions[0]
                 h = hypothesis[0]
                 print("score: " + str(h.score))
@@ -88,6 +88,7 @@ class ASR():
                 continue
 
             try:
+                print("processing audio--------------")
                 self.processor.insert_audio_chunk(audio_data, clean_buffer_timeout)
                 result = self.processor.process_iter()
                 print("\nASR Output: ", result)
@@ -108,14 +109,15 @@ class ASR():
         # segments = self.model.transcribe(audio, language=self.original_language, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
         # not finish, segments may not suitable and may not output info
         audio = self.ap.process_audio(audio)
-        segments = self.model.transcribe(
-            audio,
-            batch_size = 4,
-            return_hypotheses = True,
-            verbose = False,
-        )
+        input_features = self.asr_processor(audio, sampling_rate=16000, return_tensors="pt").input_features
+        # batch["reference"] = self.asr_processor.tokenizer._normalize(batch['text'])
 
-        return list(segments)
+        # todo
+        # predicted_ids = self.model.generate(input_features.to("cuda"))[0]
+        predicted_ids = self.model.generate(input_features)[0]
+        transcriptions = self.asr_processor.decode(predicted_ids)
+        print("transcriptions: ", transcriptions)
+        return list(transcriptions)
 
     def ts_words(self, segments):
         o = []

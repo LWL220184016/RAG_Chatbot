@@ -9,7 +9,7 @@ from ASR.whisper_streaming.whisper_online import OnlineASRProcessor
 class ASR():
     def __init__(
             self, 
-            model: str = "large-v3", 
+            model: str = "small", # "small", "medium", "large-v3"
             # device: str = "cuda", 
             device: str = "auto", 
             # compute_type: str = "float16", 
@@ -21,7 +21,7 @@ class ASR():
             streaming: bool = False, 
         ):
     
-        self.model = WhisperModel(model, device="cuda", compute_type=compute_type)
+        self.model = WhisperModel(model, device=device, compute_type=compute_type)
         self.device = device
         self.ap = ap
         self.asr_output_queue = asr_output_queue
@@ -48,7 +48,7 @@ class ASR():
                 audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
             except queue.Empty:
                 continue
-            processed_data = self.ap.process_audio2(audio_data=audio_data)
+            processed_data = self.ap.process_audio(audio_data=audio_data)
             try:
                 segments, info = self.model.transcribe(
                     # encoded_features[0],
@@ -95,7 +95,6 @@ class ASR():
                 continue
 
             try:
-                audio_data = self.ap.process_audio2(audio_data=audio_data)
                 self.processor.insert_audio_chunk(audio_data, clean_buffer_timeout)
                 result = self.processor.process_iter()
                 print("\nASR Output: ", result)
@@ -113,6 +112,7 @@ class ASR():
     def transcribe(self, audio, init_prompt=""):
 
         # tested: beam_size=5 is faster and better than 1 (on one 200 second document from En ESIC, min chunk 0.01)
+        audio = self.ap.process_audio(audio_data=audio)
         segments, info = self.model.transcribe(audio, language=None, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
 
         #print(info)  # info contains language detection result
@@ -124,13 +124,13 @@ class ASR():
         print(segments)
         for segment in segments:
             for word in segment.words:
-                if segment.no_speech_prob > 0.9:
+                if segment.no_speech_prob > 0.8:
                     continue
                 # not stripping the spaces -- should not be merged with them!
                 w = word.word
                 t = (word.start, word.end, w)
                 o.append(t)
-
+                print("w: ", w)
 # [Segment(id=1, seek=0, start=0.0, end=0.36, text=' Hello?', tokens=[50364, 2425, 30, 50389], avg_logprob=-0.6265625, compression_ratio=0.42857142857142855, no_speech_prob=0.03387451171875, words=[Word(start=0.0, end=0.36, word=' Hello?', probability=0.80126953125)], temperature=0.0)]
 
         return o

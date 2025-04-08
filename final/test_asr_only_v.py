@@ -3,7 +3,7 @@ import time
 import multiprocessing
 multiprocessing.set_start_method('spawn', force=True)
 
-from final.chatbot_config import Chatbot_config
+from chatbot_config import Chatbot_config
 
 
 # export QDRANT_HOST=localhost
