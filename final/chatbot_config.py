@@ -81,9 +81,9 @@ class Chatbot_config:
                 self.client_audio_queue, 
                 self.asr_output_queue, 
                 self.asr_output_queue_ws, 
-                "NeMo", 
-                None, # ap
-                True, # streaming: False
+                "transformers", # asr_class: "faster_whisper", "NeMo", "transformers"
+                None, # ap: Audio_Processor
+                True, # streaming: True, False
             )
         )
         self.llm_process_ws = multiprocessing.Process(

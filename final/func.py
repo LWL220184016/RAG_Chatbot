@@ -107,6 +107,7 @@ def asr_process_func_ws(
                 channels=CHANNELS, 
                 rate=RATE, 
                 audio_checked_queue=uncheck_audio_queue,
+                format="int16", # "float32", "int16"
                 startStream=False,
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event,

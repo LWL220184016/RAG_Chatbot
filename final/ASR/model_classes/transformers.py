@@ -19,7 +19,7 @@ class ASR():
         ):
     
         self.asr_processor = AutoProcessor.from_pretrained("openai/whisper-medium")
-        self.model = AutoModelForSpeechSeq2Seq.from_pretrained(model)
+        self.model = AutoModelForSpeechSeq2Seq.from_pretrained(model).to(device)
         self.device = device
         self.ap = ap
         self.asr_output_queue = asr_output_queue
@@ -51,9 +51,7 @@ class ASR():
                 input_features = self.asr_processor(processed_data, sampling_rate=16000, return_tensors="pt").input_features
                 # batch["reference"] = self.asr_processor.tokenizer._normalize(batch['text'])
 
-                # todo
-                # predicted_ids = self.model.generate(input_features.to("cuda"))[0]
-                predicted_ids = self.model.generate(input_features)[0]
+                predicted_ids = self.model.generate(input_features.to(self.device))[0]
                 transcriptions = self.asr_processor.decode(predicted_ids)
                 print("transcriptions: " + str(transcriptions))
                 hypothesis = transcriptions[0]
@@ -112,9 +110,7 @@ class ASR():
         input_features = self.asr_processor(audio, sampling_rate=16000, return_tensors="pt").input_features
         # batch["reference"] = self.asr_processor.tokenizer._normalize(batch['text'])
 
-        # todo
-        # predicted_ids = self.model.generate(input_features.to("cuda"))[0]
-        predicted_ids = self.model.generate(input_features)[0]
+        predicted_ids = self.model.generate(input_features.to(self.device))[0]
         transcriptions = self.asr_processor.decode(predicted_ids)
         print("transcriptions: ", transcriptions)
         return list(transcriptions)
