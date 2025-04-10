@@ -1,6 +1,6 @@
 import queue
 import traceback
-from transformers import AutoProcessor, AutoModelForSpeechSeq2Seq
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
 import logging
 
 from ASR.audio_process import Audio_Processor
@@ -18,8 +18,8 @@ class ASR():
             streaming: bool = False, 
         ):
     
-        self.asr_processor = AutoProcessor.from_pretrained("openai/whisper-medium")
-        self.model = AutoModelForSpeechSeq2Seq.from_pretrained(model).to(device)
+        self.asr_processor = WhisperProcessor.from_pretrained("openai/whisper-medium")
+        self.model = WhisperForConditionalGeneration.from_pretrained(model, local_files_only=True).to(device)
         self.device = device
         self.ap = ap
         self.asr_output_queue = asr_output_queue
@@ -49,7 +49,6 @@ class ASR():
             processed_data = self.ap.process_audio(audio_data=audio_data)
             try:
                 input_features = self.asr_processor(processed_data, sampling_rate=16000, return_tensors="pt").input_features
-                # batch["reference"] = self.asr_processor.tokenizer._normalize(batch['text'])
 
                 predicted_ids = self.model.generate(input_features.to(self.device))[0]
                 transcriptions = self.asr_processor.decode(predicted_ids)
@@ -102,27 +101,39 @@ class ASR():
         print("asr_output_stream end")
 
     def stream_processor_transcribe(self, audio, init_prompt=""):
-
-        # tested: beam_size=5 is faster and better than 1 (on one 200 second document from En ESIC, min chunk 0.01)
-        # segments = self.model.transcribe(audio, language=self.original_language, initial_prompt=init_prompt, beam_size=5, word_timestamps=True, condition_on_previous_text=True, **self.transcribe_kargs)
-        # not finish, segments may not suitable and may not output info
         audio = self.ap.process_audio(audio)
         input_features = self.asr_processor(audio, sampling_rate=16000, return_tensors="pt").input_features
-        # batch["reference"] = self.asr_processor.tokenizer._normalize(batch['text'])
 
         predicted_ids = self.model.generate(input_features.to(self.device))[0]
-        transcriptions = self.asr_processor.decode(predicted_ids)
+        transcriptions = self.asr_processor.decode(predicted_ids, skip_special_tokens=True)
         print("transcriptions: ", transcriptions)
-        return list(transcriptions)
+        return transcriptions
 
     def ts_words(self, segments):
         o = []
-        hypothesis = segments[0]
-        h = hypothesis[0]
-        t = (1, 2, h.text)
+        t = (1, 2, segments)
         o.append(t)
 
         return o
+    
+    # todo
+    # # from whisper_streaming, for reference when throw error
+    # def ts_words(self, segments):
+    #     o = []
+    #     print(segments)
+    #     for segment in segments:
+    #         for word in segment.words:
+    #             if segment.no_speech_prob > 0.8:
+    #                 continue
+    #             # not stripping the spaces -- should not be merged with them!
+    #             w = word.word
+    #             t = (word.start, word.end, w)
+    #             o.append(t)
+    #             print("w: ", w)
+    # # [Segment(id=1, seek=0, start=0.0, end=0.36, text=' Hello?', tokens=[50364, 2425, 30, 50389], avg_logprob=-0.6265625, compression_ratio=0.42857142857142855, no_speech_prob=0.03387451171875, words=[Word(start=0.0, end=0.36, word=' Hello?', probability=0.80126953125)], temperature=0.0)]
+
+    #         return o
+
 
     def segments_end_ts(self, res):
         print(res)
@@ -133,5 +144,4 @@ class ASR():
 
     def set_translate_task(self):
         self.transcribe_kargs["task"] = "translate"
-
 

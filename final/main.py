@@ -34,9 +34,9 @@ def main():
                 stop_event, 
                 is_asr_ready_event, 
                 asr_output_queue, 
-                "NeMo", # asr_class = "faster_whisper", "NeMo"
-                None, # ap = Audio_Processor
-                True, # stream = True, False
+                "NeMo", # asr_class: "NeMo", "transformers"
+                None, # ap: Audio_Processor
+                True, # stream: True, False
             ) 
         ) 
         llm_process = multiprocessing.Process(

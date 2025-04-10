@@ -44,7 +44,10 @@ def asr_process_func(
             check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         get_audio_thread.start()
         check_audio_thread.start()
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         asr = ASR( 
+            device=device, 
             stop_event=stop_event, 
             is_user_talking=is_user_talking, 
             ap=ap, 
@@ -230,14 +233,12 @@ def tts_process_func(
         torch.cuda.ipc_collect()
 
 def get_asr_class(asr_name: str):
-    if asr_name == "faster_whisper":
-        from ASR.model_classes.faster_whisper import ASR
-    elif asr_name == "NeMo":
+    if asr_name == "NeMo":
         from ASR.model_classes.NeMo import ASR
     elif asr_name == "transformers":
         from ASR.model_classes.transformers import ASR
     else:
-        raise ValueError("asr_name must be 'faster_whisper' or 'NeMo'")
+        raise ValueError("asr_name must be 'NeMo' or 'transformers'")
     
     return ASR
 
