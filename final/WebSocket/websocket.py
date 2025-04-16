@@ -45,11 +45,14 @@ async def received_data(
                 
                 else:
                     print(f"Received text: {message}")
-                    await asyncio.get_event_loop().run_in_executor(
-                        None, 
-                        text_input_queue.put,
-                        message, 
-                    )
+                    if message == "[object Promise]":
+                        print("Received a Promise object, ignoring it.") # todo
+                    else:
+                        await asyncio.get_event_loop().run_in_executor(
+                            None, 
+                            text_input_queue.put,
+                            message, 
+                        )
 
             elif isinstance(message, bytes):
                 print(f"Received audio: len {len(message)}")

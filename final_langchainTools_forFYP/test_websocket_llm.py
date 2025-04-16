@@ -2,9 +2,8 @@ import multiprocessing
 import torch
 import time
 
-from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 from WebSocket.websocket import run_ws_server
-from func_fyp import llm_process_func_ws
+from final.func import llm_process_func_ws
 
 # set environment variable in linux
 # export NEO4J_URI="neo4j://localhost:7687" export NEO4J_USERNAME="username" export NEO4J_PASSWORD="password"
@@ -32,8 +31,6 @@ def main():
     llm_output_queue_ws = multiprocessing.Queue() # for send back the text to user to show what the llm said
     audio_queue = multiprocessing.Queue()
 
-    prompt_template = get_langchain_PromptTemplate_Chinese2()
-
     try:
         # asr_output_queue for user text input
         ws_process = multiprocessing.Process(
@@ -44,6 +41,7 @@ def main():
                 is_asr_ready_event, 
                 is_llm_ready_event, 
                 is_tts_ready_event, 
+                is_user_talking, 
                 client_audio_queue, 
                 asr_output_queue, 
                 asr_output_queue_ws, 
@@ -62,7 +60,6 @@ def main():
                 asr_output_queue, 
                 llm_output_queue, 
                 llm_output_queue_ws,
-                prompt_template,
                 None, 
                 True, 
             )

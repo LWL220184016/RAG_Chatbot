@@ -14,6 +14,7 @@ class Message():
         self.emoji = None
         self.memory = None
         self.time = None
+        self.system_msg = "Your current role is a good friend with the user. You need to communicate with him like a best friend. When he is silent, the system will send [User did not speak] to indicate that he has not spoken for a while, you can also remain silent or actively seek topics to talk about."
 
     def update_content(self, content, mood=None, emoji=None, memory=None):
         self.content = content

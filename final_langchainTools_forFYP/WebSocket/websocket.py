@@ -16,37 +16,66 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardi
 
 # 全局字典，用于跟踪每个客户端的处理任务
 client_tasks = {}
-
 async def received_data(
         websocket, 
+        is_user_talking, 
         audio_input_queue: queue = None, 
         text_input_queue: queue = None, 
     ):
+    """
+    Handles incoming websocket messages, processing both text and audio data.
+    
+    Parameters:
+    -----------
+    websocket: WebSocket connection object
+    is_user_talking: multiprocessing.Event
+        Indicates whether the user is currently talking
+    audio_input_queue: queue
+        Queue for storing received audio data
+    text_input_queue: queue
+        Queue for storing received text data
+    """
 
     try:
         async for message in websocket:
             if isinstance(message, str):
-                print(f"Received text: {message}")
-                await asyncio.get_event_loop().run_in_executor(
-                    None, 
-                    text_input_queue.put,
-                    message
-                )
+                if message.startswith("([user stop speaking])"):
+                    print("User stopped speaking")
+                    is_user_talking.clear()
+                
+                else:
+                    print(f"Received text: {message}")
+                    if message == "[object Promise]":
+                        print("Received a Promise object, ignoring it.") # todo
+                    else:
+                        await asyncio.get_event_loop().run_in_executor(
+                            None, 
+                            text_input_queue.put,
+                            message, 
+                        )
 
             elif isinstance(message, bytes):
                 print(f"Received audio: len {len(message)}")
-                print(f"Data type: {type(message)}")
+                # Update user talking status if it has changed
+                if not is_user_talking.is_set():
+                    is_user_talking.set()  # Update the value
+                    print("User speaking")
+                
                 await asyncio.get_event_loop().run_in_executor(
                     None, 
                     audio_input_queue.put,
-                    message
+                    message, 
                 )
-                # print("Invalid message received")
+            else:
+                print("Empty message received")
+                
     except ConnectionClosed:
-        print("接收循环检测到连接关闭")
-    # except Exception as e:
-        # print(f"receiving loop Exception: {str(e)}")
-
+        print("Connection closed by client")
+    except Exception as e:
+        print(f"Error in receiving loop: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
 async def send_data(
         websocket, 
         asr_queue: queue = None, 
@@ -109,6 +138,7 @@ async def connection_watcher(websocket):
 
 async def handler(
         websocket, 
+        is_user_talking, 
         audio_input_queue: queue = None, 
         text_input_queue: queue = None, 
         asr_output_queue: queue = None, 
@@ -144,7 +174,7 @@ async def handler(
         watcher_task = asyncio.create_task(connection_watcher(websocket))
         
         tasks = [
-            asyncio.create_task(received_data(websocket, audio_input_queue, text_input_queue)),
+            asyncio.create_task(received_data(websocket, is_user_talking, audio_input_queue, text_input_queue)),
             asyncio.create_task(send_data(websocket, asr_output_queue, llm_output_queue, tts_queue)),
             watcher_task
         ]
@@ -189,6 +219,7 @@ async def handler(
 async def ws_main(
         host: str = "localhost",
         port: int = 6789,
+        is_user_talking = None, 
         audio_input_queue: queue = None, 
         text_input_queue: queue = None, 
         asr_output_queue: queue = None, 
@@ -206,7 +237,7 @@ async def ws_main(
     }
     
     async with websockets.serve(
-        lambda ws: handler(ws, audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue),
+        lambda ws: handler(ws, is_user_talking, audio_input_queue, text_input_queue, asr_output_queue, llm_output_queue, tts_queue),
         **server_config
     ):
         print(f"WebSocket服务器启动在 {server_config['host']}:{server_config['port']}")
@@ -218,6 +249,7 @@ def run_ws_server(
         is_asr_ready_event = None, 
         is_llm_ready_event = None, 
         is_tts_ready_event = None, 
+        is_user_talking = None, # multiprocessing.Event(), 用於判斷用戶是否説完這句話
         audio_input_queue: queue = None, 
         text_input_queue: queue = None, 
         asr_output_queue: queue = None, 
@@ -225,13 +257,16 @@ def run_ws_server(
         tts_queue: queue = None, 
     ):
 
+    last_not_ready_msg_time = time.time()
     while not all([is_asr_ready_event.is_set(), is_llm_ready_event.is_set(), is_tts_ready_event.is_set()]):
-        if not is_asr_ready_event.is_set():
-            print("asr not ready")
-        if not is_llm_ready_event.is_set():
-            print("llm not ready")
-        if not is_tts_ready_event.is_set():
-            print("tts not ready")
+        if time.time() - last_not_ready_msg_time > 5:
+            last_not_ready_msg_time = time.time()
+            if not is_asr_ready_event.is_set():
+                print("asr not ready")
+            if not is_llm_ready_event.is_set():
+                print("llm not ready")
+            if not is_tts_ready_event.is_set():
+                print("tts not ready")
         time.sleep(0.1)
 
     # 配置事件循环
@@ -243,6 +278,7 @@ def run_ws_server(
             ws_main(
                 host,
                 port,
+                is_user_talking, 
                 audio_input_queue, 
                 text_input_queue, 
                 asr_output_queue, 

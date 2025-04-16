@@ -245,7 +245,8 @@ class Audio_Processor():
             
             # Convert to numpy array
             samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-            samples = np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
+            samples = nr.reduce_noise(y = samples, sr = self.rate) # reduced noise
+            # samples = np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
             
             return samples
         except Exception as e:

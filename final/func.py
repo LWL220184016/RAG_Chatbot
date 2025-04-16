@@ -123,8 +123,9 @@ def asr_process_func_ws(
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
         )
+        print("asr_process_func_ws asring")
         asr.asr_output(is_asr_ready_event, asr_output_queue_ws)
-        print("asr_process_func end")
+        print("asr_process_func_ws end")
 
     except KeyboardInterrupt:
         print("asr_process_func KeyboardInterrupt\n")

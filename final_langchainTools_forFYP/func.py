@@ -8,44 +8,48 @@ def asr_process_func(
         stop_event: threading.Event, 
         is_asr_ready_event: threading.Event,
         asr_output_queue: queue, 
+        asr_class = "NeMo", 
         ap = None, 
         streaming=False, 
+        chunk=4096,
     ):
     """
-    ap: Audio_Processer
+    ap: Audio_Processor
     """
 
     import pyaudio
-    from ASR.audio_process import Audio_Processer
-    # from ASR.model_classes.faster_whisper import ASR
-    from ASR.model_classes.NeMo import ASR
+    from ASR.audio_process import Audio_Processor
 
-    SOUND_LEVEL = 10
-    CHUNK = 4096
-    FORMAT = pyaudio.paInt16
+    ASR = get_asr_class(asr_class)
+
+    SOUND_LEVEL = 0.5
     CHANNELS = 1
     RATE = 16000
     TIMEOUT_SEC = 0.3
 
     try:
         if ap is None:
-            ap = Audio_Processer( 
-                chunk=CHUNK, 
-                format=FORMAT, 
+            ap = Audio_Processor( 
+                chunk=chunk, 
                 channels=CHANNELS, 
                 rate=RATE, 
+                format="int16", # "float32", "int16"
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event, 
             ) 
-        get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
+        get_audio_thread = threading.Thread(target=ap.get_chunk, args=(is_asr_ready_event, ))
         if streaming:
-            check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(SOUND_LEVEL, TIMEOUT_SEC))
+            check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(SOUND_LEVEL, TIMEOUT_SEC, ))
         else:
             check_audio_thread = threading.Thread(target=ap.detect_sound, args=(SOUND_LEVEL, TIMEOUT_SEC))
         get_audio_thread.start()
         check_audio_thread.start()
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
         asr = ASR( 
+            device=device, 
             stop_event=stop_event, 
+            is_user_talking=is_user_talking, 
             ap=ap, 
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
@@ -81,43 +85,45 @@ def asr_process_func_ws(
         uncheck_audio_queue: queue, 
         asr_output_queue: queue, 
         asr_output_queue_ws: queue, 
+        asr_class = "NeMo", 
         ap = None, 
         streaming=False, 
+        chunk=4096,
     ): 
     """
-    ap: Audio_Processer
+    ap: Audio_Processor
     """
 
     import pyaudio
-    from ASR.audio_process import Audio_Processer
-    # from ASR.model_classes.faster_whisper import ASR
-    from ASR.model_classes.NeMo import ASR
+    from ASR.audio_process import Audio_Processor
+
+    ASR = get_asr_class(asr_class)
     
-    CHUNK = 4096
-    FORMAT = pyaudio.paInt16
+    # FORMAT = pyaudio.paInt16
     CHANNELS = 1
     RATE = 16000
 
     try:
         if ap is None:
-            ap = Audio_Processer(
-                chunk=CHUNK, 
-                format=FORMAT, 
+            ap = Audio_Processor(
+                chunk=chunk, 
                 channels=CHANNELS, 
                 rate=RATE, 
                 audio_checked_queue=uncheck_audio_queue,
+                format="int16", # "float32", "int16"
                 startStream=False,
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event,
             )
         asr = ASR(
-            device="cuda:0",
+            device="cuda",
             ap=ap, 
             stop_event=stop_event, 
+            is_user_talking=is_user_talking, 
             asr_output_queue=asr_output_queue, 
             streaming=streaming, 
         )
-        asr.asr_output_ws(is_asr_ready_event, asr_output_queue_ws)
+        asr.asr_output(is_asr_ready_event, asr_output_queue_ws)
         print("asr_process_func end")
 
     except KeyboardInterrupt:
@@ -143,18 +149,21 @@ def llm_process_func_ws(
         asr_output_queue: queue, 
         llm_output_queue: queue, 
         llm_output_queue_ws: queue, 
-        prompt_template, 
         llm_class = "google", 
         use_agent = False, 
         use_database = None,
     ):
 
-    # from LLM.llm_transformers import LLM_Transformers as LLM
-    # from LLM.llm_google import LLM_Google as LLM
-    # from LLM.llm_ollama import LLM_Ollama as LLM
     from Tools.tool import Tools
 
     LLM = get_llm_class(llm_class)
+
+    message = """
+    如果記憶儲存内容出現問題，可以優先檢查 llm.py 中的以下兩行代碼：
+    self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
+    self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output)
+    """
+    print(f"\n\033[38;5;17m{message}\033[0m")
 
     if use_database not in [None, "qdrant"]:
         raise ValueError("use_database must be 'none' or 'qdrant'")
@@ -188,12 +197,10 @@ def llm_process_func_ws(
         if use_agent:
             llm.langchain_agent_output_ws(
                 is_llm_ready_event=is_llm_ready_event, 
-                prompt_template=prompt_template
             )
         else:
             llm.llm_output_ws(
                 is_llm_ready_event=is_llm_ready_event, 
-                prompt_template=prompt_template
             )
     except KeyboardInterrupt:
         print("llm_process_func KeyboardInterrupt\n")
@@ -224,6 +231,16 @@ def tts_process_func(
         print("tts_process_func finally\n")
         stop_event.set()
         torch.cuda.ipc_collect()
+
+def get_asr_class(asr_name: str):
+    if asr_name == "NeMo":
+        from ASR.model_classes.NeMo import ASR
+    elif asr_name == "transformers":
+        from ASR.model_classes.transformers import ASR
+    else:
+        raise ValueError("asr_name must be 'NeMo' or 'transformers'")
+    
+    return ASR
 
 def get_llm_class(llm_name: str):
     if llm_name == "transformers":

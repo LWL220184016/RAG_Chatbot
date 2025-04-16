@@ -5,46 +5,39 @@ import sounddevice as sd
 import time
 # from LLM.llm_ollama import LLM_Ollama as LLM
 from LLM.llm_google import LLM_Google as LLM
-from LLM.prompt_template import get_langchain_PromptTemplate
-from func_fyp import llm_agent_process_func_ws, tts_process_func
+from final.func import llm_process_func_ws, tts_process_func
 from langchain_community.agent_toolkits.load_tools import load_tools
 from final_langchainTools_forFYP.Tools.duckduckgo import duckduckgo_search
 
 def main():
-    tools=[duckduckgo_search]
+    is_llm_ready_event = multiprocessing.Event()
+    is_tts_ready_event = multiprocessing.Event()
     
     stop_event = multiprocessing.Event()
     is_user_talking = multiprocessing.Event()
     speaking_event = multiprocessing.Event()
+
 
     asr_output_queue = multiprocessing.Queue()
     llm_output_queue = multiprocessing.Queue()
     llm_output_queue_ws = multiprocessing.Queue()
     audio_queue = multiprocessing.Queue()
 
-    # llm = LLM(
-    #     is_user_talking=is_user_talking, 
-    #     stop_event=stop_event, 
-    #     speaking_event=speaking_event, 
-    #     llm_output_queue=llm_output_queue,
-    #     tools=tools
-    # )
-    llm = None
-
-    prompt_template = get_langchain_PromptTemplate()
-
     try:
         llm_process = multiprocessing.Process(
-            target=llm_agent_process_func_ws, 
-            args=(
-                llm,
-                stop_event, 
+            # target=llm_model_process_func_ws, 
+            target=llm_process_func_ws, 
+            args=( 
                 is_user_talking, 
+                stop_event, 
                 speaking_event, 
+                is_llm_ready_event, 
                 asr_output_queue, 
                 llm_output_queue, 
-                llm_output_queue_ws,
-                prompt_template,
+                llm_output_queue_ws, 
+                "google", # llm_class: "google", "transformers"
+                True, # use_agent: True, False
+                None, # use_database: None, "qdrant"
             )
         )
         tts_process = multiprocessing.Process(

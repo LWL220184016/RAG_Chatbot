@@ -113,8 +113,8 @@ class FixedVADIterator(VADIterator):
             speech_pad_ms = 100, 
             dtype = np.float32, 
         ): 
-        super().__init__(model, threshold, sampling_rate, min_silence_duration_ms, speech_pad_ms)
         self.dtype = dtype
+        super().__init__(model, threshold, sampling_rate, min_silence_duration_ms, speech_pad_ms)
 
     def reset_states(self):
         super().reset_states()

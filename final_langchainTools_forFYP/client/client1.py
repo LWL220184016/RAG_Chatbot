@@ -1,3 +1,4 @@
+
 import asyncio
 import threading
 import websockets
@@ -9,7 +10,7 @@ import queue
 import time
 import base64
 
-from audio_process import Audio_Processer
+from audio_process import Audio_Processor
 
 user_color_code = 155 # 顔色
 llm_color_code = 202  # 顔色
@@ -26,32 +27,30 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
 
         is_user_talking = threading.Event()
         stop_event = threading.Event()
-        
-        ap = Audio_Processer( 
-            chunk = 512, 
-            # chunk = 4096, 
+        is_asr_ready_event = threading.Event()
+        is_asr_ready_event.set()  # Just match the original code, websocket can only connect when asr is ready
+        ap = Audio_Processor( 
+            # chunk = 512, 
+            chunk = 4096, 
             audio_checked_queue = audio_checked_queue, 
             is_user_talking = is_user_talking, 
             stop_event = stop_event, 
             input_device_index = input_device,
         ) 
         
-        # Create a shared event to signal when we need to stop threads
-        thread_stop_event = threading.Event()
-        
         try:
-            get_audio_thread = threading.Thread(target=ap.get_chunk, args=(True,))
-            check_audio_thread = threading.Thread(target=ap.detect_sound, args=(10, 0.1))
-            # check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(10, -1))
+            get_audio_thread = threading.Thread(target=ap.get_chunk, args=(is_asr_ready_event,))
+            # check_audio_thread = threading.Thread(target=ap.detect_sound, args=(10, 0.1))
+            check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(0.5, -1))
             
             # Use the non-async version of send_audio for threading
             send_audio_thread = threading.Thread(
                 target=send_audio, 
-                args=(websocket, audio_checked_queue, thread_stop_event, )
+                args=(websocket, stop_event, is_user_talking, audio_checked_queue, )
             )
             play_tts_audio_thread = threading.Thread(
                 target=play_tts_audio, 
-                args=(tts_audio_queue, )
+                args=(stop_event, tts_audio_queue, )
             )
             
             get_audio_thread.daemon = True
@@ -87,8 +86,6 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
             await asyncio.sleep(1)
         finally:
             # Signal threads to stop
-            thread_stop_event.set()
-            # Ensure to stop the event so tasks can clean up properly
             stop_event.set()
             get_audio_thread.join()
             check_audio_thread.join()
@@ -117,30 +114,11 @@ async def receive_messages(websocket, tts_audio_queue):
     except Exception as e:
         print(f"Error receiving messages: {e}")
 
-# This version of send_audio is for async contexts
-async def send_audio(websocket, audio_queue):
-    """Process and send audio chunks from queue - async version"""
-    try:
-        while True:
-            # Get audio data from queue
-            try:
-                audio_data = audio_queue.get(timeout=0.1)
-            except queue.Empty:
-                continue
-            
-            # Send binary audio data to server
-            await websocket.send(audio_data)  # Use await here
-            print("Send audio data")
-            # Small delay to prevent overwhelming server
-            await asyncio.sleep(0.05)
-    except asyncio.CancelledError:
-        print("Audio streaming stopped")
-
-def play_tts_audio(tts_audio_queue):
+def play_tts_audio(stop_event, tts_audio_queue, ):
     """Play audio chunks from queue"""
     print("waiting for audio data...")
     try:
-        while True:
+        while not stop_event.is_set():
             # Get audio data from queue
             try:
                 audio_data = tts_audio_queue.get(timeout=0.1)
@@ -156,15 +134,22 @@ def play_tts_audio(tts_audio_queue):
         print("Audio playback stopped")
 
 # Non-async version for threads
-def send_audio(websocket, audio_queue, stop_event):
+def send_audio(websocket, stop_event, is_user_talking, audio_queue):
     """Process and send audio chunks from queue - thread version"""
     try:
+        send_is_user_talking = False
         while not stop_event.is_set():
             # Get audio data from queue
             try:
                 audio_data = audio_queue.get(timeout=0.1)
+                send_is_user_talking = True
             except queue.Empty:
-                continue
+                if send_is_user_talking and not is_user_talking.is_set():
+                    audio_data = "([user stop speaking])"
+                    send_is_user_talking = False
+                    print("user stop speaking")
+                else:
+                    continue
             
             # Use the synchronous API via run_until_complete
             asyncio.run(websocket.send(audio_data))
@@ -186,6 +171,7 @@ def main():
                         help="Input device ID (see --list-devices)")
     
     args = parser.parse_args()
+    print("args:", args)
     
     if args.list_devices:
         print("Available audio input devices:")

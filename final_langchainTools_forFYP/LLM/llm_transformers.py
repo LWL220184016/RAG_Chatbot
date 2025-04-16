@@ -6,6 +6,7 @@ from LLM.llm import LLM
 from transformers import AutoTokenizer, AutoModelForCausalLM, TextStreamer
 from langchain.agents import AgentType, initialize_agent
 
+
 class LLM_Transformers(LLM):
     def __init__(
         self, 
@@ -15,7 +16,9 @@ class LLM_Transformers(LLM):
         load_in_8bit: bool = False, 
         load_in_4bit: bool = True, 
 
-        model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", 
+        # model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", 
+        # model_name: str = "google/gemma-3-12b-it", 
+        model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", 
         is_user_talking = None, 
         stop_event = None,
         speaking_event = None, 
@@ -79,7 +82,6 @@ class LLM_Transformers(LLM):
     def langchain_agent_output_ws(
             self,
             is_llm_ready_event, 
-            prompt_template = None,
         ):
         
         raise NotImplementedError("langchain_agent_output_ws() in llm_transformers is not implemented yet.")
@@ -87,12 +89,16 @@ class LLM_Transformers(LLM):
     def llm_output_ws(
             self,
             is_llm_ready_event: threading.Event,
-            prompt_template = None,
         ):
         
         # 在這裡傳遞必要的參數給父類別的方法
-        super().llm_output_ws(self.model, is_llm_ready_event, prompt_template)
+        super().llm_output_ws(self.model, is_llm_ready_event)
 
+        # # todo
+        # problem in deepseek-ai/DeepSeek-R1-Distill-Qwen-7B llm output and 
+        # faster whisper streaming words not extend and too slow
+
+# todo
 #         print("llm waiting text")
 #         is_llm_ready_event.set()
 #         user_input = ""
@@ -126,7 +132,6 @@ class LLM_Transformers(LLM):
 #             is_llm_thinking = False
 
 #             output_tokens = [] # 缓存生成的 tokens (Cache generated tokens)
-#             # self.agent.invoke(prompt_template.format(user_input=user_input))
 #             input_ids = self.tokenizer.encode(user_input, return_tensors="pt").to(self.device)
 #             #  创建 attention_mask (Create attention_mask)
 #             attention_mask = input_ids.ne(self.tokenizer.pad_token_id).long().to(self.device) # ne: not equal

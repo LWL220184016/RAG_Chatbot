@@ -5,6 +5,7 @@ import json
 from Data_Storage.database import Database_Handler
 from Data_Storage.json_memory import JSON_Memory
 from tenacity import retry, stop_after_attempt, wait_fixed
+from LLM.prompt_template import get_langchain_PromptTemplate_Chinese2
 
 class LLM:
     def __init__(
@@ -40,7 +41,6 @@ class LLM:
             self, 
             agent = None, 
             is_llm_ready_event = None, 
-            prompt_template = None,
             session_id = "default"
         ): 
 
@@ -48,39 +48,13 @@ class LLM:
         is_llm_ready_event.set()
         user_input = ""
         user_last_talk_time = time.time()
+        prompt_template = get_langchain_PromptTemplate_Chinese2()
 
         try:
             while not self.stop_event.is_set():
-                if not self.is_user_talking.is_set():
-                    if time.time() - user_last_talk_time > 5:
-                        user_input = ""
-                    try:
-                        user_input += self.user_input_queue.get(timeout=0.1) + " "
-                    except queue.Empty:
-                        time.sleep(0.1)  # Avoid busy waiting
-                        continue
-                    if not self.user_input_queue.empty():
-                        user_input += self.user_input_queue.get() + " "
-                else: # user is talking
-                    user_last_talk_time = time.time()
-                    continue  # Skip if the user is talking
-
-                print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
-                
-                # Store user input in temporary memory if Redis is configured
+                llm_output = agent.invoke(self.get_user_input(prompt_template, user_last_talk_time))
                 if self.temp_memory_handler:
-                    recent_history = self.temp_memory_handler.get()
-                    # Use conversation history if available
-                    print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
-                    llm_output = agent.invoke(prompt_template.format(user_input=user_input, memory=recent_history))
-                    # stream_input = f"User: {user_input} \nChat_history: {recent_history} \n"
-                    # llm_output = agent.invoke(stream_input)
-
                     self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
-                
-                else:
-                    llm_output = agent.invoke(prompt_template.format(user_input=user_input, memory=""))
-                    # llm_output = agent.invoke(user_input)
                 
                 # Store LLM output in temporary memory if Redis is configured
                 self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
@@ -98,7 +72,6 @@ class LLM:
             self, 
             model = None, 
             is_llm_ready_event = None, 
-            prompt_template = None,
             session_id = "default" 
         ): 
 
@@ -106,38 +79,19 @@ class LLM:
         is_llm_ready_event.set()
         user_input = ""
         user_last_talk_time = time.time()
+        prompt_template = get_langchain_PromptTemplate_Chinese2()
 
         while not self.stop_event.is_set():
-            if not self.is_user_talking.is_set():
-                if time.time() - user_last_talk_time > 5:
-                    user_input = ""
-                try:
-                    user_input += self.user_input_queue.get(timeout=0.1) + " "
-                except queue.Empty:
-                    continue
-                if not self.user_input_queue.empty():
-                    user_input += self.user_input_queue.get() + " "
-            else: # user is talking
-                user_last_talk_time = time.time()
-                continue  # Skip if the user is talking
+            for output in model.stream(self.get_user_input(prompt_template, user_last_talk_time)):
+                
+                self.speaking_event.set()
+                llm_output = ""
+                llm_output_total = ""
+                is_llm_thinking = False
 
-            print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
-
-            self.speaking_event.set()
-            llm_output = ""
-            llm_output_total = ""
-            is_llm_thinking = False
-
-            # Prepare streaming input with context if Redis is configured
-            stream_input = user_input
-            if self.temp_memory_handler:
-                recent_history = self.temp_memory_handler.get()
-                stream_input = f"User: {user_input} \nContext: {recent_history} \n"
-
-            for output in model.stream(prompt_template.format(user_input=stream_input)):
-            # for output in model.stream(stream_input):
                 if self.is_user_talking.is_set() or not self.user_input_queue.empty():
                     if not self.llm_output_queue.empty():
+                        # Empty the queue
                         empty_queue = self.llm_output_queue.get(block=False)
                     break
                 
@@ -159,11 +113,11 @@ class LLM:
                     llm_output = ""
 
             # Store LLM output in temporary memory if Redis is configured
-            self.chat_history_recorder.add_no_limit(role = "user", message = user_input)
-            self.chat_history_recorder.add_no_limit(role = "assistant", message = llm_output_total)
+            # self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
+            self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output)
             if self.temp_memory_handler and llm_output_total:
-                self.temp_memory_handler.add(role = "user", message = user_input)
-                self.temp_memory_handler.add(role = "assistant", message = llm_output.get("output"))
+                # self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
+                self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output)
 
             # llm_message.update_content(content=llm_output_total)
             if self.database is not None:
@@ -177,3 +131,68 @@ class LLM:
             self.temp_memory_handler.clear_conversation(session_id)
             return True
         return False
+
+    def get_user_input(self, prompt_template, user_last_talk_time: float):
+        """Get user input from the queue"""
+        user_input = ""
+        while user_input == "":
+            if not self.is_user_talking.is_set():
+                if time.time() - user_last_talk_time > 5:
+                    user_input = ""
+                try:
+                    user_input += self.user_input_queue.get(timeout=0.1) + " "
+                    time.sleep(0.1)  # Avoid busy waiting
+                except queue.Empty:
+                        time.sleep(0.1)  # Avoid busy waiting
+                        print("queue.Empty")
+                        continue
+                if not self.user_input_queue.empty():
+                    user_input += self.user_input_queue.get() + " "
+                    continue
+            else: # user is talking
+                user_last_talk_time = time.time()
+                continue  # Skip if the user is talking
+
+        print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
+
+
+        # Prepare streaming input with context if Redis is configured
+        if self.temp_memory_handler:
+            recent_history = self.temp_memory_handler.get()
+            print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
+            return prompt_template.format(user_input=user_input, memory=recent_history)
+        
+        else:
+            return prompt_template.format(content=user_input)
+    
+    def get_user_input_stream(self, prompt_template, user_last_talk_time: float):
+        """Get user input from the queue"""
+        user_input = ""
+        while user_input == "":
+            if not self.is_user_talking.is_set():
+                if time.time() - user_last_talk_time > 5:
+                    user_input = ""
+                try:
+                    user_input += self.user_input_queue.get(timeout=0.1) + " "
+                    time.sleep(0.1)  # Avoid busy waiting
+                except queue.Empty:
+                        time.sleep(0.1)  # Avoid busy waiting
+                        continue
+                if not self.user_input_queue.empty():
+                    user_input += self.user_input_queue.get() + " "
+                    continue
+            else: # user is talking
+                user_last_talk_time = time.time()
+                continue  # Skip if the user is talking
+
+        print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
+
+
+        # Prepare streaming input with context if Redis is configured
+        if self.temp_memory_handler:
+            recent_history = self.temp_memory_handler.get()
+            print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
+            return prompt_template.format(user_input=user_input, memory=recent_history)
+        
+        else:
+            return prompt_template.format(content=user_input)
