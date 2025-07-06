@@ -38,7 +38,7 @@ class ASR():
             self.asr_output = self.asr_output_stream
 
     def asr_output(self, is_asr_ready_event, asr_output_queue_ws = None):
-        print("asr waiting audio")
+        print(f"{self.model} asr waiting audio")
         is_asr_ready_event.set()
 
         while not self.stop_event.is_set():
@@ -87,7 +87,7 @@ class ASR():
                           asr_output_queue_ws = None, 
                           clean_buffer_timeout=5
                          ):
-        print("asr waiting audio")
+        print(f"{self.model} asr waiting audio")
         is_asr_ready_event.set()
 
         while not self.stop_event.is_set():

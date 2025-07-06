@@ -82,7 +82,7 @@ class ASR():
                           asr_output_queue_ws = None, 
                           clean_buffer_timeout=5
                          ):
-        print("asr waiting audio")
+        print(f"{self.model} asr waiting audio")
         is_asr_ready_event.set()
 
         while not self.stop_event.is_set():
