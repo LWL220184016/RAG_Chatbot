@@ -7,7 +7,7 @@ class Embedder:
             model_name: str = "neuml/pubmedbert-base-embeddings"
         ):
         
-        self.model = SentenceTransformer(model_name)
+        self.model = SentenceTransformer(model_name, local_files_only=True)
 
     def embed(self, sentences: list[str]) -> np.ndarray:
         return self.model.encode(sentences)

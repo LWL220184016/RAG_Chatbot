@@ -18,7 +18,8 @@ class LLM_Transformers(LLM):
 
         # model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", 
         # model_name: str = "google/gemma-3-12b-it", 
-        model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", 
+        # model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", 
+        model_name: str = "meta-llama/Llama-3.2-3B-Instruct", 
         is_user_talking = None, 
         stop_event = None,
         speaking_event = None, 

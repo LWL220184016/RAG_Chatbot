@@ -51,6 +51,11 @@ class ASR():
             # todo
             processed_data = self.ap.process_audio_ws(audio_data=audio_data)
             
+            # Check if audio processing was successful
+            if processed_data is None:
+                print("Audio processing failed, skipping this chunk")
+                continue
+            
             try:
                 transcriptions = self.model.transcribe(
                     # encoded_features[0],

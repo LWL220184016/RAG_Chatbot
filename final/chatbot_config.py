@@ -97,8 +97,8 @@ class Chatbot_config:
                 self.asr_output_queue, 
                 self.llm_output_queue, 
                 self.llm_output_queue_ws, 
-                "google", # llm_class: "google", "transformers"
-                True, # use_agent: True, False
+                "transformers", # llm_class: "google", "transformers"
+                False, # use_agent: True, False
                 None, # use_database: None, "qdrant"
             )
         )

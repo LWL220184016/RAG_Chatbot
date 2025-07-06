@@ -50,6 +50,12 @@ class ASR():
 
             # todo
             processed_data = self.ap.process_audio_ws(audio_data=audio_data)
+            
+            # Check if audio processing was successful
+            if processed_data is None:
+                print("Audio processing failed, skipping this chunk")
+                continue
+            
             try:
                 input_features = self.asr_processor(processed_data, sampling_rate=16000, return_tensors="pt").input_features
 

@@ -49,8 +49,14 @@ class ASR():
             # processed_data = self.ap.process_audio(audio_data=audio_data)
 
             # todo
-            processed_data = self.ap.process_audio_ws(audio_data=audio_data)
             try:
+                processed_data = self.ap.process_audio_ws(audio_data=audio_data)
+                
+                # Check if audio processing was successful
+                if processed_data is None:
+                    print("Audio processing failed, skipping this chunk")
+                    continue
+                
                 input_features = self.asr_processor(processed_data, sampling_rate=16000, return_tensors="pt").input_features
 
                 predicted_ids = self.model.generate(input_features.to(self.device))[0]
