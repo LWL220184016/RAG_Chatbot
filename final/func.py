@@ -97,6 +97,13 @@ def asr_process_func_ws(
     import pyaudio
     from ASR.audio_process import Audio_Processor
 
+    #TODO
+    if asr_class == "transformers" and streaming:
+        print("\033[91m" \
+              "Warning: asr_class = transformers support streaming mode, have a problem. It can be recognized normally, but there may be a sudden freeze during the multiple recognition of a sentence, and then the model output will repeat the sentence many times, and then it will suddenly become a sentence again but with some text missing.\n" \
+              "警告：asr_class = transformers 支援流模式，有問題。可以正常識別，但是在對一句話進行多次識別的時候可能會出現突然卡頓的情況，然後模型輸出會重複這個句子很多次，然後突然又變成了一個句子但是缺少了一些文字。" \
+              "\033[0m")
+
     ASR = get_asr_class(asr_class)
     
     # FORMAT = pyaudio.paInt16
@@ -110,7 +117,6 @@ def asr_process_func_ws(
                 channels=CHANNELS, 
                 rate=RATE, 
                 audio_checked_queue=uncheck_audio_queue,
-                format="int16", # "float32", "int16"
                 startStream=False,
                 is_user_talking=is_user_talking, 
                 stop_event=stop_event,

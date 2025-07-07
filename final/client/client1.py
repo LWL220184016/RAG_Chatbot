@@ -10,7 +10,12 @@ import queue
 import time
 import base64
 
-from audio_process import Audio_Processor
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
+from ASR.audio_process import Audio_Processor
 
 user_color_code = 155 # 顔色
 llm_color_code = 202  # 顔色
@@ -40,7 +45,7 @@ async def send_audio_stream(uri, input_device=None, sample_rate=16000):
         
         try:
             get_audio_thread = threading.Thread(target=ap.get_chunk, args=(is_asr_ready_event,))
-            # check_audio_thread = threading.Thread(target=ap.detect_sound, args=(10, 0.1))
+            # check_audio_thread = threading.Thread(target=ap.detect_sound, args=(0.1, 0.1))
             check_audio_thread = threading.Thread(target=ap.detect_sound_not_extend, args=(0.5, -1))
             
             # Use the non-async version of send_audio for threading

@@ -46,11 +46,9 @@ class ASR():
                 audio_data = self.ap.audio_checked_queue.get(timeout=0.1)
             except queue.Empty:
                 continue
-            # processed_data = self.ap.process_audio(audio_data=audio_data)
 
-            # todo
             try:
-                processed_data = self.ap.process_audio_ws(audio_data=audio_data)
+                processed_data = self.ap.process_audio(audio_data=audio_data)
                 
                 # Check if audio processing was successful
                 if processed_data is None:

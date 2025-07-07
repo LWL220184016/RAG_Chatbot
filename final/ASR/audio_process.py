@@ -42,7 +42,7 @@ class Audio_Processor():
             rate: int = 16000, 
             audio_unchecked_queue: queue = queue.Queue(), 
             audio_checked_queue: queue = queue.Queue(), 
-            format: str = "float32",
+            format: str = "int16",
             startStream: bool = True,
             is_user_talking = None,
             stop_event = None,
@@ -213,6 +213,7 @@ class Audio_Processor():
             self, 
             audio_data: bytes,
         ) -> np.ndarray:
+        "Convert audio data from bytes to numpy array, normalize, and reduce noise"
 
         try:
             audio_data = self.get_audio(audio_data) # convert bytes to numpy array
@@ -224,31 +225,4 @@ class Audio_Processor():
         except ValueError as e:
             print(f"ValueError: {e}")
             return None
-
-    def process_audio_ws(
-            self, 
-            audio_data: bytes,
-        ) -> np.ndarray:
-        """
-        this function have a problem, may return None type data
-        """
-
-        try:
-            # Convert to AudioSegment object
-            audio = AudioSegment.from_file(io.BytesIO(audio_data), format="webm")
-            
-            # Unify the sampling rate
-            audio = audio.set_frame_rate(16000)
-            
-            # Convert to mono(单声道)
-            audio = audio.set_channels(1)
-            
-            # Convert to numpy array
-            samples = np.array(audio.get_array_of_samples()).astype(np.float32)
-            samples = nr.reduce_noise(y = samples, sr = self.rate) # reduced noise
-            # samples = np.iinfo(audio.array_type).max  # Normalized to [-1, 1]
-            
-            return samples
-        except Exception as e:
-            print(f"Processing Error: {e}")
-            return None
+        
