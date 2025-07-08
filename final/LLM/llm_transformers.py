@@ -19,7 +19,7 @@ class LLM_Transformers(LLM):
         # model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", 
         # model_name: str = "google/gemma-3-12b-it", 
         # model_name: str = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", 
-        model_name: str = "meta-llama/Llama-3.2-3B-Instruct", 
+        model_name: str = "Qwen/Qwen3-1.7B", 
         is_user_talking = None, 
         stop_event = None,
         speaking_event = None, 
@@ -53,7 +53,7 @@ class LLM_Transformers(LLM):
         self.device = device
 
         if load_in_8bit and load_in_4bit:
-            raise ValueError("Cannot only choose one (8bit or 4bit)")
+            raise ValueError("Can only choose one (8bit or 4bit)")
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         # 显式设置 pad_token_id (Explicitly set pad_token_id)
         if self.tokenizer.pad_token_id is None:

@@ -46,13 +46,13 @@ class LLM:
 
         print("llm waiting text")
         is_llm_ready_event.set()
-        user_input = ""
         user_last_talk_time = time.time()
         user_msg = Message(user_role="user")
+        user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
 
         try:
             while not self.stop_event.is_set():
-                llm_output = agent.invoke(self.get_user_input(user_msg, user_last_talk_time))
+                llm_output = agent.invoke(updated_user_msg)
                 if self.temp_memory_handler:
                     self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
                 
@@ -77,12 +77,13 @@ class LLM:
 
         print("llm waiting text")
         is_llm_ready_event.set()
-        user_input = ""
         user_last_talk_time = time.time()
         user_msg = Message(user_role="user")
+        user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
+
 
         while not self.stop_event.is_set():
-            for output in model.stream(self.get_user_input(user_msg, user_last_talk_time)):
+            for output in model.stream(updated_user_msg):
                 
                 self.speaking_event.set()
                 llm_output = ""
@@ -159,10 +160,10 @@ class LLM:
         if self.temp_memory_handler:
             recent_history = self.temp_memory_handler.get()
             print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
-            return user_msg.update_content(content=user_input, memory=recent_history)
+            return user_input, user_msg.update_content(content=user_input, memory=recent_history)
         
         else:
-            return user_msg.update_content(content=user_input)
+            return user_input, user_msg.update_content(content=user_input)
     
     def get_user_input_stream(self, user_msg: Message, user_last_talk_time: float):
         """Get user input from the queue"""
