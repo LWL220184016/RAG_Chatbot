@@ -26,20 +26,20 @@ test result:
     Before optimize by Claude-3.7-Sonnet
     last sound detect:  1741665559.5368438
     last ASR text output:  1741665680.5005012
-    Time difference: 120.96365737915039(sec)
+    Time used: 120.96365737915039(sec)
 
     After optimize by Claude-3.7-Sonnet
     last sound detect:  1741666773.8968987
     last ASR text output:  1741666787.4302456
-    Time difference: 13.533346891403198(sec)
+    Time used: 13.533346891403198(sec)
 
   testing device: 
     Before optimize by Claude-3.7-Sonnet
     last sound detect:  
     last ASR text output:  
-    Time difference: 
+    Time used: 
 
     After optimize by Claude-3.7-Sonnet
     last sound detect:  
     last ASR text output:  
-    Time difference: 
+    Time used: 

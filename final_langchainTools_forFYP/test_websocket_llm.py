@@ -50,7 +50,6 @@ def main():
             )
         )
         llm_process = multiprocessing.Process(
-            # target=llm_model_process_func_ws, 
             target=llm_process_func_ws, 
             args=(
                 is_user_talking, 

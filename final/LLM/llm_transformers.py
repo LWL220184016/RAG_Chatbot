@@ -95,11 +95,11 @@ class LLM_Transformers(LLM):
         # 在這裡傳遞必要的參數給父類別的方法
         super().llm_output_ws(self.model, is_llm_ready_event)
 
-        # # todo
+        # # TODO
         # problem in deepseek-ai/DeepSeek-R1-Distill-Qwen-7B llm output and 
         # faster whisper streaming words not extend and too slow
 
-# todo
+# TODO
 #         print("llm waiting text")
 #         is_llm_ready_event.set()
 #         user_input = ""

@@ -87,7 +87,6 @@ class Chatbot_config:
             )
         )
         self.llm_process_ws = multiprocessing.Process(
-            # target=llm_model_process_func_ws, 
             target=llm_process_func_ws, 
             args=( 
                 self.is_user_talking, 
