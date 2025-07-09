@@ -34,8 +34,8 @@ def main():
         print("LLM ready! Waiting for user message...")
         
         while not chatbot_config.stop_event.is_set():
-            while not chatbot_config.llm_output_queue.empty():
-                output = chatbot_config.llm_output_queue.get_nowait()
+            while not chatbot_config.llm_output_queue_ws.empty():
+                output = chatbot_config.llm_output_queue_ws.get_nowait()
                 if output:  # Only process non-empty outputs
                     print(f"\n\033[38;5;208mLLM: {output}\033]0m")  # 橙色高亮 (256-color)
 

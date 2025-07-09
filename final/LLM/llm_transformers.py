@@ -75,7 +75,7 @@ class LLM_Transformers(LLM):
         attention_mask = input_ids.ne(self.tokenizer.pad_token_id).long().to(self.device) # ne: not equal
 
         output_tokens = [] # 缓存生成的 tokens (Cache generated tokens)
-        for output in self.model.generate(input_ids, attention_mask=attention_mask, streamer=self.streamer, pad_token_id=self.tokenizer.pad_token_id): # 传入 attention_mask 和 pad_token_id (Pass attention_mask and pad_token_id)
+        for output in self.model.generate(input_ids, attention_mask=attention_mask, streamer=self.streamer, pad_token_id=self.tokenizer.pad_token_id, max_new_tokens=32768): # 传入 attention_mask 和 pad_token_id (Pass attention_mask and pad_token_id)
             output_tokens.extend(output.tolist())
             current_output_text = self.tokenizer.decode(output, skip_special_tokens=True) # 解码当前输出的 tokens (Decode current output tokens)
             yield current_output_text

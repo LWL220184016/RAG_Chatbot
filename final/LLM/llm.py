@@ -48,10 +48,10 @@ class LLM:
         is_llm_ready_event.set()
         user_last_talk_time = time.time()
         user_msg = Message(user_role="user")
-        user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
 
         try:
             while not self.stop_event.is_set():
+                user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
                 llm_output = agent.invoke(updated_user_msg)
                 if self.temp_memory_handler:
                     self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
@@ -79,14 +79,15 @@ class LLM:
         is_llm_ready_event.set()
         user_last_talk_time = time.time()
         user_msg = Message(user_role="user")
-        user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
-
+        llm_output = ""
 
         while not self.stop_event.is_set():
+            user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
+            llm_output = ""
             for output in model.stream(updated_user_msg):
                 
                 self.speaking_event.set()
-                llm_output = ""
+                # llm_output = ""
                 llm_output_total = ""
                 is_llm_thinking = False
 
@@ -98,21 +99,8 @@ class LLM:
                 
                 # Directly append to llm_output, reducing queue operations
                 llm_output += str(output)
-                if output == "<think>" and not is_llm_thinking:
-                    is_llm_thinking = True
-                    print("is_llm_thinking = True")
-                elif output == "</think>" and is_llm_thinking:
-                    is_llm_thinking = False
-                    print("is_llm_thinking = False")
-                if output in ["，", ",", "。", ".", "？", "?", "！", "!"] or "</think>" in output:
-                    llm_output_total += llm_output
-                    print("llm output: " + llm_output)
-                    if not is_llm_thinking or "</think>" in output:
-                        self.llm_output_queue.put(llm_output)
-                        print("after put llm_output_queue: ", self.llm_output_queue.qsize())
-                    self.llm_output_queue_ws.put(llm_output)
-                    llm_output = ""
 
+            print(f"\033[19mUser: {llm_output} \033[0m")  # 紫色高亮输出
             # Store LLM output in temporary memory if Redis is configured
             # self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
             self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output)
@@ -136,7 +124,8 @@ class LLM:
     def get_user_input(self, user_msg: Message, user_last_talk_time: float):
         """Get user input from the queue"""
         try:
-            user_input += self.user_input_queue.get(timeout=0.1)
+            # user_input += self.user_input_queue.get(timeout=0.1)
+            user_input += self.user_input_queue.get()
         except queue.Empty:
             user_input = ""
 
