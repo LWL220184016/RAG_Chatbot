@@ -135,26 +135,13 @@ class LLM:
 
     def get_user_input(self, user_msg: Message, user_last_talk_time: float):
         """Get user input from the queue"""
-        user_input = ""
-        while user_input == "":
-            if not self.is_user_talking.is_set():
-                if time.time() - user_last_talk_time > 5:
-                    user_input = ""
-                try:
-                    user_input += self.user_input_queue.get(timeout=0.1) + " "
-                    time.sleep(0.1)  # Avoid busy waiting
-                except queue.Empty:
-                        time.sleep(0.1)  # Avoid busy waiting
-                        continue
-                if not self.user_input_queue.empty():
-                    user_input += self.user_input_queue.get() + " "
-                    continue
-            else: # user is talking
-                user_last_talk_time = time.time()
-                continue  # Skip if the user is talking
+        try:
+            user_input += self.user_input_queue.get(timeout=0.1)
+        except queue.Empty:
+            user_input = ""
 
-        print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
-
+        if not user_input == "":
+            print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
 
         # Prepare streaming input with context if Redis is configured
         if self.temp_memory_handler:

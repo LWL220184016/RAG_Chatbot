@@ -14,7 +14,12 @@ class Message():
         self.emoji = None
         self.memory = None
         self.time = None
-        self.system_msg = "Your current role is a good friend with the user. You need to communicate with him like a best friend. When he is silent, the system will send [User did not speak] to indicate that he has not spoken for a while, you can also remain silent or actively seek topics to talk about."
+        self.system_msg = "You are a good friend with the user. " \
+                          "You need to communicate with him like a best friend. " \
+                          "You should only output spoken sentences and emoji, not formatted content. " \
+                          "When he is silent, attribute named content will be blank in the message and you can also remain silent or actively seek topics to talk about. " \
+                          "You should also consider the attribute named time in the message you receive, " \
+                          "If it's too close to the last time you spoke, you should keep silent."
 
     def update_content(self, content, mood=None, emoji=None, memory=None):
         self.content = content
