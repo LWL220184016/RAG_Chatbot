@@ -84,7 +84,7 @@ class LLM:
         while not self.stop_event.is_set():
             user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
             llm_output = ""
-            for output in model.stream(updated_user_msg):
+            for output in model.stream(user_input):
                 
                 self.speaking_event.set()
                 # llm_output = ""
@@ -100,7 +100,7 @@ class LLM:
                 # Directly append to llm_output, reducing queue operations
                 llm_output += str(output)
 
-            print(f"\033[19mUser: {llm_output} \033[0m")  # 紫色高亮输出
+            print(f"\033[19mLLM: {llm_output} \033[0m")  # 紫色高亮输出
             # Store LLM output in temporary memory if Redis is configured
             # self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
             self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output)

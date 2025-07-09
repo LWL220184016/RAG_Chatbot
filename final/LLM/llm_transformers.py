@@ -75,7 +75,19 @@ class LLM_Transformers(LLM):
         )
 
     def stream(self, user_input):
-        input_ids = self.tokenizer.encode(user_input, return_tensors="pt").to(self.device)
+
+        messages = [
+            {"role": "user", "content": user_input}
+        ]
+
+        text = self.tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False  # Setting enable_thinking=False disables thinking mode
+        )
+
+        input_ids = self.tokenizer.encode(text, return_tensors="pt").to(self.device)
         attention_mask = input_ids.ne(self.tokenizer.pad_token_id).long().to(self.device) # ne: not equal
 
         output_tokens = [] # 缓存生成的 tokens (Cache generated tokens)
@@ -86,6 +98,7 @@ class LLM_Transformers(LLM):
                                           max_new_tokens=300): # 传入 attention_mask 和 pad_token_id (Pass attention_mask and pad_token_id)
             output_tokens.extend(output.tolist())
             current_output_text = self.tokenizer.decode(output, skip_special_tokens=True) # 解码当前输出的 tokens (Decode current output tokens)
+            print("Current output text:", current_output_text)
             yield current_output_text
 
     def langchain_agent_output_ws(
