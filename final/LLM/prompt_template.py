@@ -9,26 +9,37 @@ class Message():
         ):
         
         self.user_role = user_role
-        self.content = None
-        self.mood = None
-        self.emoji = None
-        self.memory = None
-        self.time = None
         self.system_msg = "You are a good friend with the user. " \
                           "You need to communicate with him like a best friend. " \
-                          "You should only output spoken sentences and emoji, not formatted content. " \
+                          "You should only output spoken sentences with emoji to show your current mood, not formatted content. " \
+                          "You should only output Chinese or English. " \
                           "When he is silent, attribute named content will be blank in the message and you can also remain silent or actively seek topics to talk about. " \
                           "You should also consider the attribute named time in the message you receive, " \
                           "If it's too close to the last time you spoke, you should keep silent."
 
     def update_content(self, content, mood=None, emoji=None, memory=None):
-        self.content = content
-        self.mood = mood
-        self.emoji = emoji
-        self.memory = memory
-        self.time = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time()))
 
-        return json.dumps(self.__dict__)
+        # messages = [
+        #     {
+        #         "role": self.user_role, 
+        #         "content": content, 
+        #         "mood": mood, 
+        #         "emoji": emoji, 
+        #         "memory": memory, 
+        #         "time": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time())), 
+        #         "system_msg": self.system_msg
+        #     }
+        # ]
+
+        messages = [
+            {"role": self.user_role, "content": content}, 
+            {"role": "user_mood", "content": mood}, 
+            {"role": "history", "content": memory}, 
+            {"role": "current_timestamp", "content": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time()))}, 
+            {"role": "system", "content": self.system_msg}
+        ]
+
+        return messages
 
 def get_langchain_PromptTemplate_Chinese1():
     """<|IS|>: 用于标记来源信息的链接，避免 URL 进入 TTS """

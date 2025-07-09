@@ -74,21 +74,28 @@ class LLM:
             is_llm_ready_event = None, 
             session_id = "default" 
         ): 
+        """
+        LLM output processing
+
+        llm_output: 目的在於把模型輸出的内容根據逗號或者句號進行分割，儘早讓 TTS 處理以節省時間
+        llm_output_total: 目的在於儲存模型這次對話輸出的所有内容，用於記憶儲存以及輸出顯示
+
+        目前 LLM 的流式輸出存在問題，實際上是一次性輸出所有内容，也并沒有根據逗號和句號進行分割，需要以後實現
+
+        """
 
         print("llm waiting text")
         is_llm_ready_event.set()
         user_last_talk_time = time.time()
         user_msg = Message(user_role="user")
-        llm_output = ""
 
         while not self.stop_event.is_set():
             user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
-            llm_output = ""
-            for output in model.stream(user_input):
+            llm_output_total = ""
+            for thinking_output, output in model.stream(updated_user_msg):
                 
                 self.speaking_event.set()
-                # llm_output = ""
-                llm_output_total = ""
+                llm_output = ""
                 is_llm_thinking = False
 
                 if self.is_user_talking.is_set() or not self.user_input_queue.empty():
@@ -97,16 +104,17 @@ class LLM:
                         empty_queue = self.llm_output_queue.get(block=False)
                     break
                 
-                # Directly append to llm_output, reducing queue operations
-                llm_output += str(output)
+                # Directly append to llm_output_total, reducing queue operations
+                llm_output_total += str(output)
 
-            print(f"\033[19mLLM: {llm_output} \033[0m")  # 紫色高亮输出
+            self.llm_output_queue.put(llm_output_total)
+            self.llm_output_queue_ws.put(llm_output_total)
             # Store LLM output in temporary memory if Redis is configured
-            # self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
-            self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output)
+            # self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output_total.get("output"))
+            self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output_total)
             if self.temp_memory_handler and llm_output_total:
-                # self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
-                self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output)
+                # self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output_total.get("output"))
+                self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output_total)
 
             # llm_message.update_content(content=llm_output_total)
             if self.database is not None:
@@ -127,9 +135,9 @@ class LLM:
             # user_input = self.user_input_queue.get(timeout=0.1)
             user_input = self.user_input_queue.get()
         except queue.Empty:
-            user_input = ""
+            user_input = " "
 
-        if not user_input == "":
+        if not user_input == " ":
             print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
 
         # Prepare streaming input with context if Redis is configured

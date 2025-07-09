@@ -67,7 +67,7 @@ class LLM_Transformers(LLM):
             load_in_4bit=load_in_4bit,
         )
         self.streamer = TextStreamer(self.tokenizer)
-
+ 
         self.model.stream = self.stream
         print(f"LLM_Transformers initialized with model: {model_name}, device: {self.device}\n" \
                "Model class: " + str(type(self.model)) + "\n" \
@@ -76,30 +76,38 @@ class LLM_Transformers(LLM):
 
     def stream(self, user_input):
 
-        messages = [
-            {"role": "user", "content": user_input}
-        ]
-
         text = self.tokenizer.apply_chat_template(
-            messages,
+            user_input,
             tokenize=False,
             add_generation_prompt=True,
-            enable_thinking=False  # Setting enable_thinking=False disables thinking mode
+            enable_thinking=False 
         )
+        print("DEBUG: ", text)
 
         input_ids = self.tokenizer.encode(text, return_tensors="pt").to(self.device)
         attention_mask = input_ids.ne(self.tokenizer.pad_token_id).long().to(self.device) # ne: not equal
 
         output_tokens = [] # 缓存生成的 tokens (Cache generated tokens)
-        for output in self.model.generate(input_ids, 
+        for model_output in self.model.generate(input_ids, 
                                           attention_mask=attention_mask, 
                                           streamer=self.streamer, 
                                           pad_token_id=self.tokenizer.pad_token_id, 
                                           max_new_tokens=300): # 传入 attention_mask 和 pad_token_id (Pass attention_mask and pad_token_id)
-            output_tokens.extend(output.tolist())
-            current_output_text = self.tokenizer.decode(output, skip_special_tokens=True) # 解码当前输出的 tokens (Decode current output tokens)
-            print("Current output text:", current_output_text)
-            yield current_output_text
+            output_tokens.extend(model_output.tolist())
+
+            output_ids = model_output[len(input_ids[0]):].tolist() 
+
+            # parsing thinking content
+            try:
+                # rindex finding 151668 (</think>)
+                index = len(output_ids) - output_ids[::-1].index(151668)
+            except ValueError:
+                index = 0
+
+            thinking_output = self.tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip("\n")
+            output = self.tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip("\n")
+
+            yield thinking_output, output
 
     def langchain_agent_output_ws(
             self,
