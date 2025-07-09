@@ -1,9 +1,6 @@
-import pyaudio
-import sounddevice as sd
 import multiprocessing
 import torch
 import time
-import numpy as np
 
 from WebSocket.websocket import run_ws_server
 from func import asr_process_func, asr_process_func_ws, llm_process_func_ws, tts_process_func

@@ -124,8 +124,8 @@ class LLM:
     def get_user_input(self, user_msg: Message, user_last_talk_time: float):
         """Get user input from the queue"""
         try:
-            # user_input += self.user_input_queue.get(timeout=0.1)
-            user_input += self.user_input_queue.get()
+            # user_input = self.user_input_queue.get(timeout=0.1)
+            user_input = self.user_input_queue.get()
         except queue.Empty:
             user_input = ""
 
