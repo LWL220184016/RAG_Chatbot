@@ -24,6 +24,13 @@ class Chatbot_config:
 
         # pyaudio_format = pyaudio.paFloat32
         # process_audio_format = np.float32
+        
+        # model_name: str = "gemini-1.5-flash", 
+        
+        # model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", 
+        # model_name = "google/gemma-3-12b-it", 
+        # model_name = "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B", 
+        model_name = "Qwen/Qwen3-1.7B", 
 
         self.is_asr_ready_event = multiprocessing.Event()
         self.is_llm_ready_event = multiprocessing.Event()
