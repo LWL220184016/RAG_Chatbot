@@ -1,18 +1,24 @@
 import json
-import os
 import datetime
 
 from Data_Storage.database import Database_Handler
 
 class JSON_Memory:
 
-    def __init__(self, task: str = "chat_history_record"):
+    def __init__(self, task: str = "chat_history_record", path: str = None):
         """
         tasks:
         1. chat_history_record
         2. temp_memory
         """
-        CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+        if path:
+            CURRENT_DIR = path
+        else:
+            # Use the directory of this file as the default path
+            import os
+            CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+            
         if task == "chat_history_record":
             collection_name = Database_Handler.get_newest_chat_name()
             self.json_file_path = CURRENT_DIR + "/chat_history/" + collection_name + ".json" 
