@@ -2,6 +2,11 @@
 import os
 import time # 引入 time 模組
 import torch
+import sys
+import datetime
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
+
 from transformers import AutoTokenizer
 from trl import PPOTrainer, PPOConfig, AutoModelForCausalLMWithValueHead
 from tqdm import tqdm
@@ -12,7 +17,6 @@ from config import (
     TOKENIZER_ID,
     PPO_CONFIG,
     GENERATION_KWARGS,
-    INITIAL_PROMPT,
     MAX_TURNS,
     DEVICE,
     TOTAL_EPISODES,
@@ -21,6 +25,8 @@ from config import (
 )
 from agent import DialogueAgent
 from reward_model import SimpleRewardModel
+from final.Data_Storage.json_memory import JSON_Memory
+from final.LLM.prompt_template import Message
 
 def main():
     """
@@ -53,22 +59,19 @@ def main():
     # =================================================================
     reward_model = SimpleRewardModel(device=DEVICE)
 
+    msg = Message("User")
+    chat_history_recorder = JSON_Memory("chat_history_record")
+    # temp_memory_handler = JSON_Memory("temp_memory")
+    
+
     # 4. 開始自我對弈訓練循環
     # =================================================================
     for episode in tqdm(range(TOTAL_EPISODES), desc="自我對弈訓練"):
         
-        # 初始化對話歷史記錄，現在是一個列表
-        dialogue_log = [{'agent_id': 'System', 'text': INITIAL_PROMPT, 'timestamp': time.time()}]
-        
         # 每個 episode 包含多輪對話
         for turn in range(MAX_TURNS):
             
-            # 從日誌構建當前的對話歷史字串，供模型輸入
-            current_history_str = "\n".join([f"分身 {item['agent_id']}: {item['text']}" if item['agent_id'] != 'System' else item['text'] for item in dialogue_log])
-            
             print(f"\n--- Turn {turn+1} ---")
-            print(f"--- 當前對話歷史 ---\n{current_history_str}\n" + "="*30)
-
             # =================================================================
             # 並行運作模擬：
             # 讓兩個代理都對當前的歷史生成回應。
@@ -80,19 +83,18 @@ def main():
             # 讓兩個 agent 都生成一個回應
             for i, agent in enumerate(agents):
                 response_text, query_tensor, response_tensor = agent.generate_response(
-                    current_history_str, GENERATION_KWARGS
+                    msg.update_content(content=" "), GENERATION_KWARGS
                 )
                 
                 # 記錄生成的回應，無論內容如何
                 # 如果回應為空或僅有空白，視為 "無輸出"
                 is_silent = not response_text.strip()
                 if is_silent:
-                    response_text = "[無輸出]"
+                    response_text = "[沉默]"
 
                 all_responses.append({
                     'agent_id': i + 1,
                     'text': response_text,
-                    'timestamp': time.time(),
                     'query_tensor': query_tensor,
                     'response_tensor': response_tensor,
                     'is_silent': is_silent
@@ -111,18 +113,19 @@ def main():
             for resp_data in all_responses:
                 # 計算獎勵
                 # 對於無輸出的情況，可以給予一個小的負獎勵或零獎勵
-                reward_value = -0.1 if resp_data['is_silent'] else reward_model.get_reward(resp_data['text'])
+                reward_value = -0.1 根據説話的 Timestamp 來計算獎勵，目的避免連續説話以及太久不説話 if resp_data['is_silent'] else reward_model.get_reward(resp_data['text'])
                 reward = torch.tensor([reward_value], dtype=torch.float, device=DEVICE)
 
                 # 使用 PPO 進行單步訓練
                 train_stats = ppo_trainer.step([resp_data['query_tensor'][0]], [resp_data['response_tensor'][0]], [reward])
                 
-                # 將此回應添加到對話日誌中
-                dialogue_log.append({
-                    'agent_id': resp_data['agent_id'],
-                    'text': resp_data['text'],
-                    'timestamp': resp_data['timestamp']
-                })
+            # 將此回應添加到對話日誌中
+            chat_history_recorder.add_no_limit(
+                resp_data[0]['text'], 
+                resp_data[1]['text'], 
+                [resp_data[0]['agent_id'], resp_data[1]['agent_id']], 
+                str(datetime.datetime.now())
+            )
 
             # 模擬真實對話的時間間隔
             print("...等待下一個對話回合...")

@@ -15,7 +15,7 @@ class Message():
                           "You should only output Chinese or English. " \
                           "When he is silent, attribute named content will be blank in the message and you can also remain silent or actively seek topics to talk about. " \
                           "You should also consider the attribute named time in the message you receive, " \
-                          "If it's too close to the last time you spoke, you should keep silent."
+                          "If it's too close to the last time you spoke, you should keep silent. " 
 
     def update_content(self, content, mood=None, emoji=None, memory=None):
 
@@ -30,13 +30,10 @@ class Message():
         #         "system_msg": self.system_msg
         #     }
         # ]
-
+        
         messages = [
-            {"role": self.user_role, "content": content}, 
-            {"role": "user_mood", "content": mood}, 
-            {"role": "history", "content": memory}, 
-            {"role": "current_timestamp", "content": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time()))}, 
-            {"role": "system", "content": self.system_msg}
+            {"role": self.user_role, "content": content + f"[user_mood: {mood}] " }, 
+            {"role": "system", "content": self.system_msg + f"[Timestamp: {time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time()))}] " + f"[History: {memory}] " }
         ]
 
         return messages

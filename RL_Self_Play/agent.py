@@ -36,7 +36,14 @@ class DialogueAgent:
                 - response_tensor (torch.Tensor): 編碼後的回應張量。
         """
         # 將歷史文本編碼為輸入 ID
-        query_tensor = self.tokenizer.encode(history, return_tensors="pt").to(self.device)
+        query_tensor = self.tokenizer.apply_chat_template(
+            history, 
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False
+        )
+        print("DEBUG: ", query_tensor)
+        query_tensor = self.tokenizer.encode(query_tensor, return_tensors="pt").to(self.device)
         
         # 使用模型生成回應
         # 我們傳遞 query_tensor 作為輸入

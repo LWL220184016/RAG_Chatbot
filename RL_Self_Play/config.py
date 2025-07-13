@@ -42,11 +42,9 @@ GENERATION_KWARGS = {
 # ==================================
 # 自我對弈環境設定
 # ==================================
-# 初始對話提示
-INITIAL_PROMPT = "你好，我們來聊聊關於學習的話題吧。"
 
 # 最大對話輪次
-MAX_TURNS = 5
+MAX_TURNS = 100
 
 # 訓練設備
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

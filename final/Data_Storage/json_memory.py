@@ -26,6 +26,7 @@ class JSON_Memory:
             self.json_file_path = CURRENT_DIR + "/chat_history/temp.json"  # Removed trailing comma
         
         # Ensure directory exists
+        print(f"Chat history saved in {self.json_file_path}")
         os.makedirs(os.path.dirname(self.json_file_path), exist_ok=True)
         
         if os.path.exists(self.json_file_path):
@@ -41,7 +42,14 @@ class JSON_Memory:
         print("Getting the json memory")
         return self.memory
 
-    def add(self, user_message: str, llm_message: str, chat_record_limit: int = 20):
+    def add(
+            self, 
+            user_message: str, 
+            llm_message: str, 
+            Role = ["user_message", "llm_message"], 
+            timestamp = str(datetime.datetime.now()), 
+            chat_record_limit: int = 20
+            ):
         """
         Add a message to the chat records.
         
@@ -51,9 +59,9 @@ class JSON_Memory:
             chat_record_limit: Optional limit to the number of records to keep
         """
         self.memory["chat_records"].append({
-            "user_message": user_message, 
-            "llm_message": llm_message, 
-            "timestamp": str(datetime.datetime.now())
+            Role[0]: user_message, 
+            Role[1]: llm_message, 
+            "timestamp": timestamp
         })
         
         if chat_record_limit and len(self.memory["chat_records"]) > chat_record_limit:
@@ -61,7 +69,13 @@ class JSON_Memory:
 
         self.save(self.json_file_path)
 
-    def add_no_limit(self, user_message: str, llm_message: str):
+    def add_no_limit(
+            self, 
+            user_message: str, 
+            llm_message: str, 
+            Role = ["user_message", "llm_message"], 
+            timestamp = str(datetime.datetime.now())
+            ):
         """
         Add a message to the chat records.
         
@@ -70,9 +84,9 @@ class JSON_Memory:
             message: The message content
         """
         self.memory["chat_records"].append({
-            "user_message": user_message, 
-            "llm_message": llm_message, 
-            "timestamp": str(datetime.datetime.now())
+            Role[0]: user_message, 
+            Role[1]: llm_message, 
+            "timestamp": timestamp
         })
         
         self.save(self.json_file_path)
