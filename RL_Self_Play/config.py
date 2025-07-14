@@ -53,7 +53,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 訓練流程設定
 # ==================================
 # 總共進行多少次自我對弈的完整對話
-TOTAL_EPISODES = 100
+TOTAL_EPISODES = 20
 
 # 每隔多少次對話後儲存一次模型
 SAVE_FREQ = 10

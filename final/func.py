@@ -167,8 +167,8 @@ def llm_process_func_ws(
 
     message = """
     如果記憶儲存内容出現問題，可以優先檢查 llm.py 中的以下兩行代碼：
-    self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
-    self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output)
+    self.chat_history_recorder.add_no_limit(message=user_input, Role="user")
+    self.chat_history_recorder.add_no_limit(message=llm_output.get("output"), Role="assistant")
     """
     print(f"\n\033[38;5;17m{message}\033[0m")
 

@@ -54,10 +54,12 @@ class LLM:
                 user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
                 llm_output = agent.invoke(updated_user_msg)
                 if self.temp_memory_handler:
-                    self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output.get("output"))
+                    self.temp_memory_handler.add(message=user_input, Role="user")
+                    self.temp_memory_handler.add(message=llm_output.get("output"), Role="assistant")
                 
                 # Store LLM output in temporary memory if Redis is configured
-                self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output.get("output"))
+                self.chat_history_recorder.add_no_limit(message=user_input, Role="user")
+                self.chat_history_recorder.add_no_limit(message=llm_output.get("output"), Role="assistant")
                 if self.database is not None:
                     self.database.add_data(user_input, "user")
                     self.database.add_data(llm_output.get("output"), "llm")
@@ -111,11 +113,12 @@ class LLM:
             self.llm_output_queue_ws.put(llm_output_total)
             # Store LLM output in temporary memory if Redis is configured
             # self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output_total.get("output"))
-            self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output_total)
+            self.chat_history_recorder.add_no_limit(message=user_input, Role="user")
+            self.chat_history_recorder.add_no_limit(message=llm_output_total, Role="assistant")
             if self.temp_memory_handler and llm_output_total:
-                # self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output_total.get("output"))
-                self.temp_memory_handler.add(user_message=user_input, llm_message=llm_output_total)
-
+                self.temp_memory_handler.add(message=user_input, Role="user")
+                self.temp_memory_handler.add(message=llm_output_total, Role="assistant")
+                
             # llm_message.update_content(content=llm_output_total)
             if self.database is not None:
                 self.database.add_data(user_input, "user")

@@ -44,11 +44,10 @@ class JSON_Memory:
 
     def add(
             self, 
-            user_message: str, 
-            llm_message: str, 
-            Role = ["user_message", "llm_message"], 
+            message: str, 
+            Role = "user", 
             timestamp = str(datetime.datetime.now()), 
-            chat_record_limit: int = 20
+            chat_record_limit: int = 40
             ):
         """
         Add a message to the chat records.
@@ -59,8 +58,7 @@ class JSON_Memory:
             chat_record_limit: Optional limit to the number of records to keep
         """
         self.memory["chat_records"].append({
-            Role[0]: user_message, 
-            Role[1]: llm_message, 
+            Role: message, 
             "timestamp": timestamp
         })
         
@@ -71,9 +69,8 @@ class JSON_Memory:
 
     def add_no_limit(
             self, 
-            user_message: str, 
-            llm_message: str, 
-            Role = ["user_message", "llm_message"], 
+            message: str, 
+            Role = "user", 
             timestamp = str(datetime.datetime.now())
             ):
         """
@@ -84,9 +81,8 @@ class JSON_Memory:
             message: The message content
         """
         self.memory["chat_records"].append({
-            Role[0]: user_message, 
-            Role[1]: llm_message, 
-            "timestamp": timestamp
+            Role: message, 
+            "timestamp": timestamp, 
         })
         
         self.save(self.json_file_path)
