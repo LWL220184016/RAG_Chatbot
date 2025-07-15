@@ -8,23 +8,16 @@ import torch
 # ==================================
 # 我們將使用一個較小的模型來進行演示，您可以換成任何支援的 Hugging Face 模型
 # 例如: "meta-llama/Llama-2-7b-chat-hf" 或您自己的模型
-MODEL_ID = "gpt2" 
-TOKENIZER_ID = "gpt2"
+MODEL_ID = "Qwen/Qwen3-1.7B" 
+TOKENIZER_ID = "Qwen/Qwen3-1.7B"
 
 # ==================================
 # PPO 訓練設定 (TRL)
 # ==================================
 PPO_CONFIG = {
     "batch_size": 1,
-    "forward_batch_size": 1,
-    "ppo_epochs": 4,
-    "lr": 1.41e-5,
-    "init_kl_coef": 0.2,
-    "target": 6,
-    "kl_penalty": "kl",
-    "log_with": None,  # 可以設定為 "wandb"
-    "use_score_scaling": True,
-    "use_score_norm": True,
+    "num_ppo_epochs": 4,
+    "learning_rate": 1.41e-5,
 }
 
 # ==================================

@@ -24,7 +24,7 @@ from config import (
     OUTPUT_DIR,
 )
 from agent import DialogueAgent
-from reward_model import SimpleRewardModel
+from reward_model import RewardModel
 from final.Data_Storage.json_memory import JSON_Memory
 from final.LLM.prompt_template import Message
 
@@ -44,9 +44,9 @@ def main():
     # 設定 pad token
     tokenizer.pad_token = tokenizer.eos_token
     
-    ppo_trainer = PPOTrainer(ppo_config, model, tokenizer=tokenizer)
+    ppo_trainer = PPOTrainer(ppo_config, model)
     agent = DialogueAgent(model, tokenizer, DEVICE)
-    reward_model = SimpleRewardModel(device=DEVICE)
+    reward_model = RewardModel(device=DEVICE)
 
     # 這裡使用 User 是因為大多數模型訓練時使用的是 User, Assistant 和 System, 無法辨識訓練時沒出現的 Role
     # 下方使用 agent1 和 agent2 是因為方便程式碼編寫, 提高程式效率並且已經在提示詞中告訴模型他的角色

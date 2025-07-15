@@ -30,7 +30,7 @@ class Message():
         #     }
         # ]
         
-        timestamp = f" [Timestamp: {time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time()))}] "
+        timestamp = f' [Timestamp: {time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time()))}] '
         messages = [
             {"role": self.user_role, "content": content + "" if mood == None else f" [user_mood: {mood}] " }, 
             {"role": "system", "content": self.system_msg + timestamp + f"[History: {memory}] " }, 
