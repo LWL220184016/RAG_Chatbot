@@ -26,22 +26,16 @@ class RewardModel:
         )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    def get_reward(self, response: str, prompt: str = None, sys_msg: str = None) -> float:
+    def get_reward(self, prompt, sys_msg, response: str) -> torch.Tensor:
         """
         根據回應文本計算獎勵分數。
 
         Args:
-            response (str): 模型生成的回應。
-            prompt (str): 用戶輸入的提示（可選）。
-            sys_msg (str): 系統消息（可選）。
+            text (str): 模型生成的回應。
 
         Returns:
-            float: 獎勵分數。
+            torch.Tensor: 一個包含單一獎勵值的張量。
         """
-        
-        # 如果沒有提供 prompt 和 sys_msg，使用簡單的規則給分
-        if prompt is None or sys_msg is None:
-            return self._simple_reward(response)
         
         conv = [{"role": "user", "content": prompt}, {"role": "system", "content": sys_msg}, {"role": "assistant", "content": response}]
 
@@ -60,31 +54,6 @@ class RewardModel:
             score = self.reward_model(**conv_tokenized).logits[0][0].item()
         print(f"Score for response : {score}")
         return score
-    
-    def _simple_reward(self, response: str) -> float:
-        """
-        簡單的基於規則的獎勵函數。
-        """
-        if not response or response == "[沉默]":
-            return 0.0
-        
-        # 簡單的獎勵規則
-        score = 0.5  # 基礎分數
-        
-        # 鼓勵有意義的回應
-        if len(response.strip()) > 5:
-            score += 0.2
-        
-        # 鼓勵禮貌用語
-        polite_words = ["請", "謝謝", "對不起", "不好意思", "please", "thank", "sorry"]
-        if any(word in response.lower() for word in polite_words):
-            score += 0.3
-        
-        # 懲罰過於簡短或重複的回應
-        if len(response.strip()) < 3:
-            score -= 0.3
-        
-        return max(0.0, min(1.0, score))
 
 
 if __name__ == '__main__':
@@ -96,15 +65,11 @@ if __name__ == '__main__':
     prompt = "今天要一起跑嗎？"
     response1 = "好，出發啦！！！"
     response2 = "哈哈哈哈，你小心不要讓我把你落得太遠！"
-    reward = reward_model.get_reward(response1, prompt, sys_msg)
+    reward = reward_model.get_reward(prompt, sys_msg, response1)
     print(f"Reward for response1: {reward}")
 
     prompt = "Do you want to run together today?"
     response1 = "Ok, let's go!!!"
     response2 = "Hahahaha, you? Don't let me leave you too far behind."
-    reward = reward_model.get_reward(response1, prompt, sys_msg)
+    reward = reward_model.get_reward(prompt, sys_msg, response1)
     print(f"Reward for response2: {reward}")
-
-    # 測試簡單獎勵功能
-    simple_reward = reward_model.get_reward("謝謝你的幫助！")
-    print(f"Simple reward: {simple_reward}")
