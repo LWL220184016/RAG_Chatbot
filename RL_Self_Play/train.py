@@ -7,7 +7,7 @@ import datetime
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer
 from trl import PPOTrainer, PPOConfig, AutoModelForCausalLMWithValueHead
 from tqdm import tqdm
 
@@ -16,7 +16,6 @@ from config import (
     MODEL_ID,
     TOKENIZER_ID,
     REWARD_MODEL_ID, 
-    VALUE_MODEL_ID, 
     PPO_CONFIG,
     GENERATION_KWARGS,
     MAX_TURNS,
@@ -25,11 +24,9 @@ from config import (
     SAVE_FREQ,
     OUTPUT_DIR,
 )
-from datasets import load_dataset  # 用于加载数据集
 from agent import DialogueAgent
 from reward_model import RewardModel
 from final.Data_Storage.json_memory import JSON_Memory
-from final.LLM.prompt_template import Message
 
 def main():
     """
@@ -42,68 +39,89 @@ def main():
     # 加載預訓練模型和 tokenizer
     # AutoModelForCausalLMWithValueHead 會在基礎語言模型上添加一個價值頭 (value head)
     # 這個價值頭用於在 PPO 訓練中估計狀態的價值
-    model = AutoModelForCausalLMWithValueHead.from_pretrained(MODEL_ID).to(DEVICE)
-    model_ref = AutoModelForCausalLMWithValueHead.from_pretrained(MODEL_ID).to(DEVICE)
+    model = AutoModelForCausalLMWithValueHead.from_pretrained(MODEL_ID)
+    if torch.cuda.is_available():
+        model = model.to(DEVICE)
+    
+    model_ref = AutoModelForCausalLMWithValueHead.from_pretrained(MODEL_ID)
+    if torch.cuda.is_available():
+        model_ref = model_ref.to(DEVICE)
+    
     reward_model = RewardModel(model_name=REWARD_MODEL_ID, device=DEVICE)
-    value_model = AutoModelForSequenceClassification.from_pretrained(
-        VALUE_MODEL_ID,
-        torch_dtype=torch.bfloat16,
-        device_map=DEVICE,
-        # attn_implementation="flash_attention_2",
-        num_labels=1,
-    )
-    dataset = load_dataset("imdb", split="train")  # 可以替换为您的自定义数据集
-    dataset = dataset.select(range(100))  # 选取前 1000 个样本以便测试
-
-    for i in model_ref.parameters():
-        i.requires_grad_(False)
+    
+    # 設定參考模型為不可訓練
+    for param in model_ref.parameters():
+        param.requires_grad_(False)
+        
     tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_ID)
     # 設定 pad token
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
     
+    # 更新生成參數中的 pad_token_id
+    generation_kwargs = GENERATION_KWARGS.copy()
+    generation_kwargs["pad_token_id"] = tokenizer.pad_token_id
+    
+    # 創建 PPO 訓練器
     ppo_trainer = PPOTrainer(
-        args=ppo_config,  # PPO 配置
-        model=model,  # 主模型
-        reward_model=reward_model.reward_model,
-        value_model=value_model,
-        ref_model=model_ref,  # 参考模型（可选，如果不提供，会自动创建）
-        processing_class=tokenizer,  # Tokenizer
-        train_dataset=dataset,  # 数据集
-        # data_collator=data_collator,  # 数据 collator（可选）
+        config=ppo_config,
+        model=model,
+        ref_model=model_ref,
+        tokenizer=tokenizer,
     )
     agent = DialogueAgent(model, tokenizer, DEVICE)
 
-    # 這裡使用 User 是因為大多數模型訓練時使用的是 User, Assistant 和 System, 無法辨識訓練時沒出現的 Role
-    # 下方使用 agent1 和 agent2 是因為方便程式碼編寫, 提高程式效率並且已經在提示詞中告訴模型他的角色
-    msg = Message("User")
+    # 初始化對話系統
     temp_memory_handler = JSON_Memory("temp_memory")
     chat_history_recorder = JSON_Memory("chat_history_record")
     
     # 初始化上次說話時間和說話者
     last_speech_time = time.time()
     last_speaker_id = None
-    content = " "
+    
+    # 初始對話主題列表
+    conversation_topics = [
+        "今天天氣如何？",
+        "你最喜歡的食物是什麼？", 
+        "最近有什麼有趣的事情嗎？",
+        "你對人工智能有什麼看法？",
+        "你平時喜歡做什麼？"
+    ]
 
     for episode in tqdm(range(TOTAL_EPISODES), desc="自我對弈訓練"):
+        print(f"\n=== Episode {episode + 1} ===")
+        
+        # 每個episode開始時清空臨時記憶，開始新對話
+        temp_memory_handler.clear()
+        
+        # 選擇對話主題
+        topic = conversation_topics[episode % len(conversation_topics)]
+        print(f"對話主題: {topic}")
+        
+        # 初始化對話歷史
+        conversation_history = [
+            {"role": "system", "content": "你是一個友善的對話機器人，會進行自然的對話。"},
+            {"role": "user", "content": topic}
+        ]
         
         # 每個 episode 包含多輪對話
         for turn in range(MAX_TURNS):
             agent_id = turn % 2  # 0 或 1，表示兩個分身
-            print(f"\n--- Turn {turn+1} ---")
+            print(f"\n--- Turn {turn+1}, Agent {agent_id} ---")
 
             time_since_last_speech = time.time() - last_speech_time
             
-            prompt, timestamp = msg.update_content(content=content, memory=temp_memory_handler.get())
-            # 將時間資訊加入到提示詞中，讓模型學習計時
-            prompt[1]["content"] = (
-                f"You are agent{agent_id}. "
-                f"It has been {time_since_last_speech:.1f} seconds since the last turn. "
-                + prompt[1]["content"]
-            )
+            # 構建當前agent的提示
+            current_conversation = conversation_history.copy()
             
-            print(f"Debug: 分身 {agent_id} 的提示: {prompt}")
+            # 添加角色特定的系統提示
+            agent_prompt = f"你是Agent {agent_id}，正在與另一個AI進行對話。已經過去了 {time_since_last_speech:.1f} 秒。請自然地回應。"
+            current_conversation.append({"role": "system", "content": agent_prompt})
+            
+            print(f"Debug: Agent {agent_id} 的對話歷史長度: {len(current_conversation)}")
+            
             response_text, query_tensor, response_tensor = agent.generate_response(
-                prompt, GENERATION_KWARGS
+                current_conversation, generation_kwargs
             )
             
             # 記錄生成的回應，無論內容如何
@@ -140,14 +158,28 @@ def main():
                 last_speech_time = time.time()
                 last_speaker_id = agent_id
 
-            reward = torch.tensor([reward_value], dtype=torch.float, device=DEVICE)
+            reward = torch.tensor([reward_value], dtype=torch.float)
+            if torch.cuda.is_available():
+                reward = reward.to(DEVICE)
 
             # 使用 PPO 進行單步訓練
-            train_stats = ppo_trainer.step([query_tensor[0]], [response_tensor[0]], [reward])
+            stats = ppo_trainer.step([query_tensor[0]], [response_tensor[0]], [reward])
 
-            # Role 是 "agent(agent_id)" 的原因, 請翻看程式碼 msg = Message("User") 處的註解
+            # 記錄對話歷史
+            timestamp = datetime.datetime.now().isoformat()
+            conversation_history.append({"role": "assistant", "content": response_text})
+            
+            # 保存到記憶系統
             temp_memory_handler.add(message=response_text, Role=f"agent{str(agent_id)}", timestamp=timestamp)
             chat_history_recorder.add_no_limit(message=response_text, Role=f"agent{str(agent_id)}", timestamp=timestamp)
+            
+            print(f"Agent {agent_id} 回應: {response_text}")
+            print(f"獎勵值: {reward_value:.3f}")
+            
+            # 如果對話變得太長，截斷歷史
+            if len(conversation_history) > 20:
+                # 保留系統消息和最近的10條消息
+                conversation_history = conversation_history[:2] + conversation_history[-10:]
 
         # 每隔一段時間儲存模型
         if (episode + 1) % SAVE_FREQ == 0:

@@ -17,21 +17,24 @@ VALUE_MODEL_ID = "Skywork/Skywork-Reward-V2-Qwen3-1.7B"
 # PPO 訓練設定 (TRL)
 # ==================================
 PPO_CONFIG = {
-    "batch_size": 1,
-    "num_ppo_epochs": 4,
     "learning_rate": 1.41e-5,
+    "batch_size": 1,
+    "mini_batch_size": 1,
+    "ppo_epochs": 4,
+    "gradient_accumulation_steps": 1,
+    "optimize_cuda_cache": True,
 }
 
 # ==================================
 # 對話生成設定
 # ==================================
 GENERATION_KWARGS = {
-    "min_length": -1,
-    "top_k": 0.0,
-    "top_p": 1.0,
     "do_sample": True,
-    "pad_token_id": 50256,  # GPT-2 的 pad_token_id
+    "top_k": 50,
+    "top_p": 0.9,
+    "temperature": 0.7,
     "max_new_tokens": 64,
+    "pad_token_id": None,  # 將在運行時設定
 }
 
 # ==================================
@@ -39,7 +42,7 @@ GENERATION_KWARGS = {
 # ==================================
 
 # 最大對話輪次
-MAX_TURNS = 100
+MAX_TURNS = 10
 
 # 訓練設備
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,10 +51,10 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # 訓練流程設定
 # ==================================
 # 總共進行多少次自我對弈的完整對話
-TOTAL_EPISODES = 20
+TOTAL_EPISODES = 5
 
 # 每隔多少次對話後儲存一次模型
-SAVE_FREQ = 10
+SAVE_FREQ = 2
 
 # 模型儲存路徑
 OUTPUT_DIR = "ppo_self_play_model"
