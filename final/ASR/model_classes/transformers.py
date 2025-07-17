@@ -18,7 +18,7 @@ class ASR():
             streaming: bool = False, 
         ):
     
-        self.asr_processor = WhisperProcessor.from_pretrained(model)
+        self.asr_processor = WhisperProcessor.from_pretrained(model, local_files_only=True)
         self.model = WhisperForConditionalGeneration.from_pretrained(model, local_files_only=True).to(device)
         self.device = device
         self.ap = ap

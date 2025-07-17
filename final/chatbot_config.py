@@ -85,7 +85,7 @@ class Chatbot_config:
                 self.client_audio_queue, 
                 self.asr_output_queue, 
                 self.asr_output_queue_ws, 
-                "NeMo", # asr_class: "NeMo", "transformers"
+                "transformers", # asr_class: "NeMo", "transformers"
                 None, # ap: Audio_Processor
                 True, # streaming: True, False
             )
