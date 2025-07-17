@@ -35,6 +35,7 @@ class LLM:
         
         # Initialize Redis memory handler if config is provided
         if use_temp_memory:
+            self.use_temp_memory = use_temp_memory
             self.temp_memory_handler = JSON_Memory("temp_memory")
     
     def langchain_agent_output_ws( 
@@ -53,7 +54,7 @@ class LLM:
             while not self.stop_event.is_set():
                 user_input, updated_user_msg = self.get_user_input(user_msg, user_last_talk_time)
                 llm_output = agent.invoke(updated_user_msg)
-                if self.temp_memory_handler:
+                if self.use_temp_memory:
                     self.temp_memory_handler.add(message=user_input, Role="user")
                     self.temp_memory_handler.add(message=llm_output.get("output"), Role="assistant")
                 
@@ -115,7 +116,7 @@ class LLM:
             # self.chat_history_recorder.add_no_limit(user_message=user_input, llm_message=llm_output_total.get("output"))
             self.chat_history_recorder.add_no_limit(message=user_input, Role="user")
             self.chat_history_recorder.add_no_limit(message=llm_output_total, Role="assistant")
-            if self.temp_memory_handler and llm_output_total:
+            if self.use_temp_memory:
                 self.temp_memory_handler.add(message=user_input, Role="user")
                 self.temp_memory_handler.add(message=llm_output_total, Role="assistant")
                 
@@ -127,7 +128,7 @@ class LLM:
 
     def clear_temp_memory(self, session_id="default"):
         """Clear temporary memory for a specific session"""
-        if self.temp_memory_handler:
+        if self.use_temp_memory:
             self.temp_memory_handler.clear_conversation(session_id)
             return True
         return False
@@ -144,7 +145,7 @@ class LLM:
             print(f"\033[95mUser: {user_input} \033[0m")  # 紫色高亮输出
 
         # Prepare streaming input with context if Redis is configured
-        if self.temp_memory_handler:
+        if self.use_temp_memory:
             recent_history = self.temp_memory_handler.get()
             print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
             return user_input, user_msg.update_content(content=user_input, memory=recent_history)
@@ -176,7 +177,7 @@ class LLM:
 
 
         # Prepare streaming input with context if Redis is configured
-        if self.temp_memory_handler:
+        if self.use_temp_memory:
             recent_history = self.temp_memory_handler.get()
             print(f"\033[95mrecent_history: {recent_history} \033[0m")  # 紫色高亮输出
             return user_msg.update_content(content=user_input, memory=recent_history)

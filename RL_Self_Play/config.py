@@ -10,6 +10,8 @@ import torch
 # 例如: "meta-llama/Llama-2-7b-chat-hf" 或您自己的模型
 MODEL_ID = "Qwen/Qwen3-1.7B" 
 TOKENIZER_ID = "Qwen/Qwen3-1.7B"
+REWARD_MODEL_ID = "Skywork/Skywork-Reward-V2-Qwen3-1.7B"
+VALUE_MODEL_ID = "Skywork/Skywork-Reward-V2-Qwen3-1.7B"
 
 # ==================================
 # PPO 訓練設定 (TRL)

@@ -1,10 +1,12 @@
 import json
 import datetime
 
-from Data_Storage.database import Database_Handler
+try:
+    from Data_Storage.database import Database_Handler
+except ImportError:
+    from final.Data_Storage.database import Database_Handler
 
 class JSON_Memory:
-
     def __init__(self, task: str = "chat_history_record", path: str = None):
         """
         tasks:

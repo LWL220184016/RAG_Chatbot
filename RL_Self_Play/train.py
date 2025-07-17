@@ -7,7 +7,7 @@ import datetime
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir)))
 
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from trl import PPOTrainer, PPOConfig, AutoModelForCausalLMWithValueHead
 from tqdm import tqdm
 
@@ -15,6 +15,8 @@ from tqdm import tqdm
 from config import (
     MODEL_ID,
     TOKENIZER_ID,
+    REWARD_MODEL_ID, 
+    VALUE_MODEL_ID, 
     PPO_CONFIG,
     GENERATION_KWARGS,
     MAX_TURNS,
@@ -23,6 +25,7 @@ from config import (
     SAVE_FREQ,
     OUTPUT_DIR,
 )
+from datasets import load_dataset  # 用于加载数据集
 from agent import DialogueAgent
 from reward_model import RewardModel
 from final.Data_Storage.json_memory import JSON_Memory
@@ -40,13 +43,35 @@ def main():
     # AutoModelForCausalLMWithValueHead 會在基礎語言模型上添加一個價值頭 (value head)
     # 這個價值頭用於在 PPO 訓練中估計狀態的價值
     model = AutoModelForCausalLMWithValueHead.from_pretrained(MODEL_ID).to(DEVICE)
+    model_ref = AutoModelForCausalLMWithValueHead.from_pretrained(MODEL_ID).to(DEVICE)
+    reward_model = RewardModel(model_name=REWARD_MODEL_ID, device=DEVICE)
+    value_model = AutoModelForSequenceClassification.from_pretrained(
+        VALUE_MODEL_ID,
+        torch_dtype=torch.bfloat16,
+        device_map=DEVICE,
+        # attn_implementation="flash_attention_2",
+        num_labels=1,
+    )
+    dataset = load_dataset("imdb", split="train")  # 可以替换为您的自定义数据集
+    dataset = dataset.select(range(100))  # 选取前 1000 个样本以便测试
+
+    for i in model_ref.parameters():
+        i.requires_grad_(False)
     tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_ID)
     # 設定 pad token
     tokenizer.pad_token = tokenizer.eos_token
     
-    ppo_trainer = PPOTrainer(ppo_config, model)
+    ppo_trainer = PPOTrainer(
+        args=ppo_config,  # PPO 配置
+        model=model,  # 主模型
+        reward_model=reward_model.reward_model,
+        value_model=value_model,
+        ref_model=model_ref,  # 参考模型（可选，如果不提供，会自动创建）
+        processing_class=tokenizer,  # Tokenizer
+        train_dataset=dataset,  # 数据集
+        # data_collator=data_collator,  # 数据 collator（可选）
+    )
     agent = DialogueAgent(model, tokenizer, DEVICE)
-    reward_model = RewardModel(device=DEVICE)
 
     # 這裡使用 User 是因為大多數模型訓練時使用的是 User, Assistant 和 System, 無法辨識訓練時沒出現的 Role
     # 下方使用 agent1 和 agent2 是因為方便程式碼編寫, 提高程式效率並且已經在提示詞中告訴模型他的角色
